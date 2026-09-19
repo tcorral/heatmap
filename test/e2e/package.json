@@ -1,0 +1,12 @@
+{
+  "name": "@heatmap/e2e-web",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.49.1"
+  }
+}

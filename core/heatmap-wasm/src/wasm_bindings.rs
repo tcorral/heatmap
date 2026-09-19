@@ -13,7 +13,8 @@ pub struct HeatmapSdkJs {
 impl HeatmapSdkJs {
     #[wasm_bindgen(js_name = init)]
     pub fn init(config_json: &str) -> Result<HeatmapSdkJs, JsValue> {
-        let sdk = PublicHeatmapSdk::init_from_json(config_json).map_err(init_error)?;
+        let mut sdk = PublicHeatmapSdk::init_from_json(config_json).map_err(init_error)?;
+        sdk.bootstrap_web_session().map_err(capture_error)?;
         Ok(Self { sdk })
     }
 
@@ -34,8 +35,14 @@ impl HeatmapSdkJs {
         layout_version: Option<String>,
     ) -> Result<(), JsValue> {
         self.sdk
-            .screen(screen_id, layout_version)
-            .map_err(screen_error)
+            .screen(screen_id.clone(), layout_version.clone())
+            .map_err(screen_error)?;
+        self.sdk.record_screen_view().map_err(capture_error)
+    }
+
+    #[wasm_bindgen(js_name = recordScroll)]
+    pub fn record_scroll(&mut self) -> Result<(), JsValue> {
+        self.sdk.record_scroll().map_err(capture_error)
     }
 
     #[wasm_bindgen(js_name = setTrackingEnabled)]
@@ -46,6 +53,11 @@ impl HeatmapSdkJs {
     #[wasm_bindgen(js_name = flush)]
     pub fn flush(&mut self) -> Result<(), JsValue> {
         self.sdk.flush().map_err(flush_error)
+    }
+
+    #[wasm_bindgen(js_name = drainBatchJson)]
+    pub fn drain_batch_json(&mut self) -> Option<String> {
+        self.sdk.drain_batch_json()
     }
 
     #[wasm_bindgen(js_name = recordActivationClick)]

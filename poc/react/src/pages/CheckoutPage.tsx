@@ -1,9 +1,28 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+
+import { getHeatmapSdk } from "../heatmap/init";
 
 export function CheckoutPage() {
   const navigate = useNavigate();
   const [coupon, setCoupon] = useState("");
+
+  useEffect(() => {
+    const sdk = getHeatmapSdk();
+    if (!sdk) {
+      return;
+    }
+    let recorded = false;
+    const onScroll = () => {
+      if (recorded) {
+        return;
+      }
+      recorded = true;
+      sdk.recordScroll();
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   return (
     <section aria-labelledby="checkout-heading">

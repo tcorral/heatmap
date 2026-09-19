@@ -44,8 +44,26 @@ pub(crate) fn validate_config(config: &HeatmapConfig) -> Result<(), InitError> {
     if config.endpoint.trim().is_empty() {
         return Err(InitError::MissingEndpoint);
     }
-    if !config.endpoint.starts_with("https://") {
+    if !endpoint_is_allowed(&config.endpoint) {
         return Err(InitError::InsecureEndpoint);
     }
     Ok(())
+}
+
+fn endpoint_is_allowed(endpoint: &str) -> bool {
+    let trimmed = endpoint.trim();
+    if trimmed.starts_with("https://") {
+        return true;
+    }
+    is_loopback_http(trimmed)
+}
+
+fn is_loopback_http(endpoint: &str) -> bool {
+    let Some(rest) = endpoint.strip_prefix("http://") else {
+        return false;
+    };
+    let hostport = rest.split(['/', '?']).next().unwrap_or(rest);
+    let host = hostport.rsplit_once('@').map(|(_, host)| host).unwrap_or(hostport);
+    let hostname = host.rsplit_once(':').map(|(name, _)| name).unwrap_or(host);
+    hostname == "127.0.0.1" || hostname == "localhost"
 }

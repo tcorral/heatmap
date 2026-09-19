@@ -5,8 +5,8 @@ use uuid::Uuid;
 use crate::batch::{BatchError, HeatmapBatch};
 use crate::capture::{candidate_to_event, CaptureCandidate, CaptureContext, CaptureError};
 use crate::config::{validate_config, HeatmapConfig, InitError};
-use crate::event::HeatmapEvent;
-use crate::event::ScreenInfo;
+use crate::event::{HeatmapEvent, InteractionEvent, ScreenInfo, SdkInfo, Viewport};
+use crate::event::PlatformInfo;
 use crate::transport::{BatchTransport, FlushError};
 #[cfg(not(target_arch = "wasm32"))]
 use crate::transport::HttpBatchTransport;
@@ -116,6 +116,68 @@ impl HeatmapSdk {
         Ok(())
     }
 
+    pub fn bootstrap_web_session(
+        &mut self,
+        sdk: SdkInfo,
+        platform: PlatformInfo,
+        viewport: Viewport,
+    ) -> Result<(), CaptureError> {
+        self.enqueue_lifecycle(
+            sdk,
+            platform,
+            InteractionEvent::session_start().map_err(CaptureError::InvalidEventField)?,
+            viewport,
+        )
+    }
+
+    pub fn record_screen_view(
+        &mut self,
+        sdk: SdkInfo,
+        platform: PlatformInfo,
+        viewport: Viewport,
+    ) -> Result<(), CaptureError> {
+        self.enqueue_lifecycle(
+            sdk,
+            platform,
+            InteractionEvent::screen_view().map_err(CaptureError::InvalidEventField)?,
+            viewport,
+        )
+    }
+
+    pub fn record_scroll(
+        &mut self,
+        sdk: SdkInfo,
+        platform: PlatformInfo,
+        viewport: Viewport,
+    ) -> Result<(), CaptureError> {
+        self.enqueue_lifecycle(
+            sdk,
+            platform,
+            InteractionEvent::scroll().map_err(CaptureError::InvalidEventField)?,
+            viewport,
+        )
+    }
+
+    fn enqueue_lifecycle(
+        &mut self,
+        sdk: SdkInfo,
+        platform: PlatformInfo,
+        interaction: InteractionEvent,
+        viewport: Viewport,
+    ) -> Result<(), CaptureError> {
+        let candidate = CaptureCandidate {
+            timestamp: current_timestamp_ms(),
+            sdk,
+            platform,
+            screen: None,
+            interaction,
+            position: None,
+            viewport: Some(viewport),
+            window_id: None,
+        };
+        self.enqueue_candidate(candidate)
+    }
+
     pub fn enqueue_candidate(&mut self, candidate: CaptureCandidate) -> Result<(), CaptureError> {
         if !self.tracking_enabled {
             return Err(CaptureError::TrackingDisabled);
@@ -170,4 +232,19 @@ const DEFAULT_SAMPLE_IN_THRESHOLD: f64 = 1.0;
 
 fn new_id(prefix: &str) -> String {
     format!("{prefix}_{}", Uuid::new_v4().simple())
+}
+
+fn current_timestamp_ms() -> i64 {
+    #[cfg(target_arch = "wasm32")]
+    {
+        js_sys::Date::now() as i64
+    }
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        use std::time::{SystemTime, UNIX_EPOCH};
+        SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .map(|duration| duration.as_millis() as i64)
+            .unwrap_or(0)
+    }
 }

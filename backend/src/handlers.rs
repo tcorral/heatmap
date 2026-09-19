@@ -11,7 +11,7 @@ use serde::Deserialize;
 use serde_json::{json, Value};
 
 use crate::config::AppConfig;
-use crate::db::ElementsFilter;
+use crate::db::{self, ElementsFilter};
 use crate::error::ApiError;
 use crate::service;
 
@@ -98,6 +98,15 @@ pub async fn get_elements(
         "elements": elements,
         "unique_sessions": response.unique_sessions,
     })))
+}
+
+pub async fn get_events(State(state): State<AppState>) -> Result<Json<Value>, ApiError> {
+    if !state.config.expose_test_events() {
+        return Err(ApiError::NotFound);
+    }
+    let conn = state.db.lock().map_err(|_| ApiError::Internal)?;
+    let events = db::list_raw_events(&conn).map_err(|_| ApiError::Internal)?;
+    Ok(Json(json!({ "events": events })))
 }
 
 fn parse_batch_body(body: &Bytes) -> Result<BatchBody, ApiError> {

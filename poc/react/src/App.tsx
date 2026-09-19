@@ -1,4 +1,5 @@
 import { BrowserRouter, Link, Route, Routes } from "react-router-dom";
+import { HeatmapRouteSync } from "./heatmap/HeatmapRouteSync";
 import { CheckoutPage } from "./pages/CheckoutPage";
 import { ConfirmationPage } from "./pages/ConfirmationPage";
 import { HomePage } from "./pages/HomePage";
@@ -7,6 +8,7 @@ import { ProductPage } from "./pages/ProductPage";
 export function App() {
   return (
     <BrowserRouter>
+      <HeatmapRouteSync />
       <div className="app-shell">
         <nav className="nav-links" aria-label="Checkout journey">
           <Link to="/">Home</Link>

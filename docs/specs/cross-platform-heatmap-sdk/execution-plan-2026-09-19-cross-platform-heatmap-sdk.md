@@ -72,7 +72,7 @@ Greenfield V1 POC: lock the nested event contract, prove a synthetic click throu
   - **Tests:** Totals, unique sessions, and top elements render for a slice that has clicks; empty slice shows zero counts and no overlay; query error is visible and does not crash; filters and counts are keyboard-reachable with visible names; no login wall
   - **Depends:** Step 4, Step 8
 
-- [ ] **Step 10: Prove web checkout through dashboard** — TDD: Yes
+- [x] **Step 10: Prove web checkout through dashboard** — TDD: Yes
   - **Description:** Add the first per-platform E2E so the React journey lands in ingest and dashboard counts.
   - **Files:** test/e2e/
   - **Tests:** Sequence includes session_start, screen_view(home), click(product), screen_view(checkout), scroll, click(checkout.coupon), click(checkout.pay), screen_view(confirmation); dashboard shows web Pay totals; introduce the web E2E runner

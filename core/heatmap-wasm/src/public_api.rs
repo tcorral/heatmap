@@ -1,11 +1,17 @@
 use heatmap_core::{
     CaptureCandidate, CaptureError, FlushError, HeatmapConfig, HeatmapSdk as CoreHeatmapSdk,
-    IdentityError, InitError, InteractionEvent, PlatformInfo, PlatformType, Position,
+    IdentityError, InitError, InteractionEvent, PlatformInfo, Position,
     ScreenContextError, SdkInfo, Viewport,
 };
 
 use crate::config::InitConfigJson;
+
+#[cfg(not(target_arch = "wasm32"))]
 use crate::stub_transport::StubBatchTransport;
+#[cfg(target_arch = "wasm32")]
+use crate::fetch_transport::FetchBatchTransport;
+#[cfg(target_arch = "wasm32")]
+use crate::web_context::{web_platform_info, web_sdk_info};
 
 pub struct PublicHeatmapSdk {
     inner: CoreHeatmapSdk,
@@ -18,6 +24,9 @@ impl PublicHeatmapSdk {
     }
 
     pub fn init(config: HeatmapConfig) -> Result<Self, InitError> {
+        #[cfg(target_arch = "wasm32")]
+        let inner = CoreHeatmapSdk::init_with_transport(config, FetchBatchTransport::new())?;
+        #[cfg(not(target_arch = "wasm32"))]
         let inner = CoreHeatmapSdk::init_with_transport(config, StubBatchTransport::new())?;
         Ok(Self { inner })
     }
@@ -46,6 +55,32 @@ impl PublicHeatmapSdk {
         self.inner.flush()
     }
 
+    pub fn drain_batch_json(&mut self) -> Option<String> {
+        let batch = self.inner.build_batch().ok()?;
+        serde_json::to_string(&batch).ok()
+    }
+
+    #[cfg(target_arch = "wasm32")]
+    pub fn bootstrap_web_session(&mut self) -> Result<(), CaptureError> {
+        let viewport = crate::web_context::viewport_from_window();
+        self.inner
+            .bootstrap_web_session(web_sdk_info(), web_platform_info(), viewport)
+    }
+
+    #[cfg(target_arch = "wasm32")]
+    pub fn record_screen_view(&mut self) -> Result<(), CaptureError> {
+        let viewport = crate::web_context::viewport_from_window();
+        self.inner
+            .record_screen_view(web_sdk_info(), web_platform_info(), viewport)
+    }
+
+    #[cfg(target_arch = "wasm32")]
+    pub fn record_scroll(&mut self) -> Result<(), CaptureError> {
+        let viewport = crate::web_context::viewport_from_window();
+        self.inner
+            .record_scroll(web_sdk_info(), web_platform_info(), viewport)
+    }
+
     /// Adapter-only web click enqueue; not part of the public integrator API.
     pub fn record_activation_click(
         &mut self,
@@ -60,15 +95,8 @@ impl PublicHeatmapSdk {
         let element_id = element_id.filter(|id| !id.trim().is_empty());
         let candidate = CaptureCandidate {
             timestamp: timestamp_ms,
-            sdk: SdkInfo {
-                name: WEB_SDK_NAME.into(),
-                version: WEB_SDK_VERSION.into(),
-            },
-            platform: PlatformInfo {
-                platform_type: PlatformType::Web,
-                os_version: "unknown".into(),
-                app_version: "0.0.0".into(),
-            },
+            sdk: web_capture_sdk(),
+            platform: web_capture_platform(),
             screen: None,
             interaction: InteractionEvent::click(element_id)
                 .map_err(CaptureError::InvalidEventField)?,
@@ -83,8 +111,35 @@ impl PublicHeatmapSdk {
     }
 }
 
-const WEB_SDK_NAME: &str = "heatmap-web";
-const WEB_SDK_VERSION: &str = "0.1.0";
+fn web_capture_sdk() -> SdkInfo {
+    #[cfg(target_arch = "wasm32")]
+    {
+        web_sdk_info()
+    }
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        SdkInfo {
+            name: "heatmap-web".into(),
+            version: "0.1.0".into(),
+        }
+    }
+}
+
+fn web_capture_platform() -> PlatformInfo {
+    #[cfg(target_arch = "wasm32")]
+    {
+        web_platform_info()
+    }
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        use heatmap_core::PlatformType;
+        PlatformInfo {
+            platform_type: PlatformType::Web,
+            os_version: "unknown".into(),
+            app_version: "0.0.0".into(),
+        }
+    }
+}
 
 /// JS export names for binding-surface tests (must stay in sync with wasm_bindgen attrs).
 pub mod export_names {

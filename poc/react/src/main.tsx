@@ -1,14 +1,20 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { App } from "./App";
-import { init, readDefaultHeatmapConfig } from "./heatmap/init";
+import { initWithConfig, readDefaultHeatmapConfig } from "./heatmap/init";
 import "./styles/app.css";
 
-const config = readDefaultHeatmapConfig();
-init(config.projectKey, config.endpoint);
+const root = document.getElementById("root")!;
 
-createRoot(document.getElementById("root")!).render(
-  <StrictMode>
-    <App />
-  </StrictMode>,
-);
+void (async () => {
+  try {
+    await initWithConfig(readDefaultHeatmapConfig());
+    createRoot(root).render(
+      <StrictMode>
+        <App />
+      </StrictMode>,
+    );
+  } catch (error: unknown) {
+    console.error("[heatmap] failed to boot", error);
+  }
+})();

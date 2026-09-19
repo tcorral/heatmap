@@ -1,4 +1,6 @@
 node_modules/
+heatmap-e2e.db
+heatmap-backend.db
 target/
 .DS_Store
 .env

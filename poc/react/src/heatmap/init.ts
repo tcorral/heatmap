@@ -5,16 +5,20 @@ import {
   type WasmActivationRecorder,
 } from "@heatmap/sdk-web";
 
+import type { HeatmapSdkJs } from "../wasm/pkg/heatmap_wasm.js";
+
 export type HeatmapClientConfig = {
   projectKey: string;
   endpoint: string;
 };
 
-const DEFAULT_PROJECT_KEY = "pk_poc_dev";
-const DEFAULT_ENDPOINT = "https://127.0.0.1:8080";
+const DEFAULT_PROJECT_KEY = "test-project-key";
+const DEFAULT_ENDPOINT = "http://127.0.0.1:8080";
 
 let activeConfig: HeatmapClientConfig | null = null;
 let stopClickCapture: (() => void) | null = null;
+let wasmSdk: HeatmapSdkJs | null = null;
+let bootPromise: Promise<void> | null = null;
 
 export function readDefaultHeatmapConfig(): HeatmapClientConfig {
   return {
@@ -27,16 +31,61 @@ export function getHeatmapConfig(): HeatmapClientConfig | null {
   return activeConfig;
 }
 
-export function init(projectKey: string, endpoint: string): void {
-  initWithConfig({ projectKey, endpoint });
+export function getHeatmapSdk(): HeatmapSdkJs | null {
+  return wasmSdk;
 }
 
-export function initWithConfig(config: HeatmapClientConfig): void {
+export async function flushHeatmapBatch(): Promise<void> {
+  if (!wasmSdk || !activeConfig) {
+    return;
+  }
+  const batchJson = wasmSdk.drainBatchJson();
+  if (!batchJson) {
+    return;
+  }
+  const endpoint = activeConfig.endpoint.replace(/\/$/, "");
+  const response = await fetch(`${endpoint}/v1/batches`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Project-Key": activeConfig.projectKey,
+    },
+    body: batchJson,
+  });
+  if (!response.ok) {
+    throw new Error(`batch upload failed with status ${response.status}`);
+  }
+}
+
+export async function bootHeatmap(config: HeatmapClientConfig): Promise<void> {
+  if (!bootPromise) {
+    bootPromise = loadWasmSdk(config);
+  }
+  await bootPromise;
+}
+
+export function init(projectKey: string, endpoint: string): void {
+  void initWithConfig({ projectKey, endpoint });
+}
+
+export async function initWithConfig(config: HeatmapClientConfig): Promise<void> {
+  await bootHeatmap(config);
   activeConfig = {
     projectKey: config.projectKey.trim(),
     endpoint: config.endpoint.trim(),
   };
   restartClickCapture(activeConfig);
+}
+
+async function loadWasmSdk(config: HeatmapClientConfig): Promise<void> {
+  const wasmModule = await import("../wasm/pkg/heatmap_wasm.js");
+  await wasmModule.default();
+  wasmSdk = wasmModule.HeatmapSdkJs.init(
+    JSON.stringify({
+      project_key: config.projectKey.trim(),
+      endpoint: config.endpoint.trim(),
+    }),
+  );
 }
 
 function restartClickCapture(config: HeatmapClientConfig): void {
@@ -47,31 +96,26 @@ function restartClickCapture(config: HeatmapClientConfig): void {
     : startDomClickCapture(createConsoleSafeSink());
 }
 
-function createRecorder(config: HeatmapClientConfig): WasmActivationRecorder | null {
-  const wasmSdk = loadWasmSdk(config);
+function createRecorder(_config: HeatmapClientConfig): WasmActivationRecorder | null {
   if (!wasmSdk) {
     return null;
   }
   return {
     recordActivationClick(x, y, elementId, viewportWidth, viewportHeight, timestampMs) {
-      wasmSdk.recordActivationClick(
-        x,
-        y,
-        elementId,
-        viewportWidth,
-        viewportHeight,
-        timestampMs,
-      );
+      try {
+        wasmSdk?.recordActivationClick(
+          x,
+          y,
+          elementId,
+          viewportWidth,
+          viewportHeight,
+          timestampMs,
+        );
+      } catch (error: unknown) {
+        console.error("[heatmap] click capture failed", error);
+      }
     },
   };
-}
-
-type WasmSdkHandle = WasmActivationRecorder & {
-  recordActivationClick: WasmActivationRecorder["recordActivationClick"];
-};
-
-function loadWasmSdk(_config: HeatmapClientConfig): WasmSdkHandle | null {
-  return null;
 }
 
 function createConsoleSafeSink(): ClickCaptureSink {

@@ -1,6 +1,16 @@
 use rusqlite::{params, Connection, OptionalExtension, Result as SqlResult};
 use serde_json::Value;
 
+pub fn list_raw_events(conn: &Connection) -> SqlResult<Vec<Value>> {
+    let mut statement =
+        conn.prepare("SELECT event_json FROM raw_events ORDER BY timestamp ASC, id ASC")?;
+    let rows = statement.query_map([], |row| {
+        let raw: String = row.get(0)?;
+        Ok(serde_json::from_str(&raw).unwrap_or(Value::Null))
+    })?;
+    rows.collect()
+}
+
 pub fn open_in_memory() -> SqlResult<Connection> {
     let conn = Connection::open_in_memory()?;
     init_schema(&conn)?;
