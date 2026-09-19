@@ -3,7 +3,9 @@ use std::sync::Arc;
 use uuid::Uuid;
 
 use crate::batch::{BatchError, HeatmapBatch};
-use crate::capture::{candidate_to_event, CaptureCandidate, CaptureContext, CaptureError};
+use crate::capture::{
+    capture_is_excluded, candidate_to_event, CaptureCandidate, CaptureContext, CaptureError,
+};
 use crate::clock::{Clock, SystemClock};
 use crate::config::{validate_config, HeatmapConfig, InitError};
 use crate::diagnostics::HeatmapDiagnostics;
@@ -267,6 +269,14 @@ impl HeatmapSdk {
             self.record_session_activity(now);
             return Err(CaptureError::SampledOut);
         }
+        if capture_is_excluded(
+            &candidate,
+            self.current_screen.as_ref(),
+            &self.config.exclude_screens,
+            &self.config.exclude_elements,
+        ) {
+            return Err(CaptureError::Excluded);
+        }
         let is_session_start = interaction_is_session_start(&candidate.interaction);
         if new_session && !is_session_start {
             self.push_capture_event(session_start_from(&candidate)?)?;
@@ -362,6 +372,7 @@ impl HeatmapSdk {
                 anonymous_id: &self.anonymous_id,
                 user_id: self.user_id.as_deref(),
                 inherited_screen: self.current_screen.as_ref(),
+                mask_elements: &self.config.mask_elements,
             },
         )?;
         self.queue.push(event);

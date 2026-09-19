@@ -96,7 +96,7 @@ Greenfield V1 POC: lock the nested event contract, prove a synthetic click throu
   - **Tests:** Events after screen(Checkout) group under Checkout; later screen(Confirmation) does not mix; events with no screen still send and are omitted from screen-filtered queries; Checkout layout A and layout B do not share one overlay key; missing layout uses the unspecified-layout bucket
   - **Depends:** Step 12, Step 4
 
-- [ ] **Step 14: Apply exclude, mask, and no-text rules** — TDD: Yes
+- [x] **Step 14: Apply exclude, mask, and no-text rules** — TDD: Yes
   - **Description:** Drop excluded elements and screens, strip element_id on masked controls while keeping coordinates, and keep text and typed values out of payloads, logs, queue data, and diagnostics.
   - **Files:** core/heatmap-core/; test/fixtures/
   - **Tests:** Excluded control or screen is not captured; masked control stores coordinates and omits element_id; serialized events and diagnostics contain no label text or typed values; core does not require adapters to supply text

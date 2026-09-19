@@ -1,4 +1,6 @@
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+use serde::Serialize;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize)]
 pub struct HeatmapDiagnostics {
     pub sampled_out: u64,
 }
