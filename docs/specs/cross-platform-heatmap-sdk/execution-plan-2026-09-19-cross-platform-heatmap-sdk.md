@@ -66,7 +66,7 @@ Greenfield V1 POC: lock the nested event contract, prove a synthetic click throu
   - **Tests:** App can init with project key and endpoint; journey includes home, product, checkout with scroll and coupon, Pay, and confirmation; Pay uses data-heatmap-id=checkout.pay; Cancel is present and unmarked
   - **Depends:** Step 7
 
-- [ ] **Step 9: Show element totals in the dashboard** — TDD: Yes
+- [x] **Step 9: Show element totals in the dashboard** — TDD: Yes
   - **Description:** Add the React dashboard so Checkout → Pay counts render from query data without a reference still.
   - **Files:** dashboard/
   - **Tests:** Totals, unique sessions, and top elements render for a slice that has clicks; empty slice shows zero counts and no overlay; query error is visible and does not crash; filters and counts are keyboard-reachable with visible names; no login wall

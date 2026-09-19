@@ -1,0 +1,33 @@
+body {
+  font-family: system-ui, sans-serif;
+  margin: 1.5rem;
+}
+
+form {
+  display: grid;
+  gap: 0.75rem;
+  max-width: 28rem;
+  margin-bottom: 1.5rem;
+}
+
+label {
+  display: grid;
+  gap: 0.25rem;
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  max-width: 40rem;
+}
+
+th,
+td {
+  border: 1px solid #ccc;
+  padding: 0.5rem;
+  text-align: left;
+}
+
+[role="alert"] {
+  color: #8b0000;
+}
