@@ -54,7 +54,7 @@ Greenfield V1 POC: lock the nested event contract, prove a synthetic click throu
   - **Tests:** Binding surface covers init, identify, sign-out, screen with optional layout, setTrackingEnabled, and flush; no public track/custom API
   - **Depends:** Step 5
 
-- [ ] **Step 7: Capture web clicks with stable ids** — TDD: Yes
+- [x] **Step 7: Capture web clicks with stable ids** — TDD: Yes
   - **Description:** Add the web TypeScript SDK that auto-captures activations, reads data-heatmap-id, and sends window-normalized positions.
   - **Files:** sdk/web/
   - **Tests:** Click on Pay with data-heatmap-id=checkout.pay emits click with that element_id; unmarked non-secret control emits click with position and no element_id; center of the visible window stores ~0.5, ~0.5; after resize, new events use the new window; adapter does not read control text or input values; introduce the sdk/web package test script

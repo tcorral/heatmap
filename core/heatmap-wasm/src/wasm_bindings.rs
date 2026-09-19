@@ -1,6 +1,6 @@
 use wasm_bindgen::prelude::*;
 
-use heatmap_core::{FlushError, IdentityError, InitError, ScreenContextError};
+use heatmap_core::{CaptureError, FlushError, IdentityError, InitError, ScreenContextError};
 
 use crate::public_api::PublicHeatmapSdk;
 
@@ -47,6 +47,28 @@ impl HeatmapSdkJs {
     pub fn flush(&mut self) -> Result<(), JsValue> {
         self.sdk.flush().map_err(flush_error)
     }
+
+    #[wasm_bindgen(js_name = recordActivationClick)]
+    pub fn record_activation_click(
+        &mut self,
+        x: f64,
+        y: f64,
+        element_id: Option<String>,
+        viewport_width: u32,
+        viewport_height: u32,
+        timestamp_ms: f64,
+    ) -> Result<(), JsValue> {
+        self.sdk
+            .record_activation_click(
+                x,
+                y,
+                element_id,
+                viewport_width,
+                viewport_height,
+                timestamp_ms as i64,
+            )
+            .map_err(capture_error)
+    }
 }
 
 fn init_error(err: InitError) -> JsValue {
@@ -62,5 +84,9 @@ fn screen_error(err: ScreenContextError) -> JsValue {
 }
 
 fn flush_error(err: FlushError) -> JsValue {
+    JsValue::from_str(&err.to_string())
+}
+
+fn capture_error(err: CaptureError) -> JsValue {
     JsValue::from_str(&err.to_string())
 }
