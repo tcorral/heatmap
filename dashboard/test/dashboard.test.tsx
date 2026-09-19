@@ -106,6 +106,24 @@ describe("heatmap dashboard element totals", () => {
     expect(screen.getByRole("heading", { name: /heatmap dashboard/i })).toBeInTheDocument();
   });
 
+  it("should show checkout totals without scroll-depth or scroll-map UI", async () => {
+    const client = createClient(sliceWithClicks);
+    render(<DashboardApp client={client} autoLoad />);
+
+    expect(
+      await screen.findByRole("status", { name: /^unique sessions$/i }),
+    ).toHaveTextContent("3");
+    expect(screen.getByRole("table", { name: /element totals/i })).toBeInTheDocument();
+    expect(screen.getByRole("list", { name: /top elements/i })).toBeInTheDocument();
+
+    const main = screen.getByRole("main");
+    const copy = main.textContent ?? "";
+    expect(copy).not.toMatch(/scroll[-\s]?depth/i);
+    expect(copy).not.toMatch(/scroll[-\s]?map/i);
+    expect(screen.queryByTestId("scroll-depth-map")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("scroll-map")).not.toBeInTheDocument();
+  });
+
   it("should distinguish loading from empty results", async () => {
     const client: ElementsApiClient = {
       getElements: vi.fn((): Promise<ElementsResponse> => {

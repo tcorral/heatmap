@@ -120,7 +120,7 @@ Greenfield V1 POC: lock the nested event contract, prove a synthetic click throu
   - **Tests:** Each flush trigger builds a batch with a new batch_id; 5xx and 429 keep the queue and retry with the same batch_id, honoring Retry-After; 401/403, 400, and 413 drop that batch, increment a diagnostic, and do not retry-loop; host stays up
   - **Depends:** Step 16, Step 5
 
-- [ ] **Step 18: Record scroll without a scroll map** — TDD: Yes
+- [x] **Step 18: Record scroll without a scroll map** — TDD: Yes
   - **Description:** Accept scroll on the current screen as type scroll only; store raw scroll and keep it out of bins and dashboard overlay.
   - **Files:** core/heatmap-core/; backend/; dashboard/
   - **Tests:** Scroll after screen(Checkout) is stored on Checkout; scroll is not binned; dashboard Checkout view shows click/tap counts, unique sessions, top elements, density overlay, and platform breakdown, not a scroll-depth map
