@@ -150,7 +150,7 @@ Greenfield V1 POC: lock the nested event contract, prove a synthetic click throu
   - **Tests:** Offline then restore uploads once with no dashboard double-count; invalid project key does not crash the host or retry-loop; buffer-at-capacity drops oldest and keeps the host up; password and typed values never appear in payloads, logs, or queue files
   - **Depends:** Step 10, Step 21, Step 17
 
-- [ ] **Step 23: Expose the same public API through native FFI** — TDD: No
+- [x] **Step 23: Expose the same public API through native FFI** — TDD: No
   - **Description:** Add heatmap-ffi with UniFFI for Apple and Android and a C ABI for Windows, matching the public SDK surface.
   - **Files:** core/heatmap-ffi/
   - **Tests:** Exported surface covers init, identify, sign-out, screen with optional layout, setTrackingEnabled, and flush; no public track/custom API; generated bindings are callable from a smoke host on each intended path
