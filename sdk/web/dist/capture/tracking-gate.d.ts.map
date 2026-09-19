@@ -1,1 +1,0 @@
-{"version":3,"file":"tracking-gate.d.ts","sourceRoot":"","sources":["../../src/capture/tracking-gate.ts"],"names":[],"mappings":"AAAA,MAAM,MAAM,YAAY,GAAG;IACzB,iBAAiB,IAAI,OAAO,CAAC;IAC7B,kBAAkB,CAAC,OAAO,EAAE,OAAO,GAAG,IAAI,CAAC;CAC5C,CAAC;AAEF,wBAAgB,kBAAkB,CAAC,cAAc,UAAO,GAAG,YAAY,CAQtE"}
