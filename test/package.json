@@ -1,0 +1,11 @@
+{
+  "name": "heatmap-fixture-validation",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "validate-fixtures": "node validate-fixtures.mjs"
+  },
+  "dependencies": {
+    "ajv": "^8.17.1"
+  }
+}

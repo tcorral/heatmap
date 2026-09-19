@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "session_id": "sess_windows_journey_001",
+  "anonymous_id": "anon_windows_001",
+  "user_id": "user_win_demo",
+  "timestamp": 1726771210000,
+  "window_id": "hwnd_checkout",
+  "sdk": { "name": "heatmap-windows", "version": "0.1.0" },
+  "platform": {
+    "type": "windows",
+    "os_version": "Windows 11 23H2",
+    "app_version": "1.0.0"
+  },
+  "screen": { "id": "Confirmation" },
+  "event": { "type": "session_end" },
+  "viewport": { "width": 1920, "height": 1080 }
+}

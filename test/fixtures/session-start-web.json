@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "session_id": "sess_a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "anonymous_id": "anon_web_001",
+  "user_id": "user_checkout_demo",
+  "timestamp": 1726771200000,
+  "window_id": "win_browser_main",
+  "sdk": { "name": "heatmap-web", "version": "0.1.0" },
+  "platform": {
+    "type": "web",
+    "os_version": "macOS 14.6",
+    "app_version": "1.0.0"
+  },
+  "screen": { "id": "Home" },
+  "event": { "type": "session_start" },
+  "viewport": { "width": 1280, "height": 720 }
+}
