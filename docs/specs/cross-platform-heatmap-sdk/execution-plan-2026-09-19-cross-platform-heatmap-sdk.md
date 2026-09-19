@@ -138,7 +138,7 @@ Greenfield V1 POC: lock the nested event contract, prove a synthetic click throu
   - **Tests:** Filters restrict counts and overlay to the selected slice; missing still still shows counts and no overlay image; present still for that screen + layout + platform is the overlay background; different layout versions are not drawn together; pending vs empty vs error states are distinct; filter and overlay controls stay keyboard-reachable
   - **Depends:** Step 19, Step 9
 
-- [ ] **Step 21: Finish web capture, package, and docs** — TDD: Yes
+- [x] **Step 21: Finish web capture, package, and docs** — TDD: Yes
   - **Description:** Complete web secret-field dropping, scroll, disable, and installable NPM packaging with integrator docs.
   - **Files:** sdk/web/; docs/
   - **Tests:** Password and common payment/password autocomplete fields are dropped even when unmarked; tracking disabled captures nothing further; a clean consumer project can install the pre-release web package and init; docs cover install, init, screen, annotate, disable, identify, and sign-out

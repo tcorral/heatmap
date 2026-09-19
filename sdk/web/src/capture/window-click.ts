@@ -16,9 +16,11 @@ export function readHeatmapElementId(target: EventTarget | null): string | undef
   if (!marked) {
     return undefined;
   }
-  const fromDataset = marked.dataset.heatmapId;
-  if (fromDataset && fromDataset.trim().length > 0) {
-    return fromDataset.trim();
+  if (marked instanceof HTMLElement) {
+    const fromDataset = marked.dataset.heatmapId;
+    if (fromDataset && fromDataset.trim().length > 0) {
+      return fromDataset.trim();
+    }
   }
   const fromAttribute = marked.getAttribute("data-heatmap-id");
   if (fromAttribute && fromAttribute.trim().length > 0) {

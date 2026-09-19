@@ -1,3 +1,5 @@
+import { isSecretInteractionTarget } from "../capture/secret-field.js";
+import type { TrackingGate } from "../capture/tracking-gate.js";
 import {
   normalizeWindowPosition,
   readHeatmapElementId,
@@ -17,8 +19,21 @@ export type ClickCaptureSink = {
   recordClick(click: RecordedWebClick): void;
 };
 
-export function startDomClickCapture(sink: ClickCaptureSink): () => void {
+export type DomClickCaptureOptions = {
+  gate?: TrackingGate;
+};
+
+export function startDomClickCapture(
+  sink: ClickCaptureSink,
+  options?: DomClickCaptureOptions,
+): () => void {
   const onClick = (event: MouseEvent) => {
+    if (options?.gate && !options.gate.isTrackingEnabled()) {
+      return;
+    }
+    if (isSecretInteractionTarget(event.target)) {
+      return;
+    }
     if (event.button !== 0) {
       return;
     }
