@@ -5,6 +5,7 @@ mod capture;
 mod config;
 mod event;
 mod sdk;
+mod transport;
 
 pub use batch::{BatchError, HeatmapBatch};
 pub use capture::{CaptureCandidate, CaptureError};
@@ -15,3 +16,6 @@ pub use event::{
     SCHEMA_VERSION,
 };
 pub use sdk::HeatmapSdk;
+pub use transport::{
+    batch_ingest_url, BatchTransport, FlushError, HttpBatchTransport,
+};

@@ -42,7 +42,7 @@ Greenfield V1 POC: lock the nested event contract, prove a synthetic click throu
   - **Tests:** Valid batch with X-Project-Key returns 202 and accepted_count; invalid project key returns 401/403; duplicate batch_id returns 202 with no new writes; click with element_id upserts totals; click without element_id stores raw event and does not create a total row; introduce backend `cargo test`
   - **Depends:** Step 2
 
-- [ ] **Step 5: Flush one synthetic click to query** — TDD: Yes
+- [x] **Step 5: Flush one synthetic click to query** — TDD: Yes
   - **Description:** Wire core transport so an explicit flush delivers one Pay click to local ingest and the elements query shows it.
   - **Files:** core/heatmap-core/; test/integration/; backend/
   - **Tests:** Synthetic checkout.pay click at window center uploads once and appears under Checkout → Pay; transport uses the configured HTTPS ingest base; host remains up if ingest is down
