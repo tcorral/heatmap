@@ -24,7 +24,7 @@ Greenfield V1 POC: lock the nested event contract, prove a synthetic click throu
   - **Tests:** Fixtures validate against the schemas; allowed types are session_start, session_end, screen_view, click, scroll only; click is the shared activation type; position is 0–1 window fraction with no in-control fields; user_id, screen, position, viewport, and window_id may be omitted; flatter plan.md sketch is not a second wire schema
   - **Depends:** None
 
-- [ ] **Step 2: Serialize canonical events in core** — TDD: Yes
+- [x] **Step 2: Serialize canonical events in core** — TDD: Yes
   - **Description:** Create the heatmap-core crate and event model that serializes to the golden nested envelope.
   - **Files:** Cargo.toml (workspace); core/heatmap-core/
   - **Tests:** Serialized session_start, screen_view, click, scroll, and session_end match fixtures; unknown or out-of-scope types are rejected; omitted optional fields stay omitted; introduce `cargo test -p heatmap-core`
