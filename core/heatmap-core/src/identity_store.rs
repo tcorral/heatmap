@@ -5,6 +5,7 @@ pub const STORE_KEY_ANONYMOUS_ID: &str = "heatmap.anonymous_id";
 pub const STORE_KEY_USER_ID: &str = "heatmap.user_id";
 pub const STORE_KEY_SESSION_ID: &str = "heatmap.session_id";
 pub const STORE_KEY_LAST_EVENT_AT: &str = "heatmap.last_event_at";
+pub const STORE_KEY_SAMPLE_IN: &str = "heatmap.sample_in";
 
 pub trait IdentityStore: Send + Sync {
     fn read(&self, key: &str) -> Option<String>;

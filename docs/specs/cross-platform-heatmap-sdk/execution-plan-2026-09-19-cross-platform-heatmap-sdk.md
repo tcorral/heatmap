@@ -102,7 +102,7 @@ Greenfield V1 POC: lock the nested event contract, prove a synthetic click throu
   - **Tests:** Excluded control or screen is not captured; masked control stores coordinates and omits element_id; serialized events and diagnostics contain no label text or typed values; core does not require adapters to supply text
   - **Depends:** Step 13
 
-- [ ] **Step 15: Sample whole sessions only** — TDD: Yes
+- [x] **Step 15: Sample whole sessions only** — TDD: Yes
   - **Description:** Capture every session by default; when a sample rate is set, decide once at session start and persist that decision.
   - **Files:** core/heatmap-core/
   - **Tests:** Default sample_rate 1.0 enqueues the session; sampled-out session enqueues nothing and does not appear in dashboard queries; decision does not change mid-session; local diagnostic records sampled-out

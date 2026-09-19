@@ -6,12 +6,14 @@ use crate::batch::{BatchError, HeatmapBatch};
 use crate::capture::{candidate_to_event, CaptureCandidate, CaptureContext, CaptureError};
 use crate::clock::{Clock, SystemClock};
 use crate::config::{validate_config, HeatmapConfig, InitError};
+use crate::diagnostics::HeatmapDiagnostics;
 use crate::event::{HeatmapEvent, InteractionEvent, InteractionType, ScreenInfo, SdkInfo, Viewport};
 use crate::event::PlatformInfo;
 use crate::identity_store::{
     IdentityStore, InMemoryIdentityStore, STORE_KEY_ANONYMOUS_ID, STORE_KEY_LAST_EVENT_AT,
-    STORE_KEY_SESSION_ID, STORE_KEY_USER_ID,
+    STORE_KEY_SAMPLE_IN, STORE_KEY_SESSION_ID, STORE_KEY_USER_ID,
 };
+use crate::rng::{session_sampled_in, RandomSource, SystemRng};
 use crate::transport::{BatchTransport, FlushError};
 #[cfg(not(target_arch = "wasm32"))]
 use crate::transport::HttpBatchTransport;
@@ -58,6 +60,8 @@ pub struct HeatmapSdk {
     user_id: Option<String>,
     current_screen: Option<ScreenInfo>,
     sample_in: bool,
+    rng: Arc<dyn RandomSource>,
+    diagnostics: HeatmapDiagnostics,
     queue: Vec<HeatmapEvent>,
 }
 
@@ -97,13 +101,32 @@ impl HeatmapSdk {
         identity_store: Arc<dyn IdentityStore>,
         clock: Arc<dyn Clock>,
     ) -> Result<Self, InitError> {
+        Self::init_with_transport_store_clock_and_rng(
+            config,
+            transport,
+            identity_store,
+            clock,
+            Arc::new(SystemRng),
+        )
+    }
+
+    pub fn init_with_transport_store_clock_and_rng(
+        config: HeatmapConfig,
+        transport: impl BatchTransport + 'static,
+        identity_store: Arc<dyn IdentityStore>,
+        clock: Arc<dyn Clock>,
+        rng: Arc<dyn RandomSource>,
+    ) -> Result<Self, InitError> {
         validate_config(&config)?;
         let now = clock.now_ms();
         let (session_id, last_event_at) =
             load_persisted_session(identity_store.as_ref(), now, config.session_timeout_ms);
         let anonymous_id = load_or_create_anonymous_id(identity_store.as_ref());
         let user_id = load_persisted_user_id(identity_store.as_ref());
-        let sample_in = config.sample_rate >= DEFAULT_SAMPLE_IN_THRESHOLD;
+        let sample_in = load_persisted_sample_in(
+            identity_store.as_ref(),
+            session_id.as_ref().is_some_and(|id| !id.trim().is_empty()),
+        );
         Ok(Self {
             config,
             transport: Arc::new(transport),
@@ -116,8 +139,14 @@ impl HeatmapSdk {
             user_id,
             current_screen: None,
             sample_in,
+            rng,
+            diagnostics: HeatmapDiagnostics::default(),
             queue: Vec::new(),
         })
+    }
+
+    pub fn diagnostics(&self) -> HeatmapDiagnostics {
+        self.diagnostics
     }
 
     pub fn config(&self) -> &HeatmapConfig {
@@ -231,11 +260,13 @@ impl HeatmapSdk {
         if !self.tracking_enabled {
             return Err(CaptureError::TrackingDisabled);
         }
-        if !self.sample_in {
-            return Err(CaptureError::SampledOut);
-        }
         let now = self.clock.now_ms();
         let new_session = self.ensure_active_session(now);
+        if !self.sample_in {
+            self.diagnostics.record_sampled_out();
+            self.record_session_activity(now);
+            return Err(CaptureError::SampledOut);
+        }
         let is_session_start = interaction_is_session_start(&candidate.interaction);
         if new_session && !is_session_start {
             self.push_capture_event(session_start_from(&candidate)?)?;
@@ -291,9 +322,11 @@ impl HeatmapSdk {
         let session_id = new_id("sess");
         self.session_id = Some(session_id.clone());
         self.last_event_at = None;
+        self.sample_in = decide_session_sample_in(self.config.sample_rate, self.rng.as_ref());
         self.identity_store
             .write(STORE_KEY_SESSION_ID, Some(session_id.as_str()));
         self.identity_store.write(STORE_KEY_LAST_EVENT_AT, None);
+        persist_sample_in(self.identity_store.as_ref(), self.sample_in);
     }
 
     fn record_session_activity(&mut self, now: i64) {
@@ -335,8 +368,6 @@ impl HeatmapSdk {
         Ok(())
     }
 }
-
-const DEFAULT_SAMPLE_IN_THRESHOLD: f64 = 1.0;
 
 fn new_id(prefix: &str) -> String {
     format!("{prefix}_{}", Uuid::new_v4().simple())
@@ -406,6 +437,33 @@ fn load_persisted_session(
 fn clear_persisted_session(store: &dyn IdentityStore) {
     store.write(STORE_KEY_SESSION_ID, None);
     store.write(STORE_KEY_LAST_EVENT_AT, None);
+    store.write(STORE_KEY_SAMPLE_IN, None);
+}
+
+fn load_persisted_sample_in(store: &dyn IdentityStore, session_active: bool) -> bool {
+    if !session_active {
+        return false;
+    }
+    match store.read(STORE_KEY_SAMPLE_IN).as_deref() {
+        Some("1") => true,
+        Some("0") => false,
+        _ => true,
+    }
+}
+
+fn persist_sample_in(store: &dyn IdentityStore, sample_in: bool) {
+    let flag = if sample_in { "1" } else { "0" };
+    store.write(STORE_KEY_SAMPLE_IN, Some(flag));
+}
+
+fn decide_session_sample_in(sample_rate: f64, rng: &dyn RandomSource) -> bool {
+    if sample_rate >= 1.0 {
+        return true;
+    }
+    if sample_rate <= 0.0 {
+        return false;
+    }
+    session_sampled_in(sample_rate, rng.next_unit_f64())
 }
 
 fn load_or_create_anonymous_id(store: &dyn IdentityStore) -> String {
