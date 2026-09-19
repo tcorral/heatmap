@@ -5,14 +5,28 @@ use crate::batch::HeatmapBatch;
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum FlushError {
     Transport(String),
-    HttpStatus(u16),
+    HttpStatus {
+        code: u16,
+        retry_after_secs: Option<u64>,
+    },
+}
+
+impl FlushError {
+    pub fn http_status(code: u16, retry_after_secs: Option<u64>) -> Self {
+        Self::HttpStatus {
+            code,
+            retry_after_secs,
+        }
+    }
 }
 
 impl fmt::Display for FlushError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Transport(message) => write!(f, "batch upload failed: {message}"),
-            Self::HttpStatus(code) => write!(f, "batch upload failed with HTTP status {code}"),
+            Self::HttpStatus { code, .. } => {
+                write!(f, "batch upload failed with HTTP status {code}")
+            }
         }
     }
 }
@@ -67,7 +81,15 @@ impl BatchTransport for HttpBatchTransport {
         if (200..300).contains(&status) {
             Ok(())
         } else {
-            Err(FlushError::HttpStatus(status))
+            let retry_after_secs = parse_retry_after_header(&response);
+            Err(FlushError::http_status(status, retry_after_secs))
         }
     }
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+fn parse_retry_after_header(response: &ureq::Response) -> Option<u64> {
+    response
+        .header("Retry-After")
+        .and_then(|value| value.parse::<u64>().ok())
 }

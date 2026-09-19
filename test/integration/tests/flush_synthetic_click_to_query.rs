@@ -87,7 +87,7 @@ impl heatmap_core::BatchTransport for RecordAndForwardTransport {
         if response.status().is_success() {
             Ok(())
         } else {
-            Err(FlushError::HttpStatus(response.status().as_u16()))
+            Err(FlushError::http_status(response.status().as_u16(), None))
         }
     }
 }

@@ -39,7 +39,7 @@ impl BatchTransport for FetchBatchTransport {
         if (200..300).contains(&status) {
             Ok(())
         } else {
-            Err(FlushError::HttpStatus(status as u16))
+            Err(FlushError::http_status(status as u16, None))
         }
     }
 }

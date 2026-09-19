@@ -15,6 +15,10 @@ use crate::identity_store::{
     IdentityStore, InMemoryIdentityStore, STORE_KEY_ANONYMOUS_ID, STORE_KEY_LAST_EVENT_AT,
     STORE_KEY_SAMPLE_IN, STORE_KEY_SESSION_ID, STORE_KEY_USER_ID,
 };
+use crate::flush_policy::{
+    flush_error_is_permanent, flush_error_is_transient, flush_event_limit_reached,
+    flush_interval_elapsed, queue_flush_byte_limit_reached,
+};
 use crate::persistent_queue::{
     load_persisted_queue, persist_queue, push_with_overflow, QueueLimits,
 };
@@ -69,6 +73,9 @@ pub struct HeatmapSdk {
     diagnostics: HeatmapDiagnostics,
     queue: Vec<HeatmapEvent>,
     queue_limits: QueueLimits,
+    queue_pending_since_ms: Option<i64>,
+    retry_batch_id: Option<String>,
+    retry_not_before_ms: i64,
 }
 
 impl HeatmapSdk {
@@ -150,6 +157,9 @@ impl HeatmapSdk {
             diagnostics: HeatmapDiagnostics::default(),
             queue,
             queue_limits: QueueLimits::production(),
+            queue_pending_since_ms: None,
+            retry_batch_id: None,
+            retry_not_before_ms: 0,
         })
     }
 
@@ -162,6 +172,16 @@ impl HeatmapSdk {
         self.queue_limits = limits;
     }
 
+    #[doc(hidden)]
+    pub fn queued_event_count_for_testing(&self) -> usize {
+        self.queue.len()
+    }
+
+    #[doc(hidden)]
+    pub fn flush_byte_limit_reached_for_testing(&self) -> bool {
+        queue_flush_byte_limit_reached(&self.queue)
+    }
+
     pub fn config(&self) -> &HeatmapConfig {
         &self.config
     }
@@ -172,6 +192,7 @@ impl HeatmapSdk {
 
     pub fn on_background(&mut self) {
         self.persist_session_state();
+        let _ = self.try_flush();
     }
 
     pub fn on_foreground(&mut self) {}
@@ -308,23 +329,98 @@ impl HeatmapSdk {
     }
 
     pub fn flush(&mut self) -> Result<(), FlushError> {
+        self.try_flush()
+    }
+
+    fn try_flush(&mut self) -> Result<(), FlushError> {
+        if self.clock.now_ms() < self.retry_not_before_ms {
+            return Ok(());
+        }
         if self.queue.is_empty() {
             return Ok(());
         }
         let batch = self
-            .build_batch()
+            .take_batch_for_upload()
             .map_err(|err| FlushError::Transport(err.to_string()))?;
         match self.transport.send_batch(
             &self.config.endpoint,
             &self.config.project_key,
             &batch,
         ) {
-            Ok(()) => Ok(()),
-            Err(err) => {
-                self.queue.extend(batch.events);
-                self.sync_persisted_queue();
-                Err(err)
+            Ok(()) => {
+                self.finish_successful_upload();
+                Ok(())
             }
+            Err(err) => self.handle_upload_failure(batch, err),
+        }
+    }
+
+    fn take_batch_for_upload(&mut self) -> Result<HeatmapBatch, BatchError> {
+        if self.queue.is_empty() {
+            return Err(BatchError::EmptyQueue);
+        }
+        let batch_id = self
+            .retry_batch_id
+            .take()
+            .unwrap_or_else(|| new_id("batch"));
+        let events = std::mem::take(&mut self.queue);
+        self.sync_persisted_queue();
+        Ok(HeatmapBatch { batch_id, events })
+    }
+
+    fn finish_successful_upload(&mut self) {
+        self.retry_batch_id = None;
+        self.retry_not_before_ms = 0;
+        if self.queue.is_empty() {
+            self.queue_pending_since_ms = None;
+        }
+    }
+
+    fn handle_upload_failure(
+        &mut self,
+        batch: HeatmapBatch,
+        err: FlushError,
+    ) -> Result<(), FlushError> {
+        if flush_error_is_permanent(&err) || !flush_error_is_transient(&err) {
+            self.retry_batch_id = None;
+            self.retry_not_before_ms = 0;
+            self.diagnostics.record_permanent_drop(1);
+            if self.queue.is_empty() {
+                self.queue_pending_since_ms = None;
+            }
+            return Err(err);
+        }
+        self.retry_batch_id = Some(batch.batch_id);
+        self.queue.extend(batch.events);
+        self.sync_persisted_queue();
+        self.retry_not_before_ms = retry_not_before_ms(&err, self.clock.now_ms());
+        Err(err)
+    }
+
+    fn maybe_auto_flush(&mut self, now: i64) {
+        if !self.should_auto_flush(now) {
+            return;
+        }
+        let _ = self.try_flush();
+    }
+
+    fn should_auto_flush(&self, now: i64) -> bool {
+        if self.queue.is_empty() {
+            return false;
+        }
+        if flush_event_limit_reached(self.queue.len()) {
+            return true;
+        }
+        if queue_flush_byte_limit_reached(&self.queue) {
+            return true;
+        }
+        self.queue_pending_since_ms
+            .is_some_and(|since| flush_interval_elapsed(since, now))
+    }
+
+    fn note_queue_activity(&mut self, now: i64) {
+        if self.queue_pending_since_ms.is_none() {
+            self.queue_pending_since_ms = Some(now);
         }
     }
 
@@ -393,6 +489,8 @@ impl HeatmapSdk {
             self.diagnostics.record_queue_dropped(dropped);
         }
         self.sync_persisted_queue();
+        self.note_queue_activity(self.clock.now_ms());
+        self.maybe_auto_flush(self.clock.now_ms());
         Ok(())
     }
 
@@ -403,6 +501,19 @@ impl HeatmapSdk {
 
 fn new_id(prefix: &str) -> String {
     format!("{prefix}_{}", Uuid::new_v4().simple())
+}
+
+fn retry_not_before_ms(err: &FlushError, now_ms: i64) -> i64 {
+    let secs = match err {
+        FlushError::Transport(_) => return 0,
+        FlushError::HttpStatus {
+            retry_after_secs, ..
+        } => retry_after_secs,
+    };
+    let Some(secs) = secs else {
+        return 0;
+    };
+    now_ms.saturating_add((*secs as i64).saturating_mul(1_000))
 }
 
 fn interaction_is_session_start(interaction: &InteractionEvent) -> bool {

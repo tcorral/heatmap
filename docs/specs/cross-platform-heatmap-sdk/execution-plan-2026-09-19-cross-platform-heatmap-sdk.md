@@ -114,7 +114,7 @@ Greenfield V1 POC: lock the nested event contract, prove a synthetic click throu
   - **Tests:** Events captured offline upload once after restore; relaunch with pending events does not crash; at cap, oldest events drop, newer events enqueue, host stays up; local diagnostic counts drops
   - **Depends:** Step 14, Step 15
 
-- [ ] **Step 17: Flush on triggers and classify delivery failures** — TDD: Yes
+- [x] **Step 17: Flush on triggers and classify delivery failures** — TDD: Yes
   - **Description:** Flush on 50 events, 64 KiB, 10 seconds, background, or flush(); retry only transient failures; treat invalid key, bad schema, and oversize as permanent.
   - **Files:** core/heatmap-core/
   - **Tests:** Each flush trigger builds a batch with a new batch_id; 5xx and 429 keep the queue and retry with the same batch_id, honoring Retry-After; 401/403, 400, and 413 drop that batch, increment a diagnostic, and do not retry-loop; host stays up
