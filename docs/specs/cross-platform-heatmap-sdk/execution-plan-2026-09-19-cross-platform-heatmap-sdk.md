@@ -144,7 +144,7 @@ Greenfield V1 POC: lock the nested event contract, prove a synthetic click throu
   - **Tests:** Password and common payment/password autocomplete fields are dropped even when unmarked; tracking disabled captures nothing further; a clean consumer project can install the pre-release web package and init; docs cover install, init, screen, annotate, disable, identify, and sign-out
   - **Depends:** Step 7, Step 14, Step 17, Step 18
 
-- [ ] **Step 22: Cover web failure and privacy E2E** — TDD: Yes
+- [x] **Step 22: Cover web failure and privacy E2E** — TDD: Yes
   - **Description:** Extend web E2E for offline upload, invalid key, full buffer, and no-text privacy.
   - **Files:** test/e2e/; sdk/web/
   - **Tests:** Offline then restore uploads once with no dashboard double-count; invalid project key does not crash the host or retry-loop; buffer-at-capacity drops oldest and keeps the host up; password and typed values never appear in payloads, logs, or queue files

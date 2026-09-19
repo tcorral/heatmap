@@ -3,7 +3,7 @@ use std::sync::Arc;
 
 use heatmap_core::{
     CaptureCandidate, CaptureError, FlushError, HeatmapConfig, HeatmapSdk as CoreHeatmapSdk,
-    IdentityError, InitError, InteractionEvent, PlatformInfo, Position,
+    IdentityError, InitError, InteractionEvent, PlatformInfo, Position, QueueLimits,
     ScreenContextError, SdkInfo, Viewport,
 };
 
@@ -65,6 +65,19 @@ impl PublicHeatmapSdk {
     pub fn drain_batch_json(&mut self) -> Option<String> {
         let batch = self.inner.build_batch().ok()?;
         serde_json::to_string(&batch).ok()
+    }
+
+    #[doc(hidden)]
+    pub fn set_queue_limits_for_testing(&mut self, max_events: usize, max_bytes: usize) {
+        self.inner.set_queue_limits_for_testing(QueueLimits {
+            max_events,
+            max_bytes,
+        });
+    }
+
+    #[doc(hidden)]
+    pub fn queued_event_count_for_testing(&self) -> usize {
+        self.inner.queued_event_count_for_testing()
     }
 
     #[cfg(target_arch = "wasm32")]

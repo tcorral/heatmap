@@ -15,5 +15,7 @@ declare module "../wasm/pkg/heatmap_wasm.js" {
       viewportHeight: number,
       timestampMs: number,
     ): void;
+    setQueueLimitsForTesting(maxEvents: number, maxBytes: number): void;
+    queuedEventCountForTesting(): number;
   }
 }

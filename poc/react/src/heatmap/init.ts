@@ -7,6 +7,15 @@ import {
 
 import type { HeatmapSdkJs } from "../wasm/pkg/heatmap_wasm.js";
 
+declare global {
+  interface Window {
+    __heatmapE2E?: {
+      flushHeatmapBatch: () => Promise<void>;
+      getHeatmapSdk: () => HeatmapSdkJs | null;
+    };
+  }
+}
+
 export type HeatmapClientConfig = {
   projectKey: string;
   endpoint: string;
@@ -20,11 +29,24 @@ let stopClickCapture: (() => void) | null = null;
 let wasmSdk: HeatmapSdkJs | null = null;
 let bootPromise: Promise<void> | null = null;
 
+function readQueryHeatmapOverrides(): Partial<HeatmapClientConfig> {
+  if (typeof window === "undefined") {
+    return {};
+  }
+  const params = new URLSearchParams(window.location.search);
+  const projectKey = params.get("heatmapProjectKey");
+  if (!projectKey) {
+    return {};
+  }
+  return { projectKey };
+}
+
 export function readDefaultHeatmapConfig(): HeatmapClientConfig {
-  return {
+  const defaults = {
     projectKey: import.meta.env.VITE_HEATMAP_PROJECT_KEY ?? DEFAULT_PROJECT_KEY,
     endpoint: import.meta.env.VITE_HEATMAP_ENDPOINT ?? DEFAULT_ENDPOINT,
   };
+  return { ...defaults, ...readQueryHeatmapOverrides() };
 }
 
 export function getHeatmapConfig(): HeatmapClientConfig | null {
@@ -57,6 +79,16 @@ export async function flushHeatmapBatch(): Promise<void> {
   }
 }
 
+function exposeE2EHelpers(): void {
+  if (!import.meta.env.DEV || typeof window === "undefined") {
+    return;
+  }
+  window.__heatmapE2E = {
+    flushHeatmapBatch,
+    getHeatmapSdk: () => wasmSdk,
+  };
+}
+
 export async function bootHeatmap(config: HeatmapClientConfig): Promise<void> {
   if (!bootPromise) {
     bootPromise = loadWasmSdk(config);
@@ -86,6 +118,7 @@ async function loadWasmSdk(config: HeatmapClientConfig): Promise<void> {
       endpoint: config.endpoint.trim(),
     }),
   );
+  exposeE2EHelpers();
 }
 
 function restartClickCapture(config: HeatmapClientConfig): void {

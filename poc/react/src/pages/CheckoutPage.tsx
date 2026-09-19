@@ -54,6 +54,11 @@ export function CheckoutPage() {
         </div>
       </div>
       <div className="checkout-section">
+        <h2>Account</h2>
+        <label htmlFor="checkout-password">Account password</label>
+        <input id="checkout-password" name="password" type="password" autoComplete="current-password" />
+      </div>
+      <div className="checkout-section">
         <h2>Payment</h2>
         <div className="checkout-actions">
           <button

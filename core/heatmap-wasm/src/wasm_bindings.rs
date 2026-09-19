@@ -81,6 +81,17 @@ impl HeatmapSdkJs {
             )
             .map_err(capture_error)
     }
+
+    #[wasm_bindgen(js_name = setQueueLimitsForTesting)]
+    pub fn set_queue_limits_for_testing(&mut self, max_events: usize, max_bytes: usize) {
+        self.sdk
+            .set_queue_limits_for_testing(max_events, max_bytes);
+    }
+
+    #[wasm_bindgen(js_name = queuedEventCountForTesting)]
+    pub fn queued_event_count_for_testing(&self) -> usize {
+        self.sdk.queued_event_count_for_testing()
+    }
 }
 
 fn init_error(err: InitError) -> JsValue {
