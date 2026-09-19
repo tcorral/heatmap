@@ -60,7 +60,7 @@ Greenfield V1 POC: lock the nested event contract, prove a synthetic click throu
   - **Tests:** Click on Pay with data-heatmap-id=checkout.pay emits click with that element_id; unmarked non-secret control emits click with position and no element_id; center of the visible window stores ~0.5, ~0.5; after resize, new events use the new window; adapter does not read control text or input values; introduce the sdk/web package test script
   - **Depends:** Step 6
 
-- [ ] **Step 8: Build React checkout POC** — TDD: No
+- [x] **Step 8: Build React checkout POC** — TDD: No
   - **Description:** Add the React sample app that completes the shared checkout journey and initializes the web SDK.
   - **Files:** poc/react/
   - **Tests:** App can init with project key and endpoint; journey includes home, product, checkout with scroll and coupon, Pay, and confirmation; Pay uses data-heatmap-id=checkout.pay; Cancel is present and unmarked
