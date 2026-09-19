@@ -27,6 +27,7 @@ pub fn app(config: AppConfig, db: Connection) -> Router {
         .route("/v1/batches", post(handlers::post_batches))
         .route("/v1/elements", get(handlers::get_elements))
         .route("/v1/heatmap", get(handlers::get_heatmap))
+        .route("/v1/stills", get(handlers::get_stills).post(handlers::post_stills))
         .route("/v1/screens", get(handlers::get_screens));
     if config.expose_test_events() {
         router = router.route("/v1/events", get(handlers::get_events));

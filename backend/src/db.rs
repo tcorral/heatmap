@@ -73,6 +73,15 @@ pub fn init_schema(conn: &Connection) -> SqlResult<()> {
                 bin_y
             )
         );
+
+        CREATE TABLE IF NOT EXISTS screen_stills (
+            platform_type TEXT NOT NULL,
+            screen_id TEXT NOT NULL,
+            layout_version TEXT NOT NULL DEFAULT '',
+            content_type TEXT NOT NULL,
+            image_base64 TEXT NOT NULL,
+            PRIMARY KEY (platform_type, screen_id, layout_version)
+        );
         ",
     )
 }
@@ -334,9 +343,21 @@ pub struct HeatmapFilter<'a> {
     pub screen: &'a str,
     pub layout_version: Option<&'a str>,
     pub app_version: &'a str,
+    pub from: Option<f64>,
+    pub to: Option<f64>,
 }
 
 pub fn query_click_bins(conn: &Connection, filter: &HeatmapFilter<'_>) -> SqlResult<Vec<ClickBinRow>> {
+    if filter.from.is_some() || filter.to.is_some() {
+        return query_click_bins_from_events(conn, filter);
+    }
+    query_click_bins_materialized(conn, filter)
+}
+
+fn query_click_bins_materialized(
+    conn: &Connection,
+    filter: &HeatmapFilter<'_>,
+) -> SqlResult<Vec<ClickBinRow>> {
     let layout = filter.layout_version.unwrap_or("");
     let mut statement = conn.prepare(
         "SELECT bin_x, bin_y, count FROM click_bins
@@ -353,6 +374,89 @@ pub fn query_click_bins(conn: &Connection, filter: &HeatmapFilter<'_>) -> SqlRes
         },
     )?;
     rows.collect()
+}
+
+fn query_click_bins_from_events(
+    conn: &Connection,
+    filter: &HeatmapFilter<'_>,
+) -> SqlResult<Vec<ClickBinRow>> {
+    let layout = filter.layout_version.unwrap_or("");
+    let sql = "SELECT
+            MIN(99, CAST(json_extract(event_json, '$.position.x') * 100 AS INTEGER)) AS bin_x,
+            MIN(99, CAST(json_extract(event_json, '$.position.y') * 100 AS INTEGER)) AS bin_y,
+            COUNT(*) AS count
+         FROM raw_events
+         WHERE platform_type = ?1 AND screen_id = ?2 AND layout_version = ?3
+           AND app_version = ?4 AND event_type = 'click'
+           AND json_extract(event_json, '$.position.x') IS NOT NULL
+           AND json_extract(event_json, '$.position.y') IS NOT NULL
+           AND (?5 IS NULL OR timestamp >= ?5)
+           AND (?6 IS NULL OR timestamp <= ?6)
+         GROUP BY bin_x, bin_y";
+    let mut statement = conn.prepare(sql)?;
+    let rows = statement.query_map(
+        params![
+            filter.platform,
+            filter.screen,
+            layout,
+            filter.app_version,
+            filter.from,
+            filter.to
+        ],
+        |row| {
+            Ok(ClickBinRow {
+                bin_x: row.get(0)?,
+                bin_y: row.get(1)?,
+                count: row.get(2)?,
+            })
+        },
+    )?;
+    rows.collect()
+}
+
+pub struct StillRecord {
+    pub content_type: String,
+    pub image_base64: String,
+}
+
+pub fn upsert_still(
+    conn: &Connection,
+    platform: &str,
+    screen: &str,
+    layout_version: &str,
+    content_type: &str,
+    image_base64: &str,
+) -> SqlResult<()> {
+    conn.execute(
+        "INSERT INTO screen_stills (
+            platform_type, screen_id, layout_version, content_type, image_base64
+        ) VALUES (?1, ?2, ?3, ?4, ?5)
+        ON CONFLICT(platform_type, screen_id, layout_version)
+        DO UPDATE SET content_type = excluded.content_type,
+                      image_base64 = excluded.image_base64",
+        params![platform, screen, layout_version, content_type, image_base64],
+    )?;
+    Ok(())
+}
+
+pub fn find_still(
+    conn: &Connection,
+    platform: &str,
+    screen: &str,
+    layout_version: &str,
+) -> SqlResult<Option<StillRecord>> {
+    conn.query_row(
+        "SELECT content_type, image_base64 FROM screen_stills
+         WHERE platform_type = ?1 AND screen_id = ?2 AND layout_version = ?3",
+        params![platform, screen, layout_version],
+        |row| {
+            Ok(StillRecord {
+                content_type: row.get(0)?,
+                image_base64: row.get(1)?,
+            })
+        },
+    )
+    .optional()
 }
 
 pub struct ScreenRow {

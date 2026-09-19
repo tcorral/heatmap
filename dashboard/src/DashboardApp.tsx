@@ -1,20 +1,22 @@
 import { useMemo, useState } from "react";
 
-import { createFetchElementsClient } from "./api/createFetchElementsClient";
-import type { ElementsApiClient, ElementsFilter } from "./api/types";
+import { createFetchDashboardClient } from "./api/createFetchDashboardClient";
+import type { DashboardApiClient, ElementsFilter } from "./api/types";
 import { FilterForm } from "./components/FilterForm";
+import { HeatmapOverlayPanel } from "./components/HeatmapOverlayPanel";
 import { QueryResultsPanel } from "./components/QueryResultsPanel";
 import { createDefaultFilters } from "./defaultFilters";
 import { useElementsQuery, type ElementsQueryRequest } from "./hooks/useElementsQuery";
+import { useOverlayQuery } from "./hooks/useOverlayQuery";
 
 type DashboardAppProps = {
-  client?: ElementsApiClient;
+  client?: DashboardApiClient;
   autoLoad?: boolean;
 };
 
 export function DashboardApp({ client, autoLoad = false }: DashboardAppProps) {
   const apiClient = useMemo(
-    () => client ?? createFetchElementsClient(readApiBaseUrl()),
+    () => client ?? createFetchDashboardClient(readApiBaseUrl()),
     [client],
   );
   const [draftFilters, setDraftFilters] = useState<ElementsFilter>(createDefaultFilters);
@@ -22,6 +24,7 @@ export function DashboardApp({ client, autoLoad = false }: DashboardAppProps) {
     autoLoad ? { id: 1, filters: createDefaultFilters() } : null,
   );
   const queryState = useElementsQuery(apiClient, request);
+  const overlayState = useOverlayQuery(apiClient, request);
 
   return (
     <main>
@@ -37,6 +40,7 @@ export function DashboardApp({ client, autoLoad = false }: DashboardAppProps) {
         }
       />
       <QueryResultsPanel queryState={queryState} />
+      <HeatmapOverlayPanel overlayState={overlayState} />
     </main>
   );
 }

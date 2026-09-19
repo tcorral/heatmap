@@ -132,7 +132,7 @@ Greenfield V1 POC: lock the nested event contract, prove a synthetic click throu
   - **Tests:** Oversize returns 413; malformed or unsupported schema_version returns 400; ~120 batches/minute/key returns 429; unknown fields are ignored; missing required fields reject that event; valid sibling events in the same batch still persist; click bins use min(99, floor(x * 100)) and the same for y; overlay query key is project + platform + screen + layout_version, not window_id; GET /v1/screens lists known screens; GET /v1/heatmap returns bins for the slice
   - **Depends:** Step 4, Step 18
 
-- [ ] **Step 20: Overlay coordinates on optional stills with filters** — TDD: Yes
+- [x] **Step 20: Overlay coordinates on optional stills with filters** — TDD: Yes
   - **Description:** Let the analyst filter by platform, screen, layout or app version, and date range; draw the per-platform density overlay on a still when one exists.
   - **Files:** backend/; dashboard/; poc/stills/
   - **Tests:** Filters restrict counts and overlay to the selected slice; missing still still shows counts and no overlay image; present still for that screen + layout + platform is the overlay background; different layout versions are not drawn together; pending vs empty vs error states are distinct; filter and overlay controls stay keyboard-reachable

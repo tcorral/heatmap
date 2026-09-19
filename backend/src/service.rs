@@ -129,6 +129,41 @@ pub struct ScreenListRow {
     pub layout_version: String,
 }
 
+pub struct StillResponse {
+    pub content_type: String,
+    pub image_base64: String,
+}
+
+pub fn upsert_still(
+    conn: &Connection,
+    platform: &str,
+    screen: &str,
+    layout_version: &str,
+    content_type: &str,
+    image_base64: &str,
+) -> Result<(), rusqlite::Error> {
+    db::upsert_still(
+        conn,
+        platform,
+        screen,
+        layout_version,
+        content_type,
+        image_base64,
+    )
+}
+
+pub fn query_still(
+    conn: &Connection,
+    platform: &str,
+    screen: &str,
+    layout_version: &str,
+) -> Result<Option<StillResponse>, rusqlite::Error> {
+    Ok(db::find_still(conn, platform, screen, layout_version)?.map(|row| StillResponse {
+        content_type: row.content_type,
+        image_base64: row.image_base64,
+    }))
+}
+
 pub fn query_screens(conn: &Connection) -> Result<ScreenListResponse, rusqlite::Error> {
     let rows = db::list_distinct_screens(conn)?;
     let screens = rows

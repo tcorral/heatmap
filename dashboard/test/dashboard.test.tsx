@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
 import { DashboardApp } from "../src/DashboardApp";
-import type { ElementsApiClient, ElementsResponse } from "../src/api/types";
+import type { DashboardApiClient, ElementsResponse } from "../src/api/types";
 
 const sliceWithClicks: ElementsResponse = {
   unique_sessions: 3,
@@ -23,11 +23,19 @@ const sliceWithClicks: ElementsResponse = {
 
 function createClient(
   result: ElementsResponse | Error,
-): ElementsApiClient {
+): DashboardApiClient {
   if (result instanceof Error) {
-    return { getElements: vi.fn().mockRejectedValue(result) };
+    return {
+      getElements: vi.fn().mockRejectedValue(result),
+      getHeatmap: vi.fn().mockResolvedValue({ bins: [] }),
+      getStill: vi.fn().mockResolvedValue(null),
+    };
   }
-  return { getElements: vi.fn().mockResolvedValue(result) };
+  return {
+    getElements: vi.fn().mockResolvedValue(result),
+    getHeatmap: vi.fn().mockResolvedValue({ bins: [] }),
+    getStill: vi.fn().mockResolvedValue(null),
+  };
 }
 
 describe("heatmap dashboard element totals", () => {
@@ -125,12 +133,14 @@ describe("heatmap dashboard element totals", () => {
   });
 
   it("should distinguish loading from empty results", async () => {
-    const client: ElementsApiClient = {
+    const client: DashboardApiClient = {
       getElements: vi.fn((): Promise<ElementsResponse> => {
         return new Promise((resolve) => {
           setTimeout(() => resolve({ unique_sessions: 0, elements: [] }), 50);
         });
       }),
+      getHeatmap: vi.fn().mockResolvedValue({ bins: [] }),
+      getStill: vi.fn().mockResolvedValue(null),
     };
 
     render(<DashboardApp client={client} autoLoad />);

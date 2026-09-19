@@ -45,6 +45,24 @@ pub struct HeatmapQuery {
     pub screen: String,
     pub layout_version: Option<String>,
     pub app_version: String,
+    pub from: Option<f64>,
+    pub to: Option<f64>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct StillsQuery {
+    pub platform: String,
+    pub screen: String,
+    pub layout_version: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct PostStillBody {
+    pub platform: String,
+    pub screen: String,
+    pub layout_version: Option<String>,
+    pub content_type: String,
+    pub image_base64: String,
 }
 
 pub async fn post_batches(
@@ -154,6 +172,8 @@ pub async fn get_heatmap(
         screen: &query.screen,
         layout_version: query.layout_version.as_deref(),
         app_version: &query.app_version,
+        from: query.from,
+        to: query.to,
     };
     let conn = state.db.lock().map_err(|_| ApiError::Internal)?;
     let response = service::query_heatmap(&conn, &filter).map_err(|_| ApiError::Internal)?;
@@ -169,6 +189,44 @@ pub async fn get_heatmap(
         })
         .collect();
     Ok(Json(json!({ "bins": bins })))
+}
+
+pub async fn get_stills(
+    State(state): State<AppState>,
+    Query(query): Query<StillsQuery>,
+) -> Result<Json<Value>, ApiError> {
+    let layout = query.layout_version.as_deref().unwrap_or("");
+    let conn = state.db.lock().map_err(|_| ApiError::Internal)?;
+    let still = service::query_still(&conn, &query.platform, &query.screen, layout)
+        .map_err(|_| ApiError::Internal)?;
+    let Some(still) = still else {
+        return Err(ApiError::NotFound);
+    };
+    Ok(Json(json!({
+        "content_type": still.content_type,
+        "image_base64": still.image_base64,
+    })))
+}
+
+pub async fn post_stills(
+    State(state): State<AppState>,
+    Json(body): Json<PostStillBody>,
+) -> Result<(StatusCode, Json<Value>), ApiError> {
+    if body.platform.is_empty() || body.screen.is_empty() || body.image_base64.is_empty() {
+        return Err(ApiError::BadRequest);
+    }
+    let layout = body.layout_version.as_deref().unwrap_or("");
+    let conn = state.db.lock().map_err(|_| ApiError::Internal)?;
+    service::upsert_still(
+        &conn,
+        &body.platform,
+        &body.screen,
+        layout,
+        &body.content_type,
+        &body.image_base64,
+    )
+    .map_err(|_| ApiError::Internal)?;
+    Ok((StatusCode::CREATED, Json(json!({ "status": "created" }))))
 }
 
 pub async fn get_screens(State(state): State<AppState>) -> Result<Json<Value>, ApiError> {
