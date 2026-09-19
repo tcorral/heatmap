@@ -1,3 +1,6 @@
+#[cfg(target_arch = "wasm32")]
+use std::sync::Arc;
+
 use heatmap_core::{
     CaptureCandidate, CaptureError, FlushError, HeatmapConfig, HeatmapSdk as CoreHeatmapSdk,
     IdentityError, InitError, InteractionEvent, PlatformInfo, Position,
@@ -25,7 +28,11 @@ impl PublicHeatmapSdk {
 
     pub fn init(config: HeatmapConfig) -> Result<Self, InitError> {
         #[cfg(target_arch = "wasm32")]
-        let inner = CoreHeatmapSdk::init_with_transport(config, FetchBatchTransport::new())?;
+        let inner = CoreHeatmapSdk::init_with_transport_and_store(
+            config,
+            FetchBatchTransport::new(),
+            Arc::new(crate::local_storage_identity::LocalStorageIdentityStore::new()),
+        )?;
         #[cfg(not(target_arch = "wasm32"))]
         let inner = CoreHeatmapSdk::init_with_transport(config, StubBatchTransport::new())?;
         Ok(Self { inner })

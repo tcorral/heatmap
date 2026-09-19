@@ -7,6 +7,9 @@ use crate::capture::{candidate_to_event, CaptureCandidate, CaptureContext, Captu
 use crate::config::{validate_config, HeatmapConfig, InitError};
 use crate::event::{HeatmapEvent, InteractionEvent, ScreenInfo, SdkInfo, Viewport};
 use crate::event::PlatformInfo;
+use crate::identity_store::{
+    IdentityStore, InMemoryIdentityStore, STORE_KEY_ANONYMOUS_ID, STORE_KEY_USER_ID,
+};
 use crate::transport::{BatchTransport, FlushError};
 #[cfg(not(target_arch = "wasm32"))]
 use crate::transport::HttpBatchTransport;
@@ -44,6 +47,7 @@ impl std::error::Error for ScreenContextError {}
 pub struct HeatmapSdk {
     config: HeatmapConfig,
     transport: Arc<dyn BatchTransport>,
+    identity_store: Arc<dyn IdentityStore>,
     tracking_enabled: bool,
     session_id: String,
     anonymous_id: String,
@@ -63,17 +67,31 @@ impl HeatmapSdk {
         config: HeatmapConfig,
         transport: impl BatchTransport + 'static,
     ) -> Result<Self, InitError> {
+        Self::init_with_transport_and_store(
+            config,
+            transport,
+            Arc::new(InMemoryIdentityStore::new()),
+        )
+    }
+
+    pub fn init_with_transport_and_store(
+        config: HeatmapConfig,
+        transport: impl BatchTransport + 'static,
+        identity_store: Arc<dyn IdentityStore>,
+    ) -> Result<Self, InitError> {
         validate_config(&config)?;
         let session_id = new_id("sess");
-        let anonymous_id = new_id("anon");
+        let anonymous_id = load_or_create_anonymous_id(identity_store.as_ref());
+        let user_id = load_persisted_user_id(identity_store.as_ref());
         let sample_in = config.sample_rate >= DEFAULT_SAMPLE_IN_THRESHOLD;
         Ok(Self {
             config,
             transport: Arc::new(transport),
+            identity_store,
             tracking_enabled: true,
             session_id,
             anonymous_id,
-            user_id: None,
+            user_id,
             current_screen: None,
             sample_in,
             queue: Vec::new(),
@@ -92,12 +110,15 @@ impl HeatmapSdk {
         if user_id.trim().is_empty() {
             return Err(IdentityError::EmptyUserId);
         }
-        self.user_id = Some(user_id);
+        self.user_id = Some(user_id.clone());
+        self.identity_store
+            .write(STORE_KEY_USER_ID, Some(user_id.as_str()));
         Ok(())
     }
 
     pub fn sign_out(&mut self) {
         self.user_id = None;
+        self.identity_store.write(STORE_KEY_USER_ID, None);
     }
 
     pub fn screen(
@@ -232,6 +253,21 @@ const DEFAULT_SAMPLE_IN_THRESHOLD: f64 = 1.0;
 
 fn new_id(prefix: &str) -> String {
     format!("{prefix}_{}", Uuid::new_v4().simple())
+}
+
+fn load_or_create_anonymous_id(store: &dyn IdentityStore) -> String {
+    if let Some(id) = store.read(STORE_KEY_ANONYMOUS_ID).filter(|id| !id.trim().is_empty()) {
+        return id;
+    }
+    let id = new_id("anon");
+    store.write(STORE_KEY_ANONYMOUS_ID, Some(id.as_str()));
+    id
+}
+
+fn load_persisted_user_id(store: &dyn IdentityStore) -> Option<String> {
+    store
+        .read(STORE_KEY_USER_ID)
+        .filter(|id| !id.trim().is_empty())
 }
 
 fn current_timestamp_ms() -> i64 {

@@ -1,4 +1,10 @@
 export {
+  HEATMAP_STORE_KEY_ANONYMOUS_ID,
+  HEATMAP_STORE_KEY_USER_ID,
+  readIdentityValue,
+  writeIdentityValue,
+} from "./identity/local-storage-store.js";
+export {
   normalizeWindowPosition,
   readHeatmapElementId,
   readVisibleWindowViewport,

@@ -4,6 +4,7 @@ mod batch;
 mod capture;
 mod config;
 mod event;
+mod identity_store;
 mod sdk;
 mod transport;
 
@@ -14,6 +15,9 @@ pub use event::{
     HeatmapEvent, InteractionEvent, InteractionType, InvalidEventField, InvalidInteractionType,
     InvalidPosition, PlatformInfo, PlatformType, Position, ScreenInfo, SdkInfo, Viewport,
     SCHEMA_VERSION,
+};
+pub use identity_store::{
+    IdentityStore, InMemoryIdentityStore, STORE_KEY_ANONYMOUS_ID, STORE_KEY_USER_ID,
 };
 pub use sdk::{HeatmapSdk, IdentityError, ScreenContextError};
 pub use transport::{batch_ingest_url, BatchTransport, FlushError};

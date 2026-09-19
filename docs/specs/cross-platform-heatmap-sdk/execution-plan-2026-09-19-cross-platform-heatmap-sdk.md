@@ -78,7 +78,7 @@ Greenfield V1 POC: lock the nested event contract, prove a synthetic click throu
   - **Tests:** Sequence includes session_start, screen_view(home), click(product), screen_view(checkout), scroll, click(checkout.coupon), click(checkout.pay), screen_view(confirmation); dashboard shows web Pay totals; introduce the web E2E runner
   - **Depends:** Step 8, Step 9
 
-- [ ] **Step 11: Persist anonymous and optional user identity** — TDD: Yes
+- [x] **Step 11: Persist anonymous and optional user identity** — TDD: Yes
   - **Description:** Keep a stable anonymous_id per install and add identify / sign-out that only add or remove user_id.
   - **Files:** core/heatmap-core/; sdk/web/
   - **Tests:** Events before and after identify share the same anonymous_id; events after identify include user_id; events after sign-out keep anonymous_id and omit user_id
