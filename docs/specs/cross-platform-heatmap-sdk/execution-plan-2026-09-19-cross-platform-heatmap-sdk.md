@@ -30,13 +30,13 @@ Greenfield V1 POC: lock the nested event contract, prove a synthetic click throu
   - **Tests:** Serialized session_start, screen_view, click, scroll, and session_end match fixtures; unknown or out-of-scope types are rejected; omitted optional fields stay omitted; introduce `cargo test -p heatmap-core`
   - **Depends:** Step 1
 
-- [ ] **Step 3: Init, capture gate, and in-memory batch** — TDD: Yes
+- [x] **Step 3: Init, capture gate, and in-memory batch** — TDD: Yes
   - **Description:** Accept init config, start capture when tracking is enabled, enqueue allowed candidates, and build a batch with a new batch_id.
   - **Files:** core/heatmap-core/
   - **Tests:** Successful init makes later candidates eligible without a separate enable call; disable stops capture and enable resumes it; sampled-in session can enqueue a click; batch body matches batch schema; host-facing APIs stay fail-closed
   - **Depends:** Step 2
 
-- [ ] **Step 4: Ingest a batch and query element totals** — TDD: Yes
+- [x] **Step 4: Ingest a batch and query element totals** — TDD: Yes
   - **Description:** Stand up the Rust ingest/query process so a valid batch persists raw events and a Pay click appears in element totals.
   - **Files:** backend/
   - **Tests:** Valid batch with X-Project-Key returns 202 and accepted_count; invalid project key returns 401/403; duplicate batch_id returns 202 with no new writes; click with element_id upserts totals; click without element_id stores raw event and does not create a total row; introduce backend `cargo test`
