@@ -90,7 +90,7 @@ Greenfield V1 POC: lock the nested event contract, prove a synthetic click throu
   - **Tests:** Default timeout is 1,800,000 ms and is overridable; captured event resets the inactivity window; background then resume before timeout keeps session_id; interaction after timeout or expiry starts a new session; tests use a short override
   - **Depends:** Step 11
 
-- [ ] **Step 13: Inherit screen and layout version** — TDD: Yes
+- [x] **Step 13: Inherit screen and layout version** — TDD: Yes
   - **Description:** Attach the app-declared screen and optional layout_version to later events until screen() changes, and keep layout versions out of one overlay bucket.
   - **Files:** core/heatmap-core/; backend/
   - **Tests:** Events after screen(Checkout) group under Checkout; later screen(Confirmation) does not mix; events with no screen still send and are omitted from screen-filtered queries; Checkout layout A and layout B do not share one overlay key; missing layout uses the unspecified-layout bucket
