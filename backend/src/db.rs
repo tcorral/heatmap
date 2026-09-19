@@ -55,6 +55,24 @@ pub fn init_schema(conn: &Connection) -> SqlResult<()> {
                 element_id
             )
         );
+
+        CREATE TABLE IF NOT EXISTS click_bins (
+            platform_type TEXT NOT NULL,
+            screen_id TEXT NOT NULL,
+            layout_version TEXT NOT NULL,
+            app_version TEXT NOT NULL,
+            bin_x INTEGER NOT NULL,
+            bin_y INTEGER NOT NULL,
+            count INTEGER NOT NULL,
+            PRIMARY KEY (
+                platform_type,
+                screen_id,
+                layout_version,
+                app_version,
+                bin_x,
+                bin_y
+            )
+        );
         ",
     )
 }
@@ -271,6 +289,91 @@ fn count_unique_sessions(
             |row| row.get(0),
         ),
     }
+}
+
+pub fn upsert_click_bin(
+    conn: &Connection,
+    event: &Value,
+    bin_x: i64,
+    bin_y: i64,
+) -> SqlResult<()> {
+    let platform_type = event["platform"]["type"].as_str().unwrap_or_default();
+    let app_version = event["platform"]["app_version"].as_str().unwrap_or_default();
+    let screen_id = event["screen"]["id"].as_str().unwrap_or_default();
+    let layout_version = event["screen"]
+        .get("layout_version")
+        .and_then(|version| version.as_str())
+        .unwrap_or("");
+
+    conn.execute(
+        "INSERT INTO click_bins (
+            platform_type, screen_id, layout_version, app_version, bin_x, bin_y, count
+        ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, 1)
+        ON CONFLICT(platform_type, screen_id, layout_version, app_version, bin_x, bin_y)
+        DO UPDATE SET count = count + 1",
+        params![
+            platform_type,
+            screen_id,
+            layout_version,
+            app_version,
+            bin_x,
+            bin_y
+        ],
+    )?;
+    Ok(())
+}
+
+pub struct ClickBinRow {
+    pub bin_x: i64,
+    pub bin_y: i64,
+    pub count: i64,
+}
+
+pub struct HeatmapFilter<'a> {
+    pub platform: &'a str,
+    pub screen: &'a str,
+    pub layout_version: Option<&'a str>,
+    pub app_version: &'a str,
+}
+
+pub fn query_click_bins(conn: &Connection, filter: &HeatmapFilter<'_>) -> SqlResult<Vec<ClickBinRow>> {
+    let layout = filter.layout_version.unwrap_or("");
+    let mut statement = conn.prepare(
+        "SELECT bin_x, bin_y, count FROM click_bins
+         WHERE platform_type = ?1 AND screen_id = ?2 AND layout_version = ?3 AND app_version = ?4",
+    )?;
+    let rows = statement.query_map(
+        params![filter.platform, filter.screen, layout, filter.app_version],
+        |row| {
+            Ok(ClickBinRow {
+                bin_x: row.get(0)?,
+                bin_y: row.get(1)?,
+                count: row.get(2)?,
+            })
+        },
+    )?;
+    rows.collect()
+}
+
+pub struct ScreenRow {
+    pub platform: String,
+    pub id: String,
+    pub layout_version: String,
+}
+
+pub fn list_distinct_screens(conn: &Connection) -> SqlResult<Vec<ScreenRow>> {
+    let mut statement = conn.prepare(
+        "SELECT DISTINCT platform_type, screen_id, layout_version FROM raw_events
+         WHERE screen_id != '' ORDER BY platform_type, screen_id, layout_version",
+    )?;
+    let rows = statement.query_map([], |row| {
+        Ok(ScreenRow {
+            platform: row.get(0)?,
+            id: row.get(1)?,
+            layout_version: row.get(2)?,
+        })
+    })?;
+    rows.collect()
 }
 
 pub fn count_slice_unique_sessions(

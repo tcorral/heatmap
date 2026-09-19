@@ -126,7 +126,7 @@ Greenfield V1 POC: lock the nested event contract, prove a synthetic click throu
   - **Tests:** Scroll after screen(Checkout) is stored on Checkout; scroll is not binned; dashboard Checkout view shows click/tap counts, unique sessions, top elements, density overlay, and platform breakdown, not a scroll-depth map
   - **Depends:** Step 13, Step 9
 
-- [ ] **Step 19: Enforce ingest limits and build click bins** — TDD: Yes
+- [x] **Step 19: Enforce ingest limits and build click bins** — TDD: Yes
   - **Description:** Reject oversized, malformed, and rate-limited batches as specified; persist valid events; upsert 100-by-100 click bins and expose heatmap and screens queries.
   - **Files:** backend/
   - **Tests:** Oversize returns 413; malformed or unsupported schema_version returns 400; ~120 batches/minute/key returns 429; unknown fields are ignored; missing required fields reject that event; valid sibling events in the same batch still persist; click bins use min(99, floor(x * 100)) and the same for y; overlay query key is project + platform + screen + layout_version, not window_id; GET /v1/screens lists known screens; GET /v1/heatmap returns bins for the slice

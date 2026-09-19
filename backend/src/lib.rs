@@ -2,6 +2,7 @@ mod config;
 pub mod db;
 mod error;
 mod handlers;
+mod rate_limit;
 mod service;
 mod validate;
 
@@ -20,10 +21,13 @@ pub fn app(config: AppConfig, db: Connection) -> Router {
     let state = AppState {
         db: Arc::new(Mutex::new(db)),
         config: config.clone(),
+        rate_limiter: Arc::new(Mutex::new(rate_limit::RateLimiter::new())),
     };
     let mut router = Router::new()
         .route("/v1/batches", post(handlers::post_batches))
-        .route("/v1/elements", get(handlers::get_elements));
+        .route("/v1/elements", get(handlers::get_elements))
+        .route("/v1/heatmap", get(handlers::get_heatmap))
+        .route("/v1/screens", get(handlers::get_screens));
     if config.expose_test_events() {
         router = router.route("/v1/events", get(handlers::get_events));
     }
