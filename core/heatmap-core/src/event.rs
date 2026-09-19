@@ -1,9 +1,9 @@
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::fmt;
 
 pub const SCHEMA_VERSION: i32 = 1;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum PlatformType {
     Web,
@@ -13,13 +13,13 @@ pub enum PlatformType {
     Windows,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct SdkInfo {
     pub name: String,
     pub version: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct PlatformInfo {
     #[serde(rename = "type")]
     pub platform_type: PlatformType,
@@ -27,7 +27,7 @@ pub struct PlatformInfo {
     pub app_version: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ScreenInfo {
     pub id: String,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -58,19 +58,32 @@ impl InteractionType {
     }
 }
 
+fn interaction_type_label(interaction_type: InteractionType) -> &'static str {
+    match interaction_type {
+        InteractionType::SessionStart => "session_start",
+        InteractionType::SessionEnd => "session_end",
+        InteractionType::ScreenView => "screen_view",
+        InteractionType::Click => "click",
+        InteractionType::Scroll => "scroll",
+    }
+}
+
 impl Serialize for InteractionType {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: serde::Serializer,
     {
-        let label = match self {
-            Self::SessionStart => "session_start",
-            Self::SessionEnd => "session_end",
-            Self::ScreenView => "screen_view",
-            Self::Click => "click",
-            Self::Scroll => "scroll",
-        };
-        serializer.serialize_str(label)
+        serializer.serialize_str(interaction_type_label(*self))
+    }
+}
+
+impl<'de> Deserialize<'de> for InteractionType {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let label = String::deserialize(deserializer)?;
+        InteractionType::parse(&label).map_err(serde::de::Error::custom)
     }
 }
 
@@ -108,7 +121,7 @@ impl fmt::Display for InvalidEventField {
 
 impl std::error::Error for InvalidEventField {}
 
-#[derive(Debug, Clone, PartialEq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct InteractionEvent {
     #[serde(rename = "type")]
     pub interaction_type: InteractionType,
@@ -151,7 +164,7 @@ impl InteractionEvent {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub struct Position {
     pub x: f64,
     pub y: f64,
@@ -186,13 +199,13 @@ impl Position {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Viewport {
     pub width: u32,
     pub height: u32,
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct HeatmapEvent {
     pub schema_version: i32,
     pub session_id: String,

@@ -108,7 +108,7 @@ Greenfield V1 POC: lock the nested event contract, prove a synthetic click throu
   - **Tests:** Default sample_rate 1.0 enqueues the session; sampled-out session enqueues nothing and does not appear in dashboard queries; decision does not change mid-session; local diagnostic records sampled-out
   - **Depends:** Step 12
 
-- [ ] **Step 16: Persist the queue with dual-cap overflow** — TDD: Yes
+- [x] **Step 16: Persist the queue with dual-cap overflow** — TDD: Yes
   - **Description:** Survive offline and process death with a persistent queue that drops oldest events at 10,000 events or 5 MiB and keeps capturing.
   - **Files:** core/heatmap-core/
   - **Tests:** Events captured offline upload once after restore; relaunch with pending events does not crash; at cap, oldest events drop, newer events enqueue, host stays up; local diagnostic counts drops

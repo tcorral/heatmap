@@ -15,6 +15,9 @@ use crate::identity_store::{
     IdentityStore, InMemoryIdentityStore, STORE_KEY_ANONYMOUS_ID, STORE_KEY_LAST_EVENT_AT,
     STORE_KEY_SAMPLE_IN, STORE_KEY_SESSION_ID, STORE_KEY_USER_ID,
 };
+use crate::persistent_queue::{
+    load_persisted_queue, persist_queue, push_with_overflow, QueueLimits,
+};
 use crate::rng::{session_sampled_in, RandomSource, SystemRng};
 use crate::transport::{BatchTransport, FlushError};
 #[cfg(not(target_arch = "wasm32"))]
@@ -65,6 +68,7 @@ pub struct HeatmapSdk {
     rng: Arc<dyn RandomSource>,
     diagnostics: HeatmapDiagnostics,
     queue: Vec<HeatmapEvent>,
+    queue_limits: QueueLimits,
 }
 
 impl HeatmapSdk {
@@ -129,6 +133,7 @@ impl HeatmapSdk {
             identity_store.as_ref(),
             session_id.as_ref().is_some_and(|id| !id.trim().is_empty()),
         );
+        let queue = load_persisted_queue(identity_store.as_ref());
         Ok(Self {
             config,
             transport: Arc::new(transport),
@@ -143,12 +148,18 @@ impl HeatmapSdk {
             sample_in,
             rng,
             diagnostics: HeatmapDiagnostics::default(),
-            queue: Vec::new(),
+            queue,
+            queue_limits: QueueLimits::production(),
         })
     }
 
     pub fn diagnostics(&self) -> HeatmapDiagnostics {
         self.diagnostics
+    }
+
+    #[doc(hidden)]
+    pub fn set_queue_limits_for_testing(&mut self, limits: QueueLimits) {
+        self.queue_limits = limits;
     }
 
     pub fn config(&self) -> &HeatmapConfig {
@@ -292,6 +303,7 @@ impl HeatmapSdk {
         }
         let batch_id = new_id("batch");
         let events = std::mem::take(&mut self.queue);
+        self.sync_persisted_queue();
         Ok(HeatmapBatch { batch_id, events })
     }
 
@@ -310,6 +322,7 @@ impl HeatmapSdk {
             Ok(()) => Ok(()),
             Err(err) => {
                 self.queue.extend(batch.events);
+                self.sync_persisted_queue();
                 Err(err)
             }
         }
@@ -375,8 +388,16 @@ impl HeatmapSdk {
                 mask_elements: &self.config.mask_elements,
             },
         )?;
-        self.queue.push(event);
+        let dropped = push_with_overflow(&mut self.queue, event, &self.queue_limits);
+        if dropped > 0 {
+            self.diagnostics.record_queue_dropped(dropped);
+        }
+        self.sync_persisted_queue();
         Ok(())
+    }
+
+    fn sync_persisted_queue(&self) {
+        persist_queue(self.identity_store.as_ref(), &self.queue);
     }
 }
 
