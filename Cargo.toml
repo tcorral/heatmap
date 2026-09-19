@@ -1,3 +1,3 @@
 [workspace]
-members = ["core/heatmap-core", "core/heatmap-wasm", "backend", "test/integration"]
+members = ["core/heatmap-core", "core/heatmap-wasm", "backend", "test/integration", "core/heatmap-ffi"]
 resolver = "2"
