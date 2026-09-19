@@ -21,6 +21,7 @@ pub enum InitError {
     MissingProjectKey,
     MissingEndpoint,
     InsecureEndpoint,
+    InvalidConfig,
 }
 
 impl fmt::Display for InitError {
@@ -29,6 +30,7 @@ impl fmt::Display for InitError {
             Self::MissingProjectKey => write!(f, "project_key is required"),
             Self::MissingEndpoint => write!(f, "endpoint is required"),
             Self::InsecureEndpoint => write!(f, "endpoint must use HTTPS"),
+            Self::InvalidConfig => write!(f, "config is not valid JSON"),
         }
     }
 }

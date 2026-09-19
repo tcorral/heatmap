@@ -48,7 +48,7 @@ Greenfield V1 POC: lock the nested event contract, prove a synthetic click throu
   - **Tests:** Synthetic checkout.pay click at window center uploads once and appears under Checkout → Pay; transport uses the configured HTTPS ingest base; host remains up if ingest is down
   - **Depends:** Step 3, Step 4
 
-- [ ] **Step 6: Expose public API through WASM** — TDD: No
+- [x] **Step 6: Expose public API through WASM** — TDD: No
   - **Description:** Add heatmap-wasm bindings for the public SDK surface used by web.
   - **Files:** core/heatmap-wasm/
   - **Tests:** Binding surface covers init, identify, sign-out, screen with optional layout, setTrackingEnabled, and flush; no public track/custom API

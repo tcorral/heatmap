@@ -45,22 +45,31 @@ pub(crate) fn validate_candidate(candidate: &CaptureCandidate) -> Result<(), Cap
     Ok(())
 }
 
+pub(crate) struct CaptureContext<'a> {
+    pub session_id: &'a str,
+    pub anonymous_id: &'a str,
+    pub user_id: Option<&'a str>,
+    pub inherited_screen: Option<&'a ScreenInfo>,
+}
+
 pub(crate) fn candidate_to_event(
     candidate: CaptureCandidate,
-    session_id: &str,
-    anonymous_id: &str,
+    context: CaptureContext<'_>,
 ) -> Result<HeatmapEvent, CaptureError> {
     validate_candidate(&candidate)?;
+    let screen = candidate
+        .screen
+        .or_else(|| context.inherited_screen.cloned());
     Ok(HeatmapEvent {
         schema_version: SCHEMA_VERSION,
-        session_id: session_id.to_owned(),
-        anonymous_id: anonymous_id.to_owned(),
-        user_id: None,
+        session_id: context.session_id.to_owned(),
+        anonymous_id: context.anonymous_id.to_owned(),
+        user_id: context.user_id.map(str::to_owned),
         timestamp: candidate.timestamp,
         window_id: candidate.window_id,
         sdk: candidate.sdk,
         platform: candidate.platform,
-        screen: candidate.screen,
+        screen,
         event: candidate.interaction,
         position: candidate.position,
         viewport: candidate.viewport,

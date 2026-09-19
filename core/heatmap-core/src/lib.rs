@@ -15,7 +15,7 @@ pub use event::{
     InvalidPosition, PlatformInfo, PlatformType, Position, ScreenInfo, SdkInfo, Viewport,
     SCHEMA_VERSION,
 };
-pub use sdk::HeatmapSdk;
-pub use transport::{
-    batch_ingest_url, BatchTransport, FlushError, HttpBatchTransport,
-};
+pub use sdk::{HeatmapSdk, IdentityError, ScreenContextError};
+pub use transport::{batch_ingest_url, BatchTransport, FlushError};
+#[cfg(not(target_arch = "wasm32"))]
+pub use transport::HttpBatchTransport;

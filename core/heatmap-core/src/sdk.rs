@@ -3,10 +3,43 @@ use std::sync::Arc;
 use uuid::Uuid;
 
 use crate::batch::{BatchError, HeatmapBatch};
-use crate::capture::{candidate_to_event, CaptureCandidate, CaptureError};
+use crate::capture::{candidate_to_event, CaptureCandidate, CaptureContext, CaptureError};
 use crate::config::{validate_config, HeatmapConfig, InitError};
 use crate::event::HeatmapEvent;
-use crate::transport::{BatchTransport, FlushError, HttpBatchTransport};
+use crate::event::ScreenInfo;
+use crate::transport::{BatchTransport, FlushError};
+#[cfg(not(target_arch = "wasm32"))]
+use crate::transport::HttpBatchTransport;
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum IdentityError {
+    EmptyUserId,
+}
+
+impl std::fmt::Display for IdentityError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::EmptyUserId => write!(f, "user_id is required"),
+        }
+    }
+}
+
+impl std::error::Error for IdentityError {}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum ScreenContextError {
+    EmptyScreenId,
+}
+
+impl std::fmt::Display for ScreenContextError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::EmptyScreenId => write!(f, "screen_id is required"),
+        }
+    }
+}
+
+impl std::error::Error for ScreenContextError {}
 
 pub struct HeatmapSdk {
     config: HeatmapConfig,
@@ -14,11 +47,14 @@ pub struct HeatmapSdk {
     tracking_enabled: bool,
     session_id: String,
     anonymous_id: String,
+    user_id: Option<String>,
+    current_screen: Option<ScreenInfo>,
     sample_in: bool,
     queue: Vec<HeatmapEvent>,
 }
 
 impl HeatmapSdk {
+    #[cfg(not(target_arch = "wasm32"))]
     pub fn init(config: HeatmapConfig) -> Result<Self, InitError> {
         Self::init_with_transport(config, HttpBatchTransport::new())
     }
@@ -37,6 +73,8 @@ impl HeatmapSdk {
             tracking_enabled: true,
             session_id,
             anonymous_id,
+            user_id: None,
+            current_screen: None,
             sample_in,
             queue: Vec::new(),
         })
@@ -50,6 +88,34 @@ impl HeatmapSdk {
         self.tracking_enabled = enabled;
     }
 
+    pub fn identify(&mut self, user_id: String) -> Result<(), IdentityError> {
+        if user_id.trim().is_empty() {
+            return Err(IdentityError::EmptyUserId);
+        }
+        self.user_id = Some(user_id);
+        Ok(())
+    }
+
+    pub fn sign_out(&mut self) {
+        self.user_id = None;
+    }
+
+    pub fn screen(
+        &mut self,
+        screen_id: String,
+        layout_version: Option<String>,
+    ) -> Result<(), ScreenContextError> {
+        if screen_id.trim().is_empty() {
+            return Err(ScreenContextError::EmptyScreenId);
+        }
+        let layout = layout_version.filter(|version| !version.trim().is_empty());
+        self.current_screen = Some(ScreenInfo {
+            id: screen_id,
+            layout_version: layout,
+        });
+        Ok(())
+    }
+
     pub fn enqueue_candidate(&mut self, candidate: CaptureCandidate) -> Result<(), CaptureError> {
         if !self.tracking_enabled {
             return Err(CaptureError::TrackingDisabled);
@@ -57,7 +123,15 @@ impl HeatmapSdk {
         if !self.sample_in {
             return Err(CaptureError::SampledOut);
         }
-        let event = candidate_to_event(candidate, &self.session_id, &self.anonymous_id)?;
+        let event = candidate_to_event(
+            candidate,
+            CaptureContext {
+                session_id: &self.session_id,
+                anonymous_id: &self.anonymous_id,
+                user_id: self.user_id.as_deref(),
+                inherited_screen: self.current_screen.as_ref(),
+            },
+        )?;
         self.queue.push(event);
         Ok(())
     }

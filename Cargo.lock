@@ -278,6 +278,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "heatmap-wasm"
+version = "0.1.0"
+dependencies = [
+ "heatmap-core",
+ "serde",
+ "serde_json",
+ "wasm-bindgen",
+]
+
+[[package]]
 name = "http"
 version = "1.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"

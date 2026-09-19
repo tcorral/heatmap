@@ -33,20 +33,24 @@ pub trait BatchTransport: Send + Sync {
     ) -> Result<(), FlushError>;
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 pub struct HttpBatchTransport;
 
+#[cfg(not(target_arch = "wasm32"))]
 impl Default for HttpBatchTransport {
     fn default() -> Self {
         Self
     }
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 impl HttpBatchTransport {
     pub fn new() -> Self {
         Self
     }
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 impl BatchTransport for HttpBatchTransport {
     fn send_batch(
         &self,
