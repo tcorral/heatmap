@@ -4,11 +4,13 @@ use uuid::Uuid;
 
 use crate::batch::{BatchError, HeatmapBatch};
 use crate::capture::{candidate_to_event, CaptureCandidate, CaptureContext, CaptureError};
+use crate::clock::{Clock, SystemClock};
 use crate::config::{validate_config, HeatmapConfig, InitError};
-use crate::event::{HeatmapEvent, InteractionEvent, ScreenInfo, SdkInfo, Viewport};
+use crate::event::{HeatmapEvent, InteractionEvent, InteractionType, ScreenInfo, SdkInfo, Viewport};
 use crate::event::PlatformInfo;
 use crate::identity_store::{
-    IdentityStore, InMemoryIdentityStore, STORE_KEY_ANONYMOUS_ID, STORE_KEY_USER_ID,
+    IdentityStore, InMemoryIdentityStore, STORE_KEY_ANONYMOUS_ID, STORE_KEY_LAST_EVENT_AT,
+    STORE_KEY_SESSION_ID, STORE_KEY_USER_ID,
 };
 use crate::transport::{BatchTransport, FlushError};
 #[cfg(not(target_arch = "wasm32"))]
@@ -48,8 +50,10 @@ pub struct HeatmapSdk {
     config: HeatmapConfig,
     transport: Arc<dyn BatchTransport>,
     identity_store: Arc<dyn IdentityStore>,
+    clock: Arc<dyn Clock>,
     tracking_enabled: bool,
-    session_id: String,
+    session_id: Option<String>,
+    last_event_at: Option<i64>,
     anonymous_id: String,
     user_id: Option<String>,
     current_screen: Option<ScreenInfo>,
@@ -79,8 +83,24 @@ impl HeatmapSdk {
         transport: impl BatchTransport + 'static,
         identity_store: Arc<dyn IdentityStore>,
     ) -> Result<Self, InitError> {
+        Self::init_with_transport_store_and_clock(
+            config,
+            transport,
+            identity_store,
+            Arc::new(SystemClock),
+        )
+    }
+
+    pub fn init_with_transport_store_and_clock(
+        config: HeatmapConfig,
+        transport: impl BatchTransport + 'static,
+        identity_store: Arc<dyn IdentityStore>,
+        clock: Arc<dyn Clock>,
+    ) -> Result<Self, InitError> {
         validate_config(&config)?;
-        let session_id = new_id("sess");
+        let now = clock.now_ms();
+        let (session_id, last_event_at) =
+            load_persisted_session(identity_store.as_ref(), now, config.session_timeout_ms);
         let anonymous_id = load_or_create_anonymous_id(identity_store.as_ref());
         let user_id = load_persisted_user_id(identity_store.as_ref());
         let sample_in = config.sample_rate >= DEFAULT_SAMPLE_IN_THRESHOLD;
@@ -88,8 +108,10 @@ impl HeatmapSdk {
             config,
             transport: Arc::new(transport),
             identity_store,
+            clock,
             tracking_enabled: true,
             session_id,
+            last_event_at,
             anonymous_id,
             user_id,
             current_screen: None,
@@ -105,6 +127,12 @@ impl HeatmapSdk {
     pub fn set_tracking_enabled(&mut self, enabled: bool) {
         self.tracking_enabled = enabled;
     }
+
+    pub fn on_background(&mut self) {
+        self.persist_session_state();
+    }
+
+    pub fn on_foreground(&mut self) {}
 
     pub fn identify(&mut self, user_id: String) -> Result<(), IdentityError> {
         if user_id.trim().is_empty() {
@@ -187,7 +215,7 @@ impl HeatmapSdk {
         viewport: Viewport,
     ) -> Result<(), CaptureError> {
         let candidate = CaptureCandidate {
-            timestamp: current_timestamp_ms(),
+            timestamp: self.clock.now_ms(),
             sdk,
             platform,
             screen: None,
@@ -206,16 +234,14 @@ impl HeatmapSdk {
         if !self.sample_in {
             return Err(CaptureError::SampledOut);
         }
-        let event = candidate_to_event(
-            candidate,
-            CaptureContext {
-                session_id: &self.session_id,
-                anonymous_id: &self.anonymous_id,
-                user_id: self.user_id.as_deref(),
-                inherited_screen: self.current_screen.as_ref(),
-            },
-        )?;
-        self.queue.push(event);
+        let now = self.clock.now_ms();
+        let new_session = self.ensure_active_session(now);
+        let is_session_start = interaction_is_session_start(&candidate.interaction);
+        if new_session && !is_session_start {
+            self.push_capture_event(session_start_from(&candidate)?)?;
+        }
+        self.push_capture_event(candidate)?;
+        self.record_session_activity(now);
         Ok(())
     }
 
@@ -247,12 +273,139 @@ impl HeatmapSdk {
             }
         }
     }
+
+    fn ensure_active_session(&mut self, now: i64) -> bool {
+        if session_still_active(
+            self.session_id.as_deref(),
+            self.last_event_at,
+            now,
+            self.config.session_timeout_ms,
+        ) {
+            return false;
+        }
+        self.start_new_session();
+        true
+    }
+
+    fn start_new_session(&mut self) {
+        let session_id = new_id("sess");
+        self.session_id = Some(session_id.clone());
+        self.last_event_at = None;
+        self.identity_store
+            .write(STORE_KEY_SESSION_ID, Some(session_id.as_str()));
+        self.identity_store.write(STORE_KEY_LAST_EVENT_AT, None);
+    }
+
+    fn record_session_activity(&mut self, now: i64) {
+        self.last_event_at = Some(now);
+        self.persist_session_state();
+    }
+
+    fn persist_session_state(&mut self) {
+        let Some(session_id) = self.session_id.as_deref() else {
+            return;
+        };
+        self.identity_store
+            .write(STORE_KEY_SESSION_ID, Some(session_id));
+        let last = self
+            .last_event_at
+            .map(|value| value.to_string())
+            .unwrap_or_default();
+        if self.last_event_at.is_some() {
+            self.identity_store
+                .write(STORE_KEY_LAST_EVENT_AT, Some(last.as_str()));
+        }
+    }
+
+    fn push_capture_event(&mut self, candidate: CaptureCandidate) -> Result<(), CaptureError> {
+        let session_id = self
+            .session_id
+            .as_deref()
+            .expect("active session required before capture");
+        let event = candidate_to_event(
+            candidate,
+            CaptureContext {
+                session_id,
+                anonymous_id: &self.anonymous_id,
+                user_id: self.user_id.as_deref(),
+                inherited_screen: self.current_screen.as_ref(),
+            },
+        )?;
+        self.queue.push(event);
+        Ok(())
+    }
 }
 
 const DEFAULT_SAMPLE_IN_THRESHOLD: f64 = 1.0;
 
 fn new_id(prefix: &str) -> String {
     format!("{prefix}_{}", Uuid::new_v4().simple())
+}
+
+fn interaction_is_session_start(interaction: &InteractionEvent) -> bool {
+    interaction.interaction_type == InteractionType::SessionStart
+}
+
+fn session_start_from(candidate: &CaptureCandidate) -> Result<CaptureCandidate, CaptureError> {
+    Ok(CaptureCandidate {
+        timestamp: candidate.timestamp,
+        sdk: candidate.sdk.clone(),
+        platform: candidate.platform.clone(),
+        screen: candidate.screen.clone(),
+        interaction: InteractionEvent::session_start()
+            .map_err(CaptureError::InvalidEventField)?,
+        position: None,
+        viewport: candidate.viewport.clone(),
+        window_id: candidate.window_id.clone(),
+    })
+}
+
+fn session_still_active(
+    session_id: Option<&str>,
+    last_event_at: Option<i64>,
+    now: i64,
+    timeout_ms: u64,
+) -> bool {
+    if session_id.is_none_or(|id| id.trim().is_empty()) {
+        return false;
+    }
+    match last_event_at {
+        Some(last) => !session_inactive(last, now, timeout_ms),
+        None => true,
+    }
+}
+
+fn session_inactive(last_event_at: i64, now: i64, timeout_ms: u64) -> bool {
+    now.saturating_sub(last_event_at) as u64 > timeout_ms
+}
+
+fn load_persisted_session(
+    store: &dyn IdentityStore,
+    now: i64,
+    timeout_ms: u64,
+) -> (Option<String>, Option<i64>) {
+    let session_id = store
+        .read(STORE_KEY_SESSION_ID)
+        .filter(|id| !id.trim().is_empty());
+    let last_event_at = store
+        .read(STORE_KEY_LAST_EVENT_AT)
+        .and_then(|value| value.parse::<i64>().ok());
+    let Some(session_id) = session_id else {
+        return (None, None);
+    };
+    let Some(last) = last_event_at else {
+        return (Some(session_id), None);
+    };
+    if session_inactive(last, now, timeout_ms) {
+        clear_persisted_session(store);
+        return (None, None);
+    }
+    (Some(session_id), Some(last))
+}
+
+fn clear_persisted_session(store: &dyn IdentityStore) {
+    store.write(STORE_KEY_SESSION_ID, None);
+    store.write(STORE_KEY_LAST_EVENT_AT, None);
 }
 
 fn load_or_create_anonymous_id(store: &dyn IdentityStore) -> String {
@@ -268,19 +421,4 @@ fn load_persisted_user_id(store: &dyn IdentityStore) -> Option<String> {
     store
         .read(STORE_KEY_USER_ID)
         .filter(|id| !id.trim().is_empty())
-}
-
-fn current_timestamp_ms() -> i64 {
-    #[cfg(target_arch = "wasm32")]
-    {
-        js_sys::Date::now() as i64
-    }
-    #[cfg(not(target_arch = "wasm32"))]
-    {
-        use std::time::{SystemTime, UNIX_EPOCH};
-        SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .map(|duration| duration.as_millis() as i64)
-            .unwrap_or(0)
-    }
 }

@@ -56,9 +56,9 @@ fn should_enqueue_screen_view_when_screen_is_set_with_context() {
     sdk.record_screen_view(web_sdk(), web_platform(), web_viewport())
         .expect("screen_view");
     let batch = sdk.build_batch().expect("batch");
-    assert_eq!(batch.events.len(), 1);
+    assert_eq!(batch.events.len(), 2);
     assert_eq!(
-        batch.events[0].screen.as_ref().map(|screen| screen.id.as_str()),
+        batch.events[1].screen.as_ref().map(|screen| screen.id.as_str()),
         Some("Home")
     );
 }
@@ -72,11 +72,11 @@ fn should_enqueue_scroll_with_inherited_checkout_screen() {
         .expect("scroll");
     let batch = sdk.build_batch().expect("batch");
     assert_eq!(
-        batch.events[0].event.interaction_type,
+        batch.events[1].event.interaction_type,
         InteractionType::Scroll
     );
     assert_eq!(
-        batch.events[0].screen.as_ref().map(|screen| screen.id.as_str()),
+        batch.events[1].screen.as_ref().map(|screen| screen.id.as_str()),
         Some("Checkout")
     );
 }

@@ -84,7 +84,7 @@ Greenfield V1 POC: lock the nested event contract, prove a synthetic click throu
   - **Tests:** Events before and after identify share the same anonymous_id; events after identify include user_id; events after sign-out keep anonymous_id and omit user_id
   - **Depends:** Step 5, Step 7
 
-- [ ] **Step 12: Rotate sessions on timeout, not background** — TDD: Yes
+- [x] **Step 12: Rotate sessions on timeout, not background** — TDD: Yes
   - **Description:** Create a session on first capture, keep it across background/foreground before timeout, and start a new session after inactivity timeout or expiry.
   - **Files:** core/heatmap-core/
   - **Tests:** Default timeout is 1,800,000 ms and is overridable; captured event resets the inactivity window; background then resume before timeout keeps session_id; interaction after timeout or expiry starts a new session; tests use a short override

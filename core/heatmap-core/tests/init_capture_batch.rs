@@ -71,9 +71,9 @@ fn should_enqueue_click_after_init_without_separate_enable_call() {
     sdk.enqueue_candidate(checkout_pay_click_candidate())
         .expect("enqueue after init");
     let batch = sdk.build_batch().expect("batch");
-    assert_eq!(batch.events.len(), 1);
+    assert_eq!(batch.events.len(), 2);
     assert_eq!(
-        batch.events[0].event.interaction_type,
+        batch.events[1].event.interaction_type,
         heatmap_core::InteractionType::Click
     );
 }
@@ -99,7 +99,7 @@ fn should_resume_enqueue_after_tracking_re_enabled() {
     sdk.enqueue_candidate(checkout_pay_click_candidate())
         .expect("enqueue after re-enable");
     let batch = sdk.build_batch().expect("batch");
-    assert_eq!(batch.events.len(), 1);
+    assert_eq!(batch.events.len(), 2);
 }
 
 #[test]
@@ -110,9 +110,9 @@ fn should_enqueue_click_when_default_sample_rate_is_sampled_in() {
     sdk.enqueue_candidate(checkout_pay_click_candidate())
         .expect("sampled-in enqueue");
     let batch = sdk.build_batch().expect("batch");
-    assert_eq!(batch.events.len(), 1);
-    assert!(!batch.events[0].session_id.is_empty());
-    assert!(!batch.events[0].anonymous_id.is_empty());
+    assert_eq!(batch.events.len(), 2);
+    assert!(!batch.events[1].session_id.is_empty());
+    assert!(!batch.events[1].anonymous_id.is_empty());
 }
 
 #[test]

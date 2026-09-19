@@ -188,5 +188,5 @@ async fn should_keep_host_usable_when_ingest_is_down() {
     sdk.enqueue_candidate(checkout_pay_click_candidate())
         .expect("enqueue after failed flush");
     let batch = sdk.build_batch().expect("events retained");
-    assert_eq!(batch.events.len(), 2);
+    assert_eq!(batch.events.len(), 3);
 }

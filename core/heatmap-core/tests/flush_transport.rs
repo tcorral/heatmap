@@ -88,7 +88,7 @@ fn should_restore_queue_when_flush_transport_fails() {
         .expect("enqueue");
     assert!(sdk.flush().is_err());
     let batch = sdk.build_batch().expect("queue restored");
-    assert_eq!(batch.events.len(), 1);
+    assert_eq!(batch.events.len(), 2);
 }
 
 #[test]
