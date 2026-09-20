@@ -1,6 +1,7 @@
 use std::fmt;
 
 use heatmap_core::{
+    BatchError as CoreBatchError, CaptureError as CoreCaptureError,
     FlushError as CoreFlushError, IdentityError as CoreIdentityError,
     InitError as CoreInitError, ScreenContextError as CoreScreenContextError,
 };
@@ -99,6 +100,51 @@ impl From<CoreFlushError> for FlushError {
         match value {
             CoreFlushError::Transport(message) => Self::Transport { message },
             CoreFlushError::HttpStatus { code, .. } => Self::HttpStatus { code },
+        }
+    }
+}
+
+#[derive(Debug, uniffi::Error)]
+pub enum CaptureError {
+    TrackingDisabled,
+    SampledOut,
+    Excluded,
+    InvalidField { message: String },
+    EmptyQueue,
+}
+
+impl fmt::Display for CaptureError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::TrackingDisabled => write!(f, "tracking is disabled"),
+            Self::SampledOut => write!(f, "session is sampled out"),
+            Self::Excluded => write!(f, "capture excluded by config"),
+            Self::InvalidField { message } => write!(f, "{message}"),
+            Self::EmptyQueue => write!(f, "no queued events"),
+        }
+    }
+}
+
+impl From<CoreCaptureError> for CaptureError {
+    fn from(value: CoreCaptureError) -> Self {
+        match value {
+            CoreCaptureError::TrackingDisabled => Self::TrackingDisabled,
+            CoreCaptureError::SampledOut => Self::SampledOut,
+            CoreCaptureError::Excluded => Self::Excluded,
+            CoreCaptureError::InvalidEventField(err) => Self::InvalidField {
+                message: err.to_string(),
+            },
+            CoreCaptureError::InvalidPosition(err) => Self::InvalidField {
+                message: err.to_string(),
+            },
+        }
+    }
+}
+
+impl From<CoreBatchError> for CaptureError {
+    fn from(value: CoreBatchError) -> Self {
+        match value {
+            CoreBatchError::EmptyQueue => Self::EmptyQueue,
         }
     }
 }

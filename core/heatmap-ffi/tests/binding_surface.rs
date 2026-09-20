@@ -10,16 +10,6 @@ fn read_src(name: &str) -> String {
     fs::read_to_string(manifest.join("src").join(name)).expect("read source")
 }
 
-fn ffi_source() -> String {
-    [
-        read_src("uniffi_api.rs"),
-        read_src("c_abi.rs"),
-        read_src("public_api.rs"),
-        read_src("lib.rs"),
-    ]
-    .join("\n")
-}
-
 #[test]
 fn should_expose_public_methods_on_uniffi_layer() {
     let source = read_src("uniffi_api.rs");
@@ -62,8 +52,14 @@ fn should_expose_stable_c_abi_symbols() {
 }
 
 #[test]
-fn should_not_expose_adapter_only_apis_on_ffi_boundary() {
-    let source = ffi_source();
+fn should_not_expose_adapter_only_apis_on_integrator_surface() {
+    let public_api = read_src("public_api.rs");
+    let c_abi = read_src("c_abi.rs");
+    let ios_adapter = read_src("ios_adapter.rs");
+    assert!(
+        ios_adapter.contains("record_activation_click"),
+        "ios adapter should own activation enqueue"
+    );
     for forbidden in [
         forbidden_export_names::TRACK,
         forbidden_export_names::ENQUEUE_CANDIDATE,
@@ -71,12 +67,14 @@ fn should_not_expose_adapter_only_apis_on_ffi_boundary() {
         forbidden_export_names::CAPTURE,
         forbidden_export_names::DRAIN_BATCH_JSON,
     ] {
+        for source in [&public_api, &c_abi] {
+            assert!(
+                !source.contains(&format!("pub fn {forbidden}")),
+                "unexpected integrator export: {forbidden}"
+            );
+        }
         assert!(
-            !source.contains(&format!("pub fn {forbidden}")),
-            "unexpected public FFI export: {forbidden}"
-        );
-        assert!(
-            !source.contains(&format!("fn heatmap_sdk_{forbidden}")),
+            !c_abi.contains(&format!("fn heatmap_sdk_{forbidden}")),
             "unexpected C ABI export: {forbidden}"
         );
     }

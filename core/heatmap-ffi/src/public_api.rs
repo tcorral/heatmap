@@ -6,7 +6,7 @@ use heatmap_core::{
 use crate::config::InitConfigJson;
 
 pub struct PublicHeatmapSdk {
-    inner: CoreHeatmapSdk,
+    pub(crate) inner: CoreHeatmapSdk,
 }
 
 impl PublicHeatmapSdk {

@@ -13,6 +13,7 @@
 
 mod config;
 mod errors;
+mod ios_adapter;
 pub mod public_api;
 mod uniffi_api;
 

@@ -156,13 +156,13 @@ Greenfield V1 POC: lock the nested event contract, prove a synthetic click throu
   - **Tests:** Exported surface covers init, identify, sign-out, screen with optional layout, setTrackingEnabled, and flush; no public track/custom API; generated bindings are callable from a smoke host on each intended path
   - **Depends:** Step 17
 
-- [ ] **Step 24: Add shared Swift API and package** — TDD: No
+- [x] **Step 24: Add shared Swift API and package** — TDD: No
   - **Description:** Add the shared Swift API over UniFFI and a Swift package with separate iOS and macOS targets.
   - **Files:** sdk/apple/shared/; Package.swift or sdk/apple/ package manifest
   - **Tests:** One package version exposes the shared API to both targets; a clean consumer project can depend on the pre-release package
   - **Depends:** Step 23
 
-- [ ] **Step 25: Capture iOS UIKit activations** — TDD: Yes
+- [x] **Step 25: Capture iOS UIKit activations** — TDD: Yes
   - **Description:** Add iOS capture for taps, screen views, scrolls, lifecycle, window-normalized positions, and accessibilityIdentifier identity.
   - **Files:** sdk/apple/ios/
   - **Tests:** Pay with accessibilityIdentifier=checkout.pay is attributed as Pay; unmarked non-secret control paints coordinates only; secure text and password/payment content types are dropped even when unmarked; background then foreground before timeout keeps the session; adapter does not read labels or typed values; introduce XCTest

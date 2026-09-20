@@ -415,6 +415,22 @@ fileprivate struct FfiConverterUInt16: FfiConverterPrimitive {
 #if swift(>=5.8)
 @_documentation(visibility: private)
 #endif
+fileprivate struct FfiConverterUInt32: FfiConverterPrimitive {
+    typealias FfiType = UInt32
+    typealias SwiftType = UInt32
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> UInt32 {
+        return try lift(readInt(&buf))
+    }
+
+    public static func write(_ value: SwiftType, into buf: inout [UInt8]) {
+        writeInt(&buf, lower(value))
+    }
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
 fileprivate struct FfiConverterUInt64: FfiConverterPrimitive {
     typealias FfiType = UInt64
     typealias SwiftType = UInt64
@@ -424,6 +440,22 @@ fileprivate struct FfiConverterUInt64: FfiConverterPrimitive {
     }
 
     public static func write(_ value: SwiftType, into buf: inout [UInt8]) {
+        writeInt(&buf, lower(value))
+    }
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+fileprivate struct FfiConverterInt64: FfiConverterPrimitive {
+    typealias FfiType = Int64
+    typealias SwiftType = Int64
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> Int64 {
+        return try lift(readInt(&buf))
+    }
+
+    public static func write(_ value: Int64, into buf: inout [UInt8]) {
         writeInt(&buf, lower(value))
     }
 }
@@ -514,9 +546,33 @@ fileprivate struct FfiConverterString: FfiConverter {
 
 public protocol HeatmapSdkProtocol : AnyObject {
     
+    /**
+     * Returns session ids for click events from a built batch (adapter tests).
+     */
+    func adapterClickSessionIdsFromBatch() throws  -> [String]
+    
     func flush() throws 
     
     func identify(userId: String) throws 
+    
+    /**
+     * iOS adapter-only lifecycle hook.
+     */
+    func onBackground() 
+    
+    /**
+     * iOS adapter-only lifecycle hook.
+     */
+    func onForeground() 
+    
+    /**
+     * iOS adapter-only click enqueue; not exposed on `HeatmapClient`.
+     */
+    func recordActivationClick(x: Double, y: Double, elementId: String?, viewportWidth: UInt32, viewportHeight: UInt32, timestampMs: Int64, osVersion: String, appVersion: String) throws 
+    
+    func recordIosScreenView(viewportWidth: UInt32, viewportHeight: UInt32, osVersion: String, appVersion: String) throws 
+    
+    func recordIosScroll(viewportWidth: UInt32, viewportHeight: UInt32, osVersion: String, appVersion: String) throws 
     
     func screen(screenId: String, layoutVersion: String?) throws 
     
@@ -592,6 +648,16 @@ public static func initFromJson(configJson: String)throws  -> HeatmapSdk {
     
 
     
+    /**
+     * Returns session ids for click events from a built batch (adapter tests).
+     */
+open func adapterClickSessionIdsFromBatch()throws  -> [String] {
+    return try  FfiConverterSequenceString.lift(try rustCallWithError(FfiConverterTypeCaptureError.lift) {
+    uniffi_heatmap_ffi_fn_method_heatmapsdk_adapter_click_session_ids_from_batch(self.uniffiClonePointer(),$0
+    )
+})
+}
+    
 open func flush()throws  {try rustCallWithError(FfiConverterTypeFlushError.lift) {
     uniffi_heatmap_ffi_fn_method_heatmapsdk_flush(self.uniffiClonePointer(),$0
     )
@@ -601,6 +667,61 @@ open func flush()throws  {try rustCallWithError(FfiConverterTypeFlushError.lift)
 open func identify(userId: String)throws  {try rustCallWithError(FfiConverterTypeIdentityError.lift) {
     uniffi_heatmap_ffi_fn_method_heatmapsdk_identify(self.uniffiClonePointer(),
         FfiConverterString.lower(userId),$0
+    )
+}
+}
+    
+    /**
+     * iOS adapter-only lifecycle hook.
+     */
+open func onBackground() {try! rustCall() {
+    uniffi_heatmap_ffi_fn_method_heatmapsdk_on_background(self.uniffiClonePointer(),$0
+    )
+}
+}
+    
+    /**
+     * iOS adapter-only lifecycle hook.
+     */
+open func onForeground() {try! rustCall() {
+    uniffi_heatmap_ffi_fn_method_heatmapsdk_on_foreground(self.uniffiClonePointer(),$0
+    )
+}
+}
+    
+    /**
+     * iOS adapter-only click enqueue; not exposed on `HeatmapClient`.
+     */
+open func recordActivationClick(x: Double, y: Double, elementId: String?, viewportWidth: UInt32, viewportHeight: UInt32, timestampMs: Int64, osVersion: String, appVersion: String)throws  {try rustCallWithError(FfiConverterTypeCaptureError.lift) {
+    uniffi_heatmap_ffi_fn_method_heatmapsdk_record_activation_click(self.uniffiClonePointer(),
+        FfiConverterDouble.lower(x),
+        FfiConverterDouble.lower(y),
+        FfiConverterOptionString.lower(elementId),
+        FfiConverterUInt32.lower(viewportWidth),
+        FfiConverterUInt32.lower(viewportHeight),
+        FfiConverterInt64.lower(timestampMs),
+        FfiConverterString.lower(osVersion),
+        FfiConverterString.lower(appVersion),$0
+    )
+}
+}
+    
+open func recordIosScreenView(viewportWidth: UInt32, viewportHeight: UInt32, osVersion: String, appVersion: String)throws  {try rustCallWithError(FfiConverterTypeCaptureError.lift) {
+    uniffi_heatmap_ffi_fn_method_heatmapsdk_record_ios_screen_view(self.uniffiClonePointer(),
+        FfiConverterUInt32.lower(viewportWidth),
+        FfiConverterUInt32.lower(viewportHeight),
+        FfiConverterString.lower(osVersion),
+        FfiConverterString.lower(appVersion),$0
+    )
+}
+}
+    
+open func recordIosScroll(viewportWidth: UInt32, viewportHeight: UInt32, osVersion: String, appVersion: String)throws  {try rustCallWithError(FfiConverterTypeCaptureError.lift) {
+    uniffi_heatmap_ffi_fn_method_heatmapsdk_record_ios_scroll(self.uniffiClonePointer(),
+        FfiConverterUInt32.lower(viewportWidth),
+        FfiConverterUInt32.lower(viewportHeight),
+        FfiConverterString.lower(osVersion),
+        FfiConverterString.lower(appVersion),$0
     )
 }
 }
@@ -784,6 +905,85 @@ public func FfiConverterTypeInitConfig_lift(_ buf: RustBuffer) throws -> InitCon
 #endif
 public func FfiConverterTypeInitConfig_lower(_ value: InitConfig) -> RustBuffer {
     return FfiConverterTypeInitConfig.lower(value)
+}
+
+
+public enum CaptureError {
+
+    
+    
+    case TrackingDisabled
+    case SampledOut
+    case Excluded
+    case InvalidField(message: String
+    )
+    case EmptyQueue
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeCaptureError: FfiConverterRustBuffer {
+    typealias SwiftType = CaptureError
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> CaptureError {
+        let variant: Int32 = try readInt(&buf)
+        switch variant {
+
+        
+
+        
+        case 1: return .TrackingDisabled
+        case 2: return .SampledOut
+        case 3: return .Excluded
+        case 4: return .InvalidField(
+            message: try FfiConverterString.read(from: &buf)
+            )
+        case 5: return .EmptyQueue
+
+         default: throw UniffiInternalError.unexpectedEnumCase
+        }
+    }
+
+    public static func write(_ value: CaptureError, into buf: inout [UInt8]) {
+        switch value {
+
+        
+
+        
+        
+        case .TrackingDisabled:
+            writeInt(&buf, Int32(1))
+        
+        
+        case .SampledOut:
+            writeInt(&buf, Int32(2))
+        
+        
+        case .Excluded:
+            writeInt(&buf, Int32(3))
+        
+        
+        case let .InvalidField(message):
+            writeInt(&buf, Int32(4))
+            FfiConverterString.write(message, into: &buf)
+            
+        
+        case .EmptyQueue:
+            writeInt(&buf, Int32(5))
+        
+        }
+    }
+}
+
+
+extension CaptureError: Equatable, Hashable {}
+
+extension CaptureError: Foundation.LocalizedError {
+    public var errorDescription: String? {
+        String(reflecting: self)
+    }
 }
 
 
@@ -1086,10 +1286,28 @@ private var initializationResult: InitializationResult = {
     if bindings_contract_version != scaffolding_contract_version {
         return InitializationResult.contractVersionMismatch
     }
+    if (uniffi_heatmap_ffi_checksum_method_heatmapsdk_adapter_click_session_ids_from_batch() != 13266) {
+        return InitializationResult.apiChecksumMismatch
+    }
     if (uniffi_heatmap_ffi_checksum_method_heatmapsdk_flush() != 65497) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_heatmap_ffi_checksum_method_heatmapsdk_identify() != 23245) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_heatmap_ffi_checksum_method_heatmapsdk_on_background() != 33127) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_heatmap_ffi_checksum_method_heatmapsdk_on_foreground() != 11265) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_heatmap_ffi_checksum_method_heatmapsdk_record_activation_click() != 29890) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_heatmap_ffi_checksum_method_heatmapsdk_record_ios_screen_view() != 8553) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_heatmap_ffi_checksum_method_heatmapsdk_record_ios_scroll() != 1417) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_heatmap_ffi_checksum_method_heatmapsdk_screen() != 18799) {

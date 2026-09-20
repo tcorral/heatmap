@@ -1,6 +1,6 @@
 use std::sync::Mutex;
 
-use crate::errors::{FlushError, IdentityError, InitError, ScreenContextError};
+use crate::errors::{CaptureError, FlushError, IdentityError, InitError, ScreenContextError};
 use crate::public_api::PublicHeatmapSdk;
 
 #[derive(uniffi::Record)]
@@ -81,5 +81,78 @@ impl HeatmapSdk {
     pub fn flush(&self) -> Result<(), FlushError> {
         let mut guard = self.state.lock().expect("heatmap sdk lock");
         guard.flush().map_err(FlushError::from)
+    }
+
+    /// iOS adapter-only lifecycle hook.
+    pub fn on_background(&self) {
+        let mut guard = self.state.lock().expect("heatmap sdk lock");
+        guard.on_background();
+    }
+
+    /// iOS adapter-only lifecycle hook.
+    pub fn on_foreground(&self) {
+        let mut guard = self.state.lock().expect("heatmap sdk lock");
+        guard.on_foreground();
+    }
+
+    /// iOS adapter-only click enqueue; not exposed on `HeatmapClient`.
+    pub fn record_activation_click(
+        &self,
+        x: f64,
+        y: f64,
+        element_id: Option<String>,
+        viewport_width: u32,
+        viewport_height: u32,
+        timestamp_ms: i64,
+        os_version: String,
+        app_version: String,
+    ) -> Result<(), CaptureError> {
+        let mut guard = self.state.lock().expect("heatmap sdk lock");
+        guard
+            .record_activation_click(
+                x,
+                y,
+                element_id,
+                viewport_width,
+                viewport_height,
+                timestamp_ms,
+                os_version,
+                app_version,
+            )
+            .map_err(CaptureError::from)
+    }
+
+    pub fn record_ios_screen_view(
+        &self,
+        viewport_width: u32,
+        viewport_height: u32,
+        os_version: String,
+        app_version: String,
+    ) -> Result<(), CaptureError> {
+        let mut guard = self.state.lock().expect("heatmap sdk lock");
+        guard
+            .record_ios_screen_view(viewport_width, viewport_height, os_version, app_version)
+            .map_err(CaptureError::from)
+    }
+
+    pub fn record_ios_scroll(
+        &self,
+        viewport_width: u32,
+        viewport_height: u32,
+        os_version: String,
+        app_version: String,
+    ) -> Result<(), CaptureError> {
+        let mut guard = self.state.lock().expect("heatmap sdk lock");
+        guard
+            .record_ios_scroll(viewport_width, viewport_height, os_version, app_version)
+            .map_err(CaptureError::from)
+    }
+
+    /// Returns session ids for click events from a built batch (adapter tests).
+    pub fn adapter_click_session_ids_from_batch(&self) -> Result<Vec<String>, CaptureError> {
+        let mut guard = self.state.lock().expect("heatmap sdk lock");
+        guard
+            .adapter_click_session_ids_from_batch()
+            .map_err(CaptureError::from)
     }
 }
