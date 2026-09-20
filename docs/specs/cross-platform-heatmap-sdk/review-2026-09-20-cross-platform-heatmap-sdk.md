@@ -60,7 +60,7 @@ _Each finding should carry enough context for arbitration without becoming a ful
   - **Why it matters:** Web retries 400/401/403/413 and cannot honor 429 `Retry-After`, contrary to delivery design.
   - **Suggested action:** Pass HTTP status and retry metadata into completion handling.
 
-- [ ] **Finding** — `core/heatmap-core/src/sdk.rs:599` — Native auto-flush performs network I/O on capture thread
+- [x] **Finding** — `core/heatmap-core/src/sdk.rs:599` — Native auto-flush performs network I/O on capture thread
   - **Issue:** Enqueue calls `maybe_auto_flush` synchronously; native transport performs blocking HTTP at `core/heatmap-core/src/transport.rs:74`.
   - **Why it matters:** Threshold-triggering UI events can block host UI, violating no-UI-thread-block constraint.
   - **Suggested action:** Dispatch native delivery to background worker while preserving bounded persistent handoff.

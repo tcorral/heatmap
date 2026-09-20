@@ -540,13 +540,6 @@ impl HeatmapSdk {
         persist_retry_batch(self.identity_store.as_ref(), None);
     }
 
-    fn maybe_auto_flush(&mut self, now: i64) {
-        if self.defer_network_flush || !self.should_auto_flush(now) {
-            return;
-        }
-        let _ = self.try_flush();
-    }
-
     fn should_auto_flush(&self, now: i64) -> bool {
         if self.queue.is_empty() {
             return false;
@@ -667,7 +660,6 @@ impl HeatmapSdk {
         }
         self.sync_persisted_queue();
         self.note_queue_activity(self.clock.now_ms());
-        self.maybe_auto_flush(self.clock.now_ms());
         Ok(())
     }
 

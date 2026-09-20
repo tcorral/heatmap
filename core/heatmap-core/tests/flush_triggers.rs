@@ -150,54 +150,84 @@ fn sdk_with_clock(
     (sdk, transport)
 }
 
-#[test]
-fn should_auto_flush_when_event_count_reaches_limit_with_new_batch_id() {
-    let clock = Arc::new(ManualClock::new(0));
-    let transport = RecordingTransport::new(TransportOutcome::Ok);
-    let (mut sdk, transport) = sdk_with_clock(transport, Arc::clone(&clock));
+fn enqueue_until_event_flush_threshold(sdk: &mut HeatmapSdk) {
     let mut ts = 1_000_i64;
-    while transport.send_count() == 0 {
+    for _ in 0..FLUSH_MAX_EVENTS * 2 {
+        if sdk.queued_event_count_for_testing() >= FLUSH_MAX_EVENTS {
+            return;
+        }
         sdk.enqueue_candidate(click_candidate(ts, "checkout.pay"))
             .expect("enqueue");
         ts += 1;
     }
-    assert_eq!(transport.send_count(), 1);
-    let ids = transport.sent_batch_ids();
-    assert_eq!(ids.len(), 1);
-    assert!(ids[0].starts_with("batch_"));
-    assert!(sdk.build_batch().is_err());
 }
 
-#[test]
-fn should_auto_flush_when_serialized_bytes_reach_limit_with_new_batch_id() {
-    let clock = Arc::new(ManualClock::new(0));
-    let transport = RecordingTransport::new(TransportOutcome::Ok);
-    let (mut sdk, transport) = sdk_with_clock(transport, Arc::clone(&clock));
+fn enqueue_until_byte_flush_threshold(sdk: &mut HeatmapSdk) {
     let mut ts = 1_000_i64;
     let padding = "x".repeat(900);
-    while transport.send_count() == 0 {
+    for _ in 0..FLUSH_MAX_EVENTS * 2 {
+        if sdk.flush_byte_limit_reached_for_testing() {
+            return;
+        }
         sdk.enqueue_candidate(click_candidate(ts, &padding))
             .expect("enqueue");
         ts += 1;
     }
-    assert_eq!(transport.send_count(), 1);
-    let ids = transport.sent_batch_ids();
-    assert!(ids[0].starts_with("batch_"));
 }
 
 #[test]
-fn should_auto_flush_after_interval_elapses_with_new_batch_id() {
+fn should_not_call_transport_when_enqueue_reaches_event_flush_threshold() {
+    let clock = Arc::new(ManualClock::new(0));
+    let transport = RecordingTransport::new(TransportOutcome::Ok);
+    let (mut sdk, transport) = sdk_with_clock(transport, Arc::clone(&clock));
+    enqueue_until_event_flush_threshold(&mut sdk);
+    assert_eq!(transport.send_count(), 0);
+    assert!(sdk.queued_event_count_for_testing() >= FLUSH_MAX_EVENTS);
+}
+
+#[test]
+fn should_not_call_transport_when_enqueue_reaches_byte_flush_threshold() {
+    let clock = Arc::new(ManualClock::new(0));
+    let transport = RecordingTransport::new(TransportOutcome::Ok);
+    let (mut sdk, transport) = sdk_with_clock(transport, Arc::clone(&clock));
+    enqueue_until_byte_flush_threshold(&mut sdk);
+    assert_eq!(transport.send_count(), 0);
+    assert!(sdk.flush_byte_limit_reached_for_testing());
+}
+
+#[test]
+fn should_not_call_transport_when_enqueue_after_flush_interval() {
     let clock = Arc::new(ManualClock::new(0));
     let transport = RecordingTransport::new(TransportOutcome::Ok);
     let (mut sdk, transport) = sdk_with_clock(transport, Arc::clone(&clock));
     sdk.enqueue_candidate(click_candidate(0, "checkout.pay"))
         .expect("enqueue");
-    assert_eq!(transport.send_count(), 0);
     clock.advance_ms(FLUSH_INTERVAL_MS);
     sdk.enqueue_candidate(click_candidate(FLUSH_INTERVAL_MS as i64, "checkout.pay"))
         .expect("enqueue after interval");
+    assert_eq!(transport.send_count(), 0);
+}
+
+#[test]
+fn should_upload_on_poll_flush_after_event_flush_threshold() {
+    let clock = Arc::new(ManualClock::new(0));
+    let transport = RecordingTransport::new(TransportOutcome::Ok);
+    let (mut sdk, transport) = sdk_with_clock(transport, Arc::clone(&clock));
+    enqueue_until_event_flush_threshold(&mut sdk);
+    sdk.poll_flush().expect("poll");
     assert_eq!(transport.send_count(), 1);
     assert!(transport.sent_batch_ids()[0].starts_with("batch_"));
+}
+
+#[test]
+fn should_upload_on_explicit_flush_after_event_flush_threshold() {
+    let clock = Arc::new(ManualClock::new(0));
+    let transport = RecordingTransport::new(TransportOutcome::Ok);
+    let (mut sdk, transport) = sdk_with_clock(transport, Arc::clone(&clock));
+    enqueue_until_event_flush_threshold(&mut sdk);
+    sdk.flush().expect("flush");
+    assert_eq!(transport.send_count(), 1);
+    assert!(sdk.build_batch().is_err());
 }
 
 #[test]

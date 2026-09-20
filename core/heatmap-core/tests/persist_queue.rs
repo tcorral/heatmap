@@ -3,7 +3,7 @@ use std::sync::{Arc, Mutex};
 use heatmap_core::{
     batch_ingest_url, CaptureCandidate, FlushError, HeatmapBatch, HeatmapConfig, HeatmapSdk,
     InMemoryIdentityStore, InteractionEvent, PlatformInfo, PlatformType, Position, QueueLimits,
-    SdkInfo, Viewport, QUEUE_MAX_BYTES, QUEUE_MAX_EVENTS,
+    SdkInfo, Viewport, FLUSH_MAX_EVENTS, QUEUE_MAX_BYTES, QUEUE_MAX_EVENTS,
 };
 
 fn valid_config() -> HeatmapConfig {
@@ -149,6 +149,35 @@ fn should_upload_offline_events_once_after_restore_and_flush() {
     third.flush().expect("noop flush");
     assert_eq!(*third_sends.lock().expect("lock"), 0);
     assert_eq!(third.diagnostics().queue_dropped, 0);
+}
+
+#[test]
+fn should_restore_queued_events_after_enqueue_crosses_event_flush_threshold() {
+    let store = Arc::new(InMemoryIdentityStore::new());
+    let (transport, send_count, _) = CountingTransport::new();
+    {
+        let mut sdk =
+            HeatmapSdk::init_with_transport_and_store(valid_config(), transport, store.clone())
+                .expect("init");
+        let mut ts = 1_000_i64;
+        for _ in 0..FLUSH_MAX_EVENTS * 2 {
+            if sdk.queued_event_count_for_testing() >= FLUSH_MAX_EVENTS {
+                break;
+            }
+            sdk.enqueue_candidate(minimal_click_candidate(ts))
+                .expect("enqueue");
+            ts += 1;
+        }
+        assert_eq!(*send_count.lock().expect("lock"), 0);
+        assert!(sdk.queued_event_count_for_testing() >= FLUSH_MAX_EVENTS);
+    }
+    let (restore_transport, restore_sends, _) = CountingTransport::new();
+    let mut restored =
+        HeatmapSdk::init_with_transport_and_store(valid_config(), restore_transport, store)
+            .expect("restore");
+    assert_eq!(*restore_sends.lock().expect("lock"), 0);
+    let batch = restored.build_batch().expect("pending");
+    assert!(batch.events.len() >= FLUSH_MAX_EVENTS);
 }
 
 #[test]
