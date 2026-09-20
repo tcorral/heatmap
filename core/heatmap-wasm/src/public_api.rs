@@ -1,10 +1,9 @@
-#[cfg(target_arch = "wasm32")]
 use std::sync::Arc;
 
 use heatmap_core::{
-    CaptureCandidate, CaptureError, FlushError, HeatmapBatch, HeatmapConfig,
-    HeatmapSdk as CoreHeatmapSdk, IdentityError, InitError, InteractionEvent, PlatformInfo,
-    Position, QueueLimits, ScreenContextError, SdkInfo, Viewport,
+    CaptureCandidate, CaptureError, Clock, FlushError, HeatmapBatch, HeatmapConfig,
+    HeatmapSdk as CoreHeatmapSdk, IdentityError, InMemoryIdentityStore, InitError,
+    InteractionEvent, PlatformInfo, Position, QueueLimits, ScreenContextError, SdkInfo, Viewport,
 };
 
 use crate::config::InitConfigJson;
@@ -51,6 +50,22 @@ impl PublicHeatmapSdk {
         }
     }
 
+    #[cfg(not(target_arch = "wasm32"))]
+    #[doc(hidden)]
+    pub fn init_from_json_with_clock(raw: &str, clock: Arc<dyn Clock>) -> Result<Self, InitError> {
+        let parsed = InitConfigJson::parse(raw)?;
+        let inner = CoreHeatmapSdk::init_with_transport_store_and_clock(
+            parsed.into_core_config(),
+            StubBatchTransport::new(),
+            Arc::new(InMemoryIdentityStore::new()),
+            clock,
+        )?;
+        Ok(Self {
+            inner,
+            pending_upload: None,
+        })
+    }
+
     pub fn identify(&mut self, user_id: String) -> Result<(), IdentityError> {
         self.inner.identify(user_id)
     }
@@ -85,7 +100,7 @@ impl PublicHeatmapSdk {
     }
 
     pub fn begin_flush_batch_json(&mut self) -> Option<String> {
-        if self.pending_upload.is_some() {
+        if self.pending_upload.is_some() || self.inner.is_flush_retry_blocked() {
             return None;
         }
         let batch = self.inner.take_batch_for_upload().ok()?;

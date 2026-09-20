@@ -114,3 +114,28 @@ fn should_restore_batch_on_http_429_complete() {
     sdk.complete_flush_http(429, Some(5));
     assert_eq!(sdk.queued_event_count_for_testing(), before);
 }
+
+#[test]
+fn should_not_begin_flush_before_retry_after_and_allow_after_expiry() {
+    use std::sync::Arc;
+
+    use heatmap_core::ManualClock;
+
+    let clock = Arc::new(ManualClock::new(0));
+    let mut sdk = PublicHeatmapSdk::init_from_json_with_clock(
+        r#"{
+            "project_key": "pk_test",
+            "endpoint": "https://ingest.example.com"
+        }"#,
+        clock.clone(),
+    )
+    .expect("init");
+    record_click(&mut sdk, 1_000);
+    sdk.begin_flush_batch_json().expect("first upload");
+    sdk.complete_flush_http(429, Some(5));
+    assert!(sdk.begin_flush_batch_json().is_none());
+    clock.advance_ms(4_999);
+    assert!(sdk.begin_flush_batch_json().is_none());
+    clock.advance_ms(1);
+    assert!(sdk.begin_flush_batch_json().is_some());
+}

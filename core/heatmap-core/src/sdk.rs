@@ -201,6 +201,10 @@ impl HeatmapSdk {
         queue_flush_byte_limit_reached(self.queue_events_bytes, self.queue.len())
     }
 
+    pub fn is_flush_retry_blocked(&self) -> bool {
+        self.clock.now_ms() < self.retry_not_before_ms
+    }
+
     pub fn config(&self) -> &HeatmapConfig {
         &self.config
     }
@@ -391,7 +395,7 @@ impl HeatmapSdk {
     }
 
     fn try_flush(&mut self) -> Result<(), FlushError> {
-        if self.clock.now_ms() < self.retry_not_before_ms {
+        if self.is_flush_retry_blocked() {
             return Ok(());
         }
         if self.queue.is_empty() && self.retry_batch.is_none() {
