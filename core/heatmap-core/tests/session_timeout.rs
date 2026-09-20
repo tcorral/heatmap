@@ -155,6 +155,50 @@ fn should_start_new_session_after_inactivity_timeout() {
 }
 
 #[test]
+fn should_emit_session_end_for_expired_session_after_process_restart() {
+    let store = Arc::new(InMemoryIdentityStore::new());
+    let clock = Arc::new(ManualClock::new(0));
+    let timeout = 1_000;
+    let old_session = {
+        let mut sdk = HeatmapSdk::init_with_transport_store_and_clock(
+            valid_config_with_timeout(timeout),
+            heatmap_core::HttpBatchTransport::new(),
+            store.clone(),
+            clock.clone(),
+        )
+        .expect("init");
+        sdk.enqueue_candidate(click_candidate(clock.now_ms()))
+            .expect("first click");
+        sdk.build_batch().expect("batch").events[1]
+            .session_id
+            .clone()
+    };
+    clock.advance_ms(timeout + 1);
+    let mut restored = HeatmapSdk::init_with_transport_store_and_clock(
+        valid_config_with_timeout(timeout),
+        heatmap_core::HttpBatchTransport::new(),
+        store,
+        clock.clone(),
+    )
+    .expect("restore");
+    restored
+        .enqueue_candidate(click_candidate(clock.now_ms()))
+        .expect("click after restart");
+    let batch = restored.build_batch().expect("batch");
+    assert_eq!(batch.events.len(), 3);
+    assert_eq!(
+        batch.events[0].event.interaction_type,
+        InteractionType::SessionEnd
+    );
+    assert_eq!(batch.events[0].session_id, old_session);
+    assert_eq!(
+        batch.events[1].event.interaction_type,
+        InteractionType::SessionStart
+    );
+    assert_ne!(batch.events[1].session_id, old_session);
+}
+
+#[test]
 fn should_not_emit_session_end_on_first_capture_after_init() {
     let clock = Arc::new(ManualClock::new(0));
     let mut sdk = sdk_with_clock(1_000, Arc::clone(&clock));

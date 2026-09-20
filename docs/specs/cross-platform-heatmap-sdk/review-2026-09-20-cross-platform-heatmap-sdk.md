@@ -65,7 +65,7 @@ _Each finding should carry enough context for arbitration without becoming a ful
   - **Why it matters:** Threshold-triggering UI events can block host UI, violating no-UI-thread-block constraint.
   - **Suggested action:** Dispatch native delivery to background worker while preserving bounded persistent handoff.
 
-- [ ] **Finding** — `core/heatmap-core/src/sdk.rs:700` — Restart after inactivity loses required `session_end`
+- [x] **Finding** — `core/heatmap-core/src/sdk.rs:700` — Restart after inactivity loses required `session_end`
   - **Issue:** Initialization clears expired persisted session before next capture, preventing rotation logic from emitting `session_end` for prior session.
   - **Why it matters:** Implementation Note 3 requires prior-session `session_end` on next capture after inactivity.
   - **Suggested action:** Retain expired prior session metadata until next capture performs closure and rotation.

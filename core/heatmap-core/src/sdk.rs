@@ -145,9 +145,7 @@ impl HeatmapSdk {
         rng: Arc<dyn RandomSource>,
     ) -> Result<Self, InitError> {
         validate_config(&config)?;
-        let now = clock.now_ms();
-        let (session_id, last_event_at) =
-            load_persisted_session(identity_store.as_ref(), now, config.session_timeout_ms);
+        let (session_id, last_event_at) = load_persisted_session(identity_store.as_ref());
         let anonymous_id = load_or_create_anonymous_id(identity_store.as_ref());
         let user_id = load_persisted_user_id(identity_store.as_ref());
         let sample_in = load_persisted_sample_in(
@@ -753,11 +751,7 @@ fn session_inactive(last_event_at: i64, now: i64, timeout_ms: u64) -> bool {
     now.saturating_sub(last_event_at) as u64 > timeout_ms
 }
 
-fn load_persisted_session(
-    store: &dyn IdentityStore,
-    now: i64,
-    timeout_ms: u64,
-) -> (Option<String>, Option<i64>) {
+fn load_persisted_session(store: &dyn IdentityStore) -> (Option<String>, Option<i64>) {
     let session_id = store
         .read(STORE_KEY_SESSION_ID)
         .filter(|id| !id.trim().is_empty());
@@ -770,17 +764,7 @@ fn load_persisted_session(
     let Some(last) = last_event_at else {
         return (Some(session_id), None);
     };
-    if session_inactive(last, now, timeout_ms) {
-        clear_persisted_session(store);
-        return (None, None);
-    }
     (Some(session_id), Some(last))
-}
-
-fn clear_persisted_session(store: &dyn IdentityStore) {
-    store.write(STORE_KEY_SESSION_ID, None);
-    store.write(STORE_KEY_LAST_EVENT_AT, None);
-    store.write(STORE_KEY_SAMPLE_IN, None);
 }
 
 fn load_persisted_sample_in(store: &dyn IdentityStore, session_active: bool) -> bool {
