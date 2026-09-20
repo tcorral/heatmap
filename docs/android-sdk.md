@@ -10,7 +10,7 @@ Pre-release View and Compose capture adapters over the UniFFI Rust core. They re
 ./gradlew :heatmap-android:publishToMavenLocal
 ```
 
-Native `libheatmap_ffi.so` is included when present under `heatmap-android/src/main/jniLibs/` (produce it with `./sdk/android/scripts/build-rust-android.sh`). A clean consumer does not clone the SDK as a source module or build Rust.
+The AAR ships `libheatmap_ffi.so` for `arm64-v8a`, `armeabi-v7a`, and `x86_64`. A clean consumer does not clone the SDK as a source module or build Rust.
 
 2. Depend on the artifact:
 

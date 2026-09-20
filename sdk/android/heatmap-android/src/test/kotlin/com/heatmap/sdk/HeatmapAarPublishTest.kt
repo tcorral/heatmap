@@ -6,6 +6,10 @@ import org.junit.Test
 import java.io.File
 
 class HeatmapAarPublishTest {
+    companion object {
+        private val REQUIRED_ABIS = listOf("arm64-v8a", "armeabi-v7a", "x86_64")
+    }
+
     @Test
     fun libraryPublishesPreReleaseMavenCoordinates() {
         val gradle = libraryGradle().readText()
@@ -24,12 +28,29 @@ class HeatmapAarPublishTest {
         assertFalse(gradle.contains("projectDir"))
     }
 
+    @Test
+    fun jniLibsIncludeRequiredAbis() {
+        val root = jniLibsRoot()
+        for (abi in REQUIRED_ABIS) {
+            val lib = File(root, "$abi/libheatmap_ffi.so")
+            assertTrue("missing $abi/libheatmap_ffi.so", lib.isFile)
+        }
+    }
+
     private fun libraryGradle(): File {
         val here = File("build.gradle.kts")
         if (here.isFile && here.readText().contains("artifactId = \"heatmap-android\"")) {
             return here
         }
         return File("heatmap-android/build.gradle.kts")
+    }
+
+    private fun jniLibsRoot(): File {
+        val moduleRoot = File("src/main/jniLibs")
+        if (File("build.gradle.kts").isFile && File("build.gradle.kts").readText().contains("artifactId = \"heatmap-android\"")) {
+            return moduleRoot
+        }
+        return File("heatmap-android/src/main/jniLibs")
     }
 
     private fun consumerGradle(): File {

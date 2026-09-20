@@ -47,8 +47,8 @@ From `sdk/android/`:
 ```bash
 ./gradlew :heatmap-android:assembleRelease          # AAR under heatmap-android/build/outputs/aar/
 ./gradlew :heatmap-android:publishToMavenLocal      # pre-release Maven Local artifact
-./gradlew :heatmap-android:testDebugUnitTest        # public API tests (no native lib required)
-./gradlew :consumer-smoke-test:testDebugUnitTest    # in-tree project dependency smoke (skipped if jniLibs empty)
+./gradlew :heatmap-android:testDebugUnitTest        # public API and packaging tests
+./gradlew :consumer-smoke-test:testDebugUnitTest    # in-tree project dependency smoke (host JVM cannot load Android .so)
 ./gradlew -p consumer-aar-smoke testDebugUnitTest   # clean AAR consumer (after publishToMavenLocal)
 ./gradlew test                                      # all module unit tests
 ```
@@ -65,5 +65,5 @@ Set `sdk.dir` via `local.properties` or `ANDROID_HOME` when the Android SDK is i
 
 ## Gaps / CI follow-ups
 
-- `jniLibs/` is empty until `build-rust-android.sh` runs on a machine with Rust Android targets and NDK.
-- Host JVM unit tests skip FFI smoke when `libheatmap_ffi` is missing; emulator/device tests are not part of Step 31.
+- Host JVM unit tests skip FFI init when the Android `.so` cannot load on the host; emulator/device tests are not part of Step 31.
+- Rebuild native libraries after Rust FFI changes: `ANDROID_NDK_HOME=... ./sdk/android/scripts/build-rust-android.sh`.
