@@ -1,8 +1,8 @@
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 use crate::event::HeatmapEvent;
 
-#[derive(Debug, Clone, PartialEq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct HeatmapBatch {
     pub batch_id: String,
     pub events: Vec<HeatmapEvent>,

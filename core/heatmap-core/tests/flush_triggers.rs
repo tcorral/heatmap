@@ -86,6 +86,15 @@ impl RecordingTransport {
             .map(|batch| batch.events.len())
             .unwrap_or(0)
     }
+
+    fn batch_event_timestamps(&self, index: usize) -> Vec<i64> {
+        self.batches
+            .lock()
+            .expect("lock")
+            .get(index)
+            .map(|batch| batch.events.iter().map(|event| event.timestamp).collect())
+            .unwrap_or_default()
+    }
 }
 
 impl heatmap_core::BatchTransport for RecordingTransport {
@@ -368,10 +377,36 @@ fn flush_limits_constants_match_spec() {
 }
 
 #[test]
+fn should_retry_original_front_batch_when_queue_exceeds_ingest_ceiling() {
+    let clock = Arc::new(ManualClock::new(0));
+    let transport = RecordingTransport::new(TransportOutcome::Http(503, None));
+    let (mut sdk, transport) = sdk_with_clock(transport, Arc::clone(&clock));
+    sdk.set_defer_network_flush(true);
+    let mut ts = 1_000_i64;
+    while sdk.queued_event_count_for_testing() < INGEST_MAX_EVENTS + 5 {
+        sdk.enqueue_candidate(click_candidate(ts, "checkout.pay"))
+            .expect("enqueue");
+        ts += 1;
+    }
+    assert!(sdk.flush().is_err());
+    let first_id = transport.sent_batch_ids()[0].clone();
+    let first_timestamps = transport.batch_event_timestamps(0);
+    assert_eq!(first_timestamps.len(), INGEST_MAX_EVENTS);
+    *transport.outcome.lock().expect("lock") = TransportOutcome::Ok;
+    sdk.flush().expect("retry original batch");
+    let ids = transport.sent_batch_ids();
+    assert_eq!(ids[0], first_id);
+    assert_eq!(ids[1], first_id);
+    assert_eq!(transport.batch_event_timestamps(1), first_timestamps);
+    assert!(sdk.queued_event_count_for_testing() > 0);
+}
+
+#[test]
 fn should_upload_at_most_ingest_event_ceiling_per_batch() {
     let clock = Arc::new(ManualClock::new(0));
     let transport = RecordingTransport::new(TransportOutcome::Transport("down".into()));
     let (mut sdk, transport) = sdk_with_clock(transport, Arc::clone(&clock));
+    sdk.set_defer_network_flush(true);
     let mut ts = 1_000_i64;
     while sdk.queued_event_count_for_testing() < INGEST_MAX_EVENTS + 5 {
         sdk.enqueue_candidate(click_candidate(ts, "checkout.pay"))

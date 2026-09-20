@@ -1,7 +1,8 @@
 use std::collections::VecDeque;
 
+use crate::batch::HeatmapBatch;
 use crate::event::HeatmapEvent;
-use crate::identity_store::{IdentityStore, STORE_KEY_QUEUE};
+use crate::identity_store::{IdentityStore, STORE_KEY_QUEUE, STORE_KEY_RETRY_BATCH};
 
 pub const QUEUE_MAX_EVENTS: usize = 10_000;
 pub const QUEUE_MAX_BYTES: usize = 5 * 1024 * 1024;
@@ -41,6 +42,17 @@ pub fn load_persisted_queue(store: &dyn IdentityStore) -> VecDeque<HeatmapEvent>
     serde_json::from_str(&raw).unwrap_or_default()
 }
 
+pub fn load_queue_with_retry(
+    store: &dyn IdentityStore,
+) -> (VecDeque<HeatmapEvent>, Option<HeatmapBatch>) {
+    let mut queue = load_persisted_queue(store);
+    let retry_batch = load_retry_batch(store);
+    if let Some(batch) = &retry_batch {
+        restore_retry_events_if_missing(&mut queue, &batch.events);
+    }
+    (queue, retry_batch)
+}
+
 pub fn persist_queue(store: &dyn IdentityStore, queue: &VecDeque<HeatmapEvent>) {
     if queue.is_empty() {
         store.write(STORE_KEY_QUEUE, None);
@@ -50,6 +62,50 @@ pub fn persist_queue(store: &dyn IdentityStore, queue: &VecDeque<HeatmapEvent>) 
         return;
     };
     store.write(STORE_KEY_QUEUE, Some(serialized.as_str()));
+}
+
+pub fn load_retry_batch(store: &dyn IdentityStore) -> Option<HeatmapBatch> {
+    let raw = store.read(STORE_KEY_RETRY_BATCH)?;
+    if raw.trim().is_empty() {
+        return None;
+    }
+    serde_json::from_str(&raw).ok()
+}
+
+pub fn persist_retry_batch(store: &dyn IdentityStore, batch: Option<&HeatmapBatch>) {
+    let Some(batch) = batch else {
+        store.write(STORE_KEY_RETRY_BATCH, None);
+        return;
+    };
+    let Ok(serialized) = serde_json::to_string(batch) else {
+        return;
+    };
+    store.write(STORE_KEY_RETRY_BATCH, Some(serialized.as_str()));
+}
+
+pub fn restore_retry_events_if_missing(
+    queue: &mut VecDeque<HeatmapEvent>,
+    events: &[HeatmapEvent],
+) {
+    if queue_starts_with(queue, events) {
+        return;
+    }
+    for event in events.iter().rev() {
+        queue.push_front(event.clone());
+    }
+}
+
+pub fn queue_starts_with(queue: &VecDeque<HeatmapEvent>, prefix: &[HeatmapEvent]) -> bool {
+    queue.len() >= prefix.len() && queue.iter().take(prefix.len()).eq(prefix.iter())
+}
+
+pub fn persist_retry_then_queue(
+    store: &dyn IdentityStore,
+    retry_batch: Option<&HeatmapBatch>,
+    queue: &VecDeque<HeatmapEvent>,
+) {
+    persist_retry_batch(store, retry_batch);
+    persist_queue(store, queue);
 }
 
 pub fn push_with_overflow(
@@ -156,5 +212,22 @@ mod tests {
         assert_eq!(dropped, 1);
         assert!(queue.is_empty());
         assert_eq!(queued_bytes, 0);
+    }
+
+    #[test]
+    fn should_prepend_retry_events_when_queue_does_not_start_with_them() {
+        let mut queue = VecDeque::from([sample_event(2)]);
+        restore_retry_events_if_missing(&mut queue, &[sample_event(1)]);
+        assert_eq!(queue[0].timestamp, 1);
+        assert_eq!(queue[1].timestamp, 2);
+    }
+
+    #[test]
+    fn should_not_duplicate_retry_events_when_queue_already_starts_with_them() {
+        let mut queue = VecDeque::from([sample_event(1), sample_event(2)]);
+        restore_retry_events_if_missing(&mut queue, &[sample_event(1)]);
+        assert_eq!(queue.len(), 2);
+        assert_eq!(queue[0].timestamp, 1);
+        assert_eq!(queue[1].timestamp, 2);
     }
 }

@@ -10,6 +10,7 @@ pub const STORE_KEY_SESSION_ID: &str = "heatmap.session_id";
 pub const STORE_KEY_LAST_EVENT_AT: &str = "heatmap.last_event_at";
 pub const STORE_KEY_SAMPLE_IN: &str = "heatmap.sample_in";
 pub const STORE_KEY_QUEUE: &str = "heatmap.queue";
+pub const STORE_KEY_RETRY_BATCH: &str = "heatmap.retry_batch";
 
 pub trait IdentityStore: Send + Sync {
     fn read(&self, key: &str) -> Option<String>;
@@ -36,10 +37,7 @@ impl Default for InMemoryIdentityStore {
 
 impl IdentityStore for InMemoryIdentityStore {
     fn read(&self, key: &str) -> Option<String> {
-        self.data
-            .lock()
-            .ok()
-            .and_then(|map| map.get(key).cloned())
+        self.data.lock().ok().and_then(|map| map.get(key).cloned())
     }
 
     fn write(&self, key: &str, value: Option<&str>) {
@@ -71,7 +69,13 @@ impl FileIdentityStore {
     fn path_for(&self, key: &str) -> PathBuf {
         let safe: String = key
             .chars()
-            .map(|c| if c.is_ascii_alphanumeric() || c == '.' || c == '_' || c == '-' { c } else { '_' })
+            .map(|c| {
+                if c.is_ascii_alphanumeric() || c == '.' || c == '_' || c == '-' {
+                    c
+                } else {
+                    '_'
+                }
+            })
             .collect();
         self.dir.join(format!("{safe}.dat"))
     }

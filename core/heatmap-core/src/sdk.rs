@@ -23,8 +23,8 @@ use crate::identity_store::{
     STORE_KEY_SAMPLE_IN, STORE_KEY_SESSION_ID, STORE_KEY_USER_ID,
 };
 use crate::persistent_queue::{
-    event_json_bytes, load_persisted_queue, persist_queue, push_with_overflow, queue_json_bytes,
-    QueueLimits,
+    event_json_bytes, load_queue_with_retry, persist_queue, persist_retry_batch,
+    persist_retry_then_queue, push_with_overflow, queue_json_bytes, queue_starts_with, QueueLimits,
 };
 use crate::rng::{session_sampled_in, RandomSource, SystemRng};
 #[cfg(not(target_arch = "wasm32"))]
@@ -86,7 +86,7 @@ pub struct HeatmapSdk {
     queue_events_bytes: usize,
     queue_limits: QueueLimits,
     queue_pending_since_ms: Option<i64>,
-    retry_batch_id: Option<String>,
+    retry_batch: Option<HeatmapBatch>,
     retry_not_before_ms: i64,
     defer_network_flush: bool,
 }
@@ -153,7 +153,7 @@ impl HeatmapSdk {
             identity_store.as_ref(),
             session_id.as_ref().is_some_and(|id| !id.trim().is_empty()),
         );
-        let queue = load_persisted_queue(identity_store.as_ref());
+        let (queue, retry_batch) = load_queue_with_retry(identity_store.as_ref());
         let queue_events_bytes = queue_json_bytes(&queue);
         Ok(Self {
             config,
@@ -173,7 +173,7 @@ impl HeatmapSdk {
             queue_events_bytes,
             queue_limits: QueueLimits::production(),
             queue_pending_since_ms: None,
-            retry_batch_id: None,
+            retry_batch,
             retry_not_before_ms: 0,
             defer_network_flush: false,
         })
@@ -362,10 +362,19 @@ impl HeatmapSdk {
         if self.queue.is_empty() {
             return Err(BatchError::EmptyQueue);
         }
-        let batch_id = new_id("batch");
+        let should_clear_retry = self
+            .retry_batch
+            .as_ref()
+            .is_some_and(|batch| queue_starts_with(&self.queue, &batch.events));
         let events = self.take_queued_events();
+        if should_clear_retry {
+            self.clear_retry_batch();
+        }
         self.sync_persisted_queue();
-        Ok(HeatmapBatch { batch_id, events })
+        Ok(HeatmapBatch {
+            batch_id: new_id("batch"),
+            events,
+        })
     }
 
     pub fn flush(&mut self) -> Result<(), FlushError> {
@@ -386,7 +395,7 @@ impl HeatmapSdk {
         if self.clock.now_ms() < self.retry_not_before_ms {
             return Ok(());
         }
-        if self.queue.is_empty() {
+        if self.queue.is_empty() && self.retry_batch.is_none() {
             return Ok(());
         }
         let batch = self
@@ -406,16 +415,22 @@ impl HeatmapSdk {
 
     #[doc(hidden)]
     pub fn take_batch_for_upload(&mut self) -> Result<HeatmapBatch, BatchError> {
+        if let Some(batch) = self.retry_batch.clone() {
+            self.remove_retry_prefix_from_queue(&batch.events);
+            self.sync_retry_and_queue();
+            return Ok(batch);
+        }
         if self.queue.is_empty() {
             return Err(BatchError::EmptyQueue);
         }
-        let batch_id = self
-            .retry_batch_id
-            .take()
-            .unwrap_or_else(|| new_id("batch"));
         let events = self.take_queued_events_for_ingest();
-        self.sync_persisted_queue();
-        Ok(HeatmapBatch { batch_id, events })
+        let batch = HeatmapBatch {
+            batch_id: new_id("batch"),
+            events,
+        };
+        self.retry_batch = Some(batch.clone());
+        self.sync_retry_and_queue();
+        Ok(batch)
     }
 
     fn take_queued_events(&mut self) -> Vec<HeatmapEvent> {
@@ -446,8 +461,7 @@ impl HeatmapSdk {
 
     #[doc(hidden)]
     pub fn finish_successful_upload(&mut self) {
-        self.retry_batch_id = None;
-        self.retry_not_before_ms = 0;
+        self.clear_retry_batch();
         if self.queue.is_empty() {
             self.queue_pending_since_ms = None;
         }
@@ -460,24 +474,53 @@ impl HeatmapSdk {
         err: FlushError,
     ) -> Result<(), FlushError> {
         if flush_error_is_permanent(&err) || !flush_error_is_transient(&err) {
-            self.retry_batch_id = None;
-            self.retry_not_before_ms = 0;
+            self.clear_retry_batch();
             self.diagnostics.record_permanent_drop(1);
             if self.queue.is_empty() {
                 self.queue_pending_since_ms = None;
             }
             return Err(err);
         }
-        self.retry_batch_id = Some(batch.batch_id);
-        for event in batch.events {
+        self.retry_batch = Some(batch.clone());
+        self.restore_batch_to_queue_front(batch.events);
+        self.sync_retry_and_queue();
+        self.retry_not_before_ms = retry_not_before_ms(&err, self.clock.now_ms());
+        Err(err)
+    }
+
+    fn restore_batch_to_queue_front(&mut self, events: Vec<HeatmapEvent>) {
+        for event in events.into_iter().rev() {
             self.queue_events_bytes = self
                 .queue_events_bytes
                 .saturating_add(event_json_bytes(&event));
-            self.queue.push_back(event);
+            self.queue.push_front(event);
         }
-        self.sync_persisted_queue();
-        self.retry_not_before_ms = retry_not_before_ms(&err, self.clock.now_ms());
-        Err(err)
+    }
+
+    fn remove_retry_prefix_from_queue(&mut self, prefix: &[HeatmapEvent]) {
+        if !queue_starts_with(&self.queue, prefix) {
+            return;
+        }
+        for event in prefix {
+            self.queue.pop_front();
+            self.queue_events_bytes = self
+                .queue_events_bytes
+                .saturating_sub(event_json_bytes(event));
+        }
+    }
+
+    fn sync_retry_and_queue(&self) {
+        persist_retry_then_queue(
+            self.identity_store.as_ref(),
+            self.retry_batch.as_ref(),
+            &self.queue,
+        );
+    }
+
+    fn clear_retry_batch(&mut self) {
+        self.retry_batch = None;
+        self.retry_not_before_ms = 0;
+        persist_retry_batch(self.identity_store.as_ref(), None);
     }
 
     fn maybe_auto_flush(&mut self, now: i64) {
