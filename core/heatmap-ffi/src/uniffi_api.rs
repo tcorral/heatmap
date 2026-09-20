@@ -148,6 +148,69 @@ impl HeatmapSdk {
             .map_err(CaptureError::from)
     }
 
+    /// macOS adapter-only click enqueue; not exposed on `HeatmapClient`.
+    pub fn record_macos_activation_click(
+        &self,
+        x: f64,
+        y: f64,
+        element_id: Option<String>,
+        viewport_width: u32,
+        viewport_height: u32,
+        timestamp_ms: i64,
+        window_id: String,
+        os_version: String,
+        app_version: String,
+    ) -> Result<(), CaptureError> {
+        let mut guard = self.state.lock().expect("heatmap sdk lock");
+        guard
+            .record_macos_activation_click(
+                x,
+                y,
+                element_id,
+                viewport_width,
+                viewport_height,
+                timestamp_ms,
+                window_id,
+                os_version,
+                app_version,
+            )
+            .map_err(CaptureError::from)
+    }
+
+    pub fn record_macos_screen_view(
+        &self,
+        viewport_width: u32,
+        viewport_height: u32,
+        os_version: String,
+        app_version: String,
+    ) -> Result<(), CaptureError> {
+        let mut guard = self.state.lock().expect("heatmap sdk lock");
+        guard
+            .record_macos_screen_view(viewport_width, viewport_height, os_version, app_version)
+            .map_err(CaptureError::from)
+    }
+
+    pub fn record_macos_scroll(
+        &self,
+        viewport_width: u32,
+        viewport_height: u32,
+        os_version: String,
+        app_version: String,
+    ) -> Result<(), CaptureError> {
+        let mut guard = self.state.lock().expect("heatmap sdk lock");
+        guard
+            .record_macos_scroll(viewport_width, viewport_height, os_version, app_version)
+            .map_err(CaptureError::from)
+    }
+
+    /// Returns window ids for macOS click events from a built batch (adapter tests).
+    pub fn adapter_macos_click_window_ids_from_batch(&self) -> Result<Vec<String>, CaptureError> {
+        let mut guard = self.state.lock().expect("heatmap sdk lock");
+        guard
+            .adapter_macos_click_window_ids_from_batch()
+            .map_err(CaptureError::from)
+    }
+
     /// Returns session ids for click events from a built batch (adapter tests).
     pub fn adapter_click_session_ids_from_batch(&self) -> Result<Vec<String>, CaptureError> {
         let mut guard = self.state.lock().expect("heatmap sdk lock");

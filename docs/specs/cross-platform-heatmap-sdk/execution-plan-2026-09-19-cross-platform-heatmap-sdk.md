@@ -180,7 +180,7 @@ Greenfield V1 POC: lock the nested event contract, prove a synthetic click throu
   - **Tests:** Shared journey sequence is stored; background/resume stays one session; coordinates stay 0–1 of the current window; host stays up when ingest is down; introduce the iOS E2E runner
   - **Depends:** Step 26, Step 19
 
-- [ ] **Step 28: Capture macOS AppKit activations** — TDD: Yes
+- [x] **Step 28: Capture macOS AppKit activations** — TDD: Yes
   - **Description:** Add macOS capture with accessibilityIdentifier then view identifier lookup, multi-window attribution, and secret-field dropping.
   - **Files:** sdk/apple/macos/
   - **Tests:** Pay identity uses accessibilityIdentifier first and identifier.rawValue when empty; events carry opaque window_id for the window used; coordinates are relative to that window; resize and scale change affect only new events; secure text fields are dropped; adapter does not send window titles or control text; introduce XCTest for macOS

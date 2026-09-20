@@ -551,6 +551,11 @@ public protocol HeatmapSdkProtocol : AnyObject {
      */
     func adapterClickSessionIdsFromBatch() throws  -> [String]
     
+    /**
+     * Returns window ids for macOS click events from a built batch (adapter tests).
+     */
+    func adapterMacosClickWindowIdsFromBatch() throws  -> [String]
+    
     func flush() throws 
     
     func identify(userId: String) throws 
@@ -573,6 +578,15 @@ public protocol HeatmapSdkProtocol : AnyObject {
     func recordIosScreenView(viewportWidth: UInt32, viewportHeight: UInt32, osVersion: String, appVersion: String) throws 
     
     func recordIosScroll(viewportWidth: UInt32, viewportHeight: UInt32, osVersion: String, appVersion: String) throws 
+    
+    /**
+     * macOS adapter-only click enqueue; not exposed on `HeatmapClient`.
+     */
+    func recordMacosActivationClick(x: Double, y: Double, elementId: String?, viewportWidth: UInt32, viewportHeight: UInt32, timestampMs: Int64, windowId: String, osVersion: String, appVersion: String) throws 
+    
+    func recordMacosScreenView(viewportWidth: UInt32, viewportHeight: UInt32, osVersion: String, appVersion: String) throws 
+    
+    func recordMacosScroll(viewportWidth: UInt32, viewportHeight: UInt32, osVersion: String, appVersion: String) throws 
     
     func screen(screenId: String, layoutVersion: String?) throws 
     
@@ -658,6 +672,16 @@ open func adapterClickSessionIdsFromBatch()throws  -> [String] {
 })
 }
     
+    /**
+     * Returns window ids for macOS click events from a built batch (adapter tests).
+     */
+open func adapterMacosClickWindowIdsFromBatch()throws  -> [String] {
+    return try  FfiConverterSequenceString.lift(try rustCallWithError(FfiConverterTypeCaptureError.lift) {
+    uniffi_heatmap_ffi_fn_method_heatmapsdk_adapter_macos_click_window_ids_from_batch(self.uniffiClonePointer(),$0
+    )
+})
+}
+    
 open func flush()throws  {try rustCallWithError(FfiConverterTypeFlushError.lift) {
     uniffi_heatmap_ffi_fn_method_heatmapsdk_flush(self.uniffiClonePointer(),$0
     )
@@ -718,6 +742,44 @@ open func recordIosScreenView(viewportWidth: UInt32, viewportHeight: UInt32, osV
     
 open func recordIosScroll(viewportWidth: UInt32, viewportHeight: UInt32, osVersion: String, appVersion: String)throws  {try rustCallWithError(FfiConverterTypeCaptureError.lift) {
     uniffi_heatmap_ffi_fn_method_heatmapsdk_record_ios_scroll(self.uniffiClonePointer(),
+        FfiConverterUInt32.lower(viewportWidth),
+        FfiConverterUInt32.lower(viewportHeight),
+        FfiConverterString.lower(osVersion),
+        FfiConverterString.lower(appVersion),$0
+    )
+}
+}
+    
+    /**
+     * macOS adapter-only click enqueue; not exposed on `HeatmapClient`.
+     */
+open func recordMacosActivationClick(x: Double, y: Double, elementId: String?, viewportWidth: UInt32, viewportHeight: UInt32, timestampMs: Int64, windowId: String, osVersion: String, appVersion: String)throws  {try rustCallWithError(FfiConverterTypeCaptureError.lift) {
+    uniffi_heatmap_ffi_fn_method_heatmapsdk_record_macos_activation_click(self.uniffiClonePointer(),
+        FfiConverterDouble.lower(x),
+        FfiConverterDouble.lower(y),
+        FfiConverterOptionString.lower(elementId),
+        FfiConverterUInt32.lower(viewportWidth),
+        FfiConverterUInt32.lower(viewportHeight),
+        FfiConverterInt64.lower(timestampMs),
+        FfiConverterString.lower(windowId),
+        FfiConverterString.lower(osVersion),
+        FfiConverterString.lower(appVersion),$0
+    )
+}
+}
+    
+open func recordMacosScreenView(viewportWidth: UInt32, viewportHeight: UInt32, osVersion: String, appVersion: String)throws  {try rustCallWithError(FfiConverterTypeCaptureError.lift) {
+    uniffi_heatmap_ffi_fn_method_heatmapsdk_record_macos_screen_view(self.uniffiClonePointer(),
+        FfiConverterUInt32.lower(viewportWidth),
+        FfiConverterUInt32.lower(viewportHeight),
+        FfiConverterString.lower(osVersion),
+        FfiConverterString.lower(appVersion),$0
+    )
+}
+}
+    
+open func recordMacosScroll(viewportWidth: UInt32, viewportHeight: UInt32, osVersion: String, appVersion: String)throws  {try rustCallWithError(FfiConverterTypeCaptureError.lift) {
+    uniffi_heatmap_ffi_fn_method_heatmapsdk_record_macos_scroll(self.uniffiClonePointer(),
         FfiConverterUInt32.lower(viewportWidth),
         FfiConverterUInt32.lower(viewportHeight),
         FfiConverterString.lower(osVersion),
@@ -1289,6 +1351,9 @@ private var initializationResult: InitializationResult = {
     if (uniffi_heatmap_ffi_checksum_method_heatmapsdk_adapter_click_session_ids_from_batch() != 13266) {
         return InitializationResult.apiChecksumMismatch
     }
+    if (uniffi_heatmap_ffi_checksum_method_heatmapsdk_adapter_macos_click_window_ids_from_batch() != 26667) {
+        return InitializationResult.apiChecksumMismatch
+    }
     if (uniffi_heatmap_ffi_checksum_method_heatmapsdk_flush() != 65497) {
         return InitializationResult.apiChecksumMismatch
     }
@@ -1308,6 +1373,15 @@ private var initializationResult: InitializationResult = {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_heatmap_ffi_checksum_method_heatmapsdk_record_ios_scroll() != 1417) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_heatmap_ffi_checksum_method_heatmapsdk_record_macos_activation_click() != 49705) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_heatmap_ffi_checksum_method_heatmapsdk_record_macos_screen_view() != 29377) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_heatmap_ffi_checksum_method_heatmapsdk_record_macos_scroll() != 57348) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_heatmap_ffi_checksum_method_heatmapsdk_screen() != 18799) {

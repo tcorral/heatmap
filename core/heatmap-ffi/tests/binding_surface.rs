@@ -56,9 +56,14 @@ fn should_not_expose_adapter_only_apis_on_integrator_surface() {
     let public_api = read_src("public_api.rs");
     let c_abi = read_src("c_abi.rs");
     let ios_adapter = read_src("ios_adapter.rs");
+    let macos_adapter = read_src("macos_adapter.rs");
     assert!(
         ios_adapter.contains("record_activation_click"),
         "ios adapter should own activation enqueue"
+    );
+    assert!(
+        macos_adapter.contains("record_macos_activation_click"),
+        "macos adapter should own activation enqueue with window_id"
     );
     for forbidden in [
         forbidden_export_names::TRACK,

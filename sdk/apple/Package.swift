@@ -28,6 +28,14 @@ let package = Package(
             name: "HeatmapAppleIOSCapture",
             targets: ["HeatmapAppleIOSCapture"]
         ),
+        .library(
+            name: "HeatmapAppleMacOS",
+            targets: ["HeatmapAppleMacOS"]
+        ),
+        .library(
+            name: "HeatmapAppleMacOSCapture",
+            targets: ["HeatmapAppleMacOSCapture"]
+        ),
     ],
     targets: [
         .target(
@@ -73,6 +81,20 @@ let package = Package(
             name: "HeatmapAppleIOSTests",
             dependencies: ["HeatmapAppleIOS", "HeatmapAppleIOSCapture"],
             path: "ios/Tests/HeatmapAppleIOSTests"
+        ),
+        .target(
+            name: "HeatmapAppleMacOSCapture",
+            path: "macos/Sources/HeatmapAppleMacOSCapture"
+        ),
+        .target(
+            name: "HeatmapAppleMacOS",
+            dependencies: ["HeatmapAppleMacOSCapture", "HeatmapFFI"],
+            path: "macos/Sources/HeatmapAppleMacOS"
+        ),
+        .testTarget(
+            name: "HeatmapAppleMacOSTests",
+            dependencies: ["HeatmapAppleMacOS", "HeatmapAppleMacOSCapture"],
+            path: "macos/Tests/HeatmapAppleMacOSTests"
         ),
     ]
 )
