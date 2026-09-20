@@ -10,7 +10,7 @@
     <PackageId>Heatmap.Sdk</PackageId>
     <Version>0.1.0-pre1</Version>
     <Authors>Heatmap</Authors>
-    <Description>Pre-release Heatmap SDK for Windows (C ABI over heatmap_ffi). Public session API only; capture adapters ship separately.</Description>
+    <Description>Pre-release Heatmap SDK for Windows (C ABI over heatmap_ffi). Public session API and native heatmap_ffi runtimes; install Heatmap.Sdk.Wpf for WPF capture.</Description>
     <PackageTags>heatmap;analytics;windows;pre-release</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>

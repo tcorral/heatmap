@@ -11,12 +11,26 @@ Pre-release WPF capture adapter over the stable C ABI Rust core (`heatmap_ffi`).
 .\sdk\windows\scripts\build-rust-windows.ps1
 ```
 
-2. Reference the local projects (POC layout) or the pre-release NuGet after packing:
+2. Reference the local projects (POC layout) or the pre-release NuGet packages after packing:
 
 ```powershell
 cd sdk\windows
 dotnet pack src\Heatmap.Sdk\Heatmap.Sdk.csproj -c Release -o artifacts
+dotnet pack src\Heatmap.Sdk.Capture\Heatmap.Sdk.Capture.csproj -c Release -o artifacts
+dotnet pack src\Heatmap.Sdk.Wpf\Heatmap.Sdk.Wpf.csproj -c Release -o artifacts -p:EnableWindowsTargeting=true
 ```
+
+Or run `./scripts/dotnet-test.sh` (macOS/Linux) which packs all three and verifies `.nupkg` files under `artifacts/`.
+
+**NuGet (recommended for capture-to-dashboard apps):**
+
+```powershell
+dotnet add package Heatmap.Sdk.Wpf --version 0.1.0-pre1 --source .\artifacts
+```
+
+This pulls **Heatmap.Sdk** (session API + `heatmap_ffi` runtimes) and **Heatmap.Sdk.Capture** as dependencies.
+
+**ProjectReference (in-repo POC):**
 
 ```xml
 <!-- App csproj -->
@@ -24,7 +38,7 @@ dotnet pack src\Heatmap.Sdk\Heatmap.Sdk.csproj -c Release -o artifacts
 <ProjectReference Include="path\to\sdk\windows\src\Heatmap.Sdk.Wpf\Heatmap.Sdk.Wpf.csproj" />
 ```
 
-NuGet install (when using the package):
+Session-only integration (no WPF capture) may use `Heatmap.Sdk` alone:
 
 ```powershell
 dotnet add package Heatmap.Sdk --version 0.1.0-pre1 --source .\artifacts
