@@ -104,17 +104,30 @@ impl PublicHeatmapSdk {
     }
 
     pub fn complete_flush(&mut self, accepted: bool) {
+        if accepted {
+            self.complete_flush_http(200, None);
+            return;
+        }
         let Some(batch) = self.pending_upload.take() else {
             return;
         };
-        if accepted {
-            self.inner.finish_successful_upload();
-            return;
-        }
         let _ = self.inner.handle_upload_failure(
             batch,
             FlushError::Transport("batch upload not accepted".into()),
         );
+    }
+
+    pub fn complete_flush_http(&mut self, status: u16, retry_after_secs: Option<u64>) {
+        let Some(batch) = self.pending_upload.take() else {
+            return;
+        };
+        if (200..300).contains(&status) {
+            self.inner.finish_successful_upload();
+            return;
+        }
+        let _ = self
+            .inner
+            .handle_upload_failure(batch, FlushError::http_status(status, retry_after_secs));
     }
 
     #[doc(hidden)]

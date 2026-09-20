@@ -8,6 +8,7 @@ declare module "../wasm/pkg/heatmap_wasm.js" {
     drainBatchJson(): string | undefined;
     beginFlushBatchJson(): string | undefined;
     completeFlush(accepted: boolean): void;
+    completeFlushHttp(status: number, retryAfterSecs?: number | null): void;
     recordScroll(): void;
     recordActivationClick(
       x: number,

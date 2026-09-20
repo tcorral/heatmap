@@ -66,7 +66,7 @@ export async function flushHeatmapBatch(): Promise<void> {
     return;
   }
   const endpoint = activeConfig.endpoint.replace(/\/$/, "");
-  let uploadAccepted = false;
+  let completed = false;
   try {
     const response = await fetch(`${endpoint}/v1/batches`, {
       method: "POST",
@@ -76,17 +76,28 @@ export async function flushHeatmapBatch(): Promise<void> {
       },
       body: batchJson,
     });
-    uploadAccepted = response.ok;
-    wasmSdk.completeFlush(uploadAccepted);
+    wasmSdk.completeFlushHttp(response.status, parseRetryAfterSeconds(response.headers.get("Retry-After")));
+    completed = true;
     if (!response.ok) {
       throw new Error(`batch upload failed with status ${response.status}`);
     }
   } catch (err) {
-    if (!uploadAccepted) {
+    if (!completed) {
       wasmSdk.completeFlush(false);
     }
     throw err;
   }
+}
+
+function parseRetryAfterSeconds(header: string | null): number | undefined {
+  if (!header) {
+    return undefined;
+  }
+  const delta = Number(header);
+  if (!Number.isFinite(delta) || delta < 0) {
+    return undefined;
+  }
+  return Math.floor(delta);
 }
 
 function exposeE2EHelpers(): void {

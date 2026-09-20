@@ -67,7 +67,7 @@ test("invalid project key keeps host usable without batch retry loop", async ({
   await expect(page.getByRole("heading", { name: "Confirmation" })).toBeVisible();
 
   expect(batchPosts.length).toBe(1);
-  await page.waitForTimeout(2_500);
+  await page.waitForTimeout(11_000);
   expect(batchPosts.length).toBe(1);
 });
 

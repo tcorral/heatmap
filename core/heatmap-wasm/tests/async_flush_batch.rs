@@ -75,3 +75,42 @@ fn should_no_op_complete_flush_when_no_pending_batch() {
     sdk.complete_flush(false);
     assert!(sdk.queued_event_count_for_testing() > 0);
 }
+
+#[test]
+fn should_drop_batch_on_permanent_http_complete_without_restore() {
+    let mut sdk = test_sdk();
+    record_click(&mut sdk, 1_726_771_205_000);
+    let before = sdk.queued_event_count_for_testing();
+    sdk.begin_flush_batch_json().expect("batch");
+    sdk.complete_flush_http(401, None);
+    assert_eq!(
+        sdk.queued_event_count_for_testing(),
+        0,
+        "permanent HTTP failure drops the in-flight batch"
+    );
+    assert!(before > 0);
+}
+
+#[test]
+fn should_restore_batch_on_transient_http_complete() {
+    let mut sdk = test_sdk();
+    record_click(&mut sdk, 1_726_771_205_000);
+    let before = sdk.queued_event_count_for_testing();
+    sdk.begin_flush_batch_json().expect("batch");
+    sdk.complete_flush_http(503, None);
+    assert_eq!(
+        sdk.queued_event_count_for_testing(),
+        before,
+        "transient HTTP failure restores the in-flight batch"
+    );
+}
+
+#[test]
+fn should_restore_batch_on_http_429_complete() {
+    let mut sdk = test_sdk();
+    record_click(&mut sdk, 1_726_771_205_000);
+    let before = sdk.queued_event_count_for_testing();
+    sdk.begin_flush_batch_json().expect("batch");
+    sdk.complete_flush_http(429, Some(5));
+    assert_eq!(sdk.queued_event_count_for_testing(), before);
+}

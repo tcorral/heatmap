@@ -75,6 +75,11 @@ impl HeatmapSdkJs {
         self.sdk.complete_flush(accepted);
     }
 
+    #[wasm_bindgen(js_name = completeFlushHttp)]
+    pub fn complete_flush_http(&mut self, status: u16, retry_after_secs: Option<u64>) {
+        self.sdk.complete_flush_http(status, retry_after_secs);
+    }
+
     #[wasm_bindgen(js_name = recordActivationClick)]
     pub fn record_activation_click(
         &mut self,

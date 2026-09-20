@@ -43,7 +43,7 @@ _Each finding should carry enough context for arbitration without becoming a ful
   - **Why it matters:** Near-limit batches exceed backend’s 262,144-byte cap, receive permanent 413, and are dropped.
   - **Suggested action:** Bound using complete serialized batch size and add exact-boundary tests.
 
-- [ ] **Finding** — `poc/react/src/heatmap/init.ts:79` — Web uploader treats permanent HTTP failures as transient
+- [x] **Finding** — `poc/react/src/heatmap/init.ts:79` — Web uploader treats permanent HTTP failures as transient
   - **Issue:** Every non-2xx response calls `completeFlush(false)`, which restores batch as generic transport failure without status classification.
   - **Why it matters:** 400/401/403/413 batches retry indefinitely every ten seconds. Existing test waits only 2.5 seconds.
   - **Suggested action:** Pass HTTP status semantics into completion and extend test beyond scheduled retry interval.
@@ -55,7 +55,7 @@ _Each finding should carry enough context for arbitration without becoming a ful
   - **Why it matters:** Same batch ID can identify different events, causing idempotency collisions, duplicate writes, or unsent-event loss.
   - **Suggested action:** Persist in-flight batch ID and exact event payload; retry them together before later events.
 
-- [ ] **Finding** — `core/heatmap-wasm/src/public_api.rs:106` — Web async flush cannot distinguish permanent failures
+- [x] **Finding** — `core/heatmap-wasm/src/public_api.rs:106` — Web async flush cannot distinguish permanent failures
   - **Issue:** `complete_flush` accepts only a boolean and converts every rejection into transient `FlushError::Transport`. React integration passes `false` for every non-2xx response at `poc/react/src/heatmap/init.ts:79`.
   - **Why it matters:** Web retries 400/401/403/413 and cannot honor 429 `Retry-After`, contrary to delivery design.
   - **Suggested action:** Pass HTTP status and retry metadata into completion handling.
