@@ -1,6 +1,7 @@
+use std::collections::HashMap;
 use std::ffi::{c_char, c_void, CStr};
 use std::ptr;
-use std::sync::{Condvar, Mutex};
+use std::sync::{Arc, Condvar, Mutex, OnceLock};
 
 use crate::public_api::PublicHeatmapSdk;
 
@@ -42,6 +43,11 @@ fn lock_mutex<T>(mutex: &Mutex<T>) -> std::sync::MutexGuard<'_, T> {
         .unwrap_or_else(|poisoned| poisoned.into_inner())
 }
 
+fn handle_table() -> &'static Mutex<HashMap<usize, Arc<HandleInner>>> {
+    static HANDLES: OnceLock<Mutex<HashMap<usize, Arc<HandleInner>>>> = OnceLock::new();
+    HANDLES.get_or_init(|| Mutex::new(HashMap::new()))
+}
+
 fn begin_sdk_use(inner: &HandleInner) -> Result<(), i32> {
     let mut gate = lock_mutex(&inner.gate);
     if gate.closed {
@@ -59,22 +65,32 @@ fn end_sdk_use(inner: &HandleInner) {
     }
 }
 
+fn acquire_handle(handle: HeatmapSdkHandle) -> Result<Arc<HandleInner>, i32> {
+    if handle.is_null() {
+        return Err(HEATMAP_ERR_NULL);
+    }
+    lock_mutex(handle_table())
+        .get(&(handle as usize))
+        .cloned()
+        .ok_or(HEATMAP_ERR_NULL)
+}
+
 fn with_sdk<F>(handle: HeatmapSdkHandle, action: F) -> i32
 where
     F: FnOnce(&mut PublicHeatmapSdk) -> i32,
 {
-    if handle.is_null() {
-        return HEATMAP_ERR_NULL;
-    }
-    let inner = unsafe { &*(handle as *mut HandleInner) };
-    if begin_sdk_use(inner).is_err() {
+    let inner = match acquire_handle(handle) {
+        Ok(inner) => inner,
+        Err(code) => return code,
+    };
+    if begin_sdk_use(&inner).is_err() {
         return HEATMAP_ERR_NULL;
     }
     let result = {
         let mut sdk = lock_mutex(&inner.sdk);
         action(&mut sdk)
     };
-    end_sdk_use(inner);
+    end_sdk_use(&inner);
     result
 }
 
@@ -90,14 +106,17 @@ fn wait_until_idle_then_close(inner: &HandleInner) {
 }
 
 fn into_handle(sdk: PublicHeatmapSdk) -> HeatmapSdkHandle {
-    Box::into_raw(Box::new(HandleInner {
+    let inner = Arc::new(HandleInner {
         sdk: Mutex::new(sdk),
         gate: Mutex::new(HandleGate {
             in_flight: 0,
             closed: false,
         }),
         wait: Condvar::new(),
-    })) as HeatmapSdkHandle
+    });
+    let key = Arc::as_ptr(&inner) as usize;
+    lock_mutex(handle_table()).insert(key, inner);
+    key as HeatmapSdkHandle
 }
 
 #[no_mangle]
@@ -128,11 +147,11 @@ pub extern "C" fn heatmap_sdk_free(handle: HeatmapSdkHandle) {
     if handle.is_null() {
         return;
     }
-    let inner = unsafe { &*(handle as *mut HandleInner) };
-    wait_until_idle_then_close(inner);
-    unsafe {
-        drop(Box::from_raw(handle as *mut HandleInner));
-    }
+    let inner = match lock_mutex(handle_table()).remove(&(handle as usize)) {
+        Some(inner) => inner,
+        None => return,
+    };
+    wait_until_idle_then_close(&inner);
 }
 
 #[no_mangle]

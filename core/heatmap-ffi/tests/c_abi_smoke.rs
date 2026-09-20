@@ -93,3 +93,27 @@ fn should_return_null_error_for_null_handle() {
         heatmap_ffi::c_abi::HEATMAP_ERR_NULL
     );
 }
+
+#[test]
+fn should_reject_or_complete_calls_overlapping_free() {
+    let handle = init_test_handle();
+    let handle_bits = handle as usize;
+    std::thread::scope(|scope| {
+        for _ in 0..8 {
+            scope.spawn(move || {
+                let handle = handle_bits as HeatmapSdkHandle;
+                for _ in 0..40 {
+                    let _ = heatmap_sdk_sign_out(handle);
+                    let _ = heatmap_sdk_poll_flush(handle);
+                }
+            });
+        }
+        scope.spawn(move || {
+            heatmap_sdk_free(handle_bits as HeatmapSdkHandle);
+        });
+    });
+    assert_eq!(
+        heatmap_sdk_sign_out(handle_bits as HeatmapSdkHandle),
+        heatmap_ffi::c_abi::HEATMAP_ERR_NULL
+    );
+}
