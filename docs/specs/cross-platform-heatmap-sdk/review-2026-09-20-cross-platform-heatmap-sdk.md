@@ -33,7 +33,7 @@ _Each finding should carry enough context for arbitration without becoming a ful
   - **Why it matters:** Aliased Rust mutable references and use-after-free cause undefined behavior.
   - **Suggested action:** Add synchronized, lifetime-safe native handle ownership and make managed disposal wait for active callbacks.
 
-- [ ] **Critical** — `core/heatmap-core/src/identity_store.rs:91` — File persistence updates fail on Windows
+- [x] **Critical** — `core/heatmap-core/src/identity_store.rs:91` — File persistence updates fail on Windows
   - **Issue:** `fs::rename(tmp, destination)` does not replace existing destination on Windows, and rename errors are discarded.
   - **Why it matters:** Subsequent queue, identity, and session writes silently retain stale data.
   - **Suggested action:** Implement platform-safe atomic replacement, propagate/report failures, and test repeated writes on Windows.

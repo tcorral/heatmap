@@ -91,10 +91,7 @@ impl IdentityStore for FileIdentityStore {
         let path = self.path_for(key);
         match value {
             Some(v) => {
-                let tmp = path.with_extension("tmp");
-                if write_atomic(&tmp, v).is_ok() {
-                    let _ = fs::rename(&tmp, &path);
-                }
+                let _ = persist_value(&path, v);
             }
             None => {
                 let _ = fs::remove_file(path);
@@ -108,4 +105,65 @@ fn write_atomic(path: &Path, contents: &str) -> io::Result<()> {
         fs::create_dir_all(parent)?;
     }
     fs::write(path, contents.as_bytes())
+}
+
+fn persist_value(dest: &Path, contents: &str) -> io::Result<()> {
+    let tmp = dest.with_extension("tmp");
+    let result = write_atomic(&tmp, contents).and_then(|_| replace_file(&tmp, dest));
+    if result.is_err() {
+        let _ = fs::remove_file(&tmp);
+    }
+    result
+}
+
+fn replace_file(tmp: &Path, dest: &Path) -> io::Result<()> {
+    match fs::rename(tmp, dest) {
+        Ok(()) => Ok(()),
+        Err(err) => replace_existing_destination(tmp, dest, err),
+    }
+}
+
+fn replace_existing_destination(tmp: &Path, dest: &Path, rename_err: io::Error) -> io::Result<()> {
+    if !tmp.exists() || !dest.exists() {
+        return Err(rename_err);
+    }
+    fs::remove_file(dest)?;
+    fs::rename(tmp, dest)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn unique_temp_dir(prefix: &str) -> PathBuf {
+        let nanos = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map(|duration| duration.as_nanos())
+            .unwrap_or(0);
+        std::env::temp_dir().join(format!("{prefix}-{}-{nanos}", std::process::id()))
+    }
+
+    #[test]
+    fn should_replace_existing_destination_file() {
+        let dir = unique_temp_dir("heatmap-replace-unit");
+        fs::create_dir_all(&dir).expect("dir");
+        let dest = dir.join("queue.dat");
+        let tmp = dir.join("queue.tmp");
+        fs::write(&dest, b"old").expect("dest");
+        fs::write(&tmp, b"new").expect("tmp");
+        replace_file(&tmp, &dest).expect("replace");
+        assert_eq!(fs::read_to_string(&dest).expect("read"), "new");
+        assert!(!tmp.exists(), "tmp file removed by replace");
+    }
+
+    #[test]
+    fn should_return_rename_error_when_tmp_is_missing() {
+        let dir = unique_temp_dir("heatmap-replace-missing");
+        fs::create_dir_all(&dir).expect("dir");
+        let dest = dir.join("queue.dat");
+        let tmp = dir.join("missing.tmp");
+        fs::write(&dest, b"keep").expect("dest");
+        assert!(replace_file(&tmp, &dest).is_err());
+        assert_eq!(fs::read_to_string(&dest).expect("read"), "keep");
+    }
 }

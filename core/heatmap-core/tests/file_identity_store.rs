@@ -94,14 +94,9 @@ impl heatmap_core::BatchTransport for CountingTransport {
 
 #[test]
 fn should_restore_queued_events_after_process_restart_with_file_store() {
-    let dir = std::env::temp_dir().join(format!(
-        "heatmap-file-store-{}",
-        std::process::id()
-    ));
+    let dir = std::env::temp_dir().join(format!("heatmap-file-store-{}", std::process::id()));
     let _ = std::fs::remove_dir_all(&dir);
-    let store = Arc::new(
-        FileIdentityStore::new(dir.clone()).expect("create file identity store"),
-    );
+    let store = Arc::new(FileIdentityStore::new(dir.clone()).expect("create file identity store"));
 
     {
         let mut sdk = HeatmapSdk::init_with_transport_and_store(
@@ -129,14 +124,39 @@ fn should_restore_queued_events_after_process_restart_with_file_store() {
 
 #[test]
 fn should_persist_key_value_round_trip() {
-    let dir = PathBuf::from(std::env::temp_dir()).join(format!(
-        "heatmap-kv-{}",
-        std::process::id()
-    ));
+    let dir =
+        PathBuf::from(std::env::temp_dir()).join(format!("heatmap-kv-{}", std::process::id()));
     let _ = std::fs::remove_dir_all(&dir);
     let store = FileIdentityStore::new(dir).expect("store");
     store.write(heatmap_core::STORE_KEY_QUEUE, Some("[{\"event\":{}}]"));
     assert!(store.read(heatmap_core::STORE_KEY_QUEUE).is_some());
     store.write(heatmap_core::STORE_KEY_QUEUE, None);
     assert!(store.read(heatmap_core::STORE_KEY_QUEUE).is_none());
+}
+
+fn unique_temp_dir(prefix: &str) -> PathBuf {
+    let nanos = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|duration| duration.as_nanos())
+        .unwrap_or(0);
+    PathBuf::from(std::env::temp_dir()).join(format!("{prefix}-{}-{nanos}", std::process::id()))
+}
+
+#[test]
+fn should_replace_existing_file_on_repeated_writes() {
+    let dir = unique_temp_dir("heatmap-replace");
+    let _ = std::fs::remove_dir_all(&dir);
+    let store = FileIdentityStore::new(dir).expect("store");
+    store.write(heatmap_core::STORE_KEY_QUEUE, Some("first"));
+    store.write(heatmap_core::STORE_KEY_QUEUE, Some("second"));
+    store.write(heatmap_core::STORE_KEY_ANONYMOUS_ID, Some("anon_a"));
+    store.write(heatmap_core::STORE_KEY_ANONYMOUS_ID, Some("anon_b"));
+    assert_eq!(
+        store.read(heatmap_core::STORE_KEY_QUEUE).as_deref(),
+        Some("second")
+    );
+    assert_eq!(
+        store.read(heatmap_core::STORE_KEY_ANONYMOUS_ID).as_deref(),
+        Some("anon_b")
+    );
 }
