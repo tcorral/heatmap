@@ -124,7 +124,7 @@ _Each finding should carry enough context for arbitration without becoming a ful
   - **Why it matters:** Analyst cannot see Pay counts broken down across web, iOS, Android, macOS, and Windows in one dashboard result as required.
   - **Suggested action:** Add cross-platform totals query grouped by platform and render all five platform counts together.
 
-- [ ] **Major** — `sdk/apple/Package.swift:3` — AC: Installable SDKs — Apple package depends on repository-local debug libraries
+- [x] **Major** — `sdk/apple/Package.swift:3` — AC: Installable SDKs — Apple package depends on repository-local debug libraries
   - **Issue:** SwiftPM package links `libheatmap_ffi` from `../../target/debug` or simulator-specific build output. It contains no binary target/XCFramework. Android docs likewise require source-module inclusion or hypothetical published AAR, but no Maven publication is configured at `sdk/android/heatmap-android/build.gradle.kts:1`.
   - **Why it matters:** Clean consumers cannot install these SDKs through normal package-manager dependency resolution and complete initialization without cloning repository and manually building native artifacts.
   - **Suggested action:** Package Apple XCFramework through SwiftPM and publish/configure Android AAR Maven artifact.

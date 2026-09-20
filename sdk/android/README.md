@@ -46,8 +46,10 @@ From `sdk/android/`:
 
 ```bash
 ./gradlew :heatmap-android:assembleRelease          # AAR under heatmap-android/build/outputs/aar/
+./gradlew :heatmap-android:publishToMavenLocal      # pre-release Maven Local artifact
 ./gradlew :heatmap-android:testDebugUnitTest        # public API tests (no native lib required)
-./gradlew :consumer-smoke-test:testDebugUnitTest    # consumer smoke (skipped if jniLibs empty)
+./gradlew :consumer-smoke-test:testDebugUnitTest    # in-tree project dependency smoke (skipped if jniLibs empty)
+./gradlew -p consumer-aar-smoke testDebugUnitTest   # clean AAR consumer (after publishToMavenLocal)
 ./gradlew test                                      # all module unit tests
 ```
 
@@ -57,11 +59,11 @@ Set `sdk.dir` via `local.properties` or `ANDROID_HOME` when the Android SDK is i
 
 | Module | Role |
 |--------|------|
-| `:heatmap-android` | AAR: `HeatmapClient`, UniFFI Kotlin, `jniLibs/libheatmap_ffi.so` |
-| `:consumer-smoke-test` | Depends on `:heatmap-android`; calls public API in unit tests |
+| `:heatmap-android` | AAR: `HeatmapClient`, UniFFI Kotlin, `jniLibs/libheatmap_ffi.so`; publishes `com.heatmap:heatmap-android:0.1.0-pre1` |
+| `:consumer-smoke-test` | In-tree `project(":heatmap-android")` smoke |
+| `consumer-aar-smoke/` | Clean consumer: Maven Local AAR only, no source-module include |
 
 ## Gaps / CI follow-ups
 
 - `jniLibs/` is empty until `build-rust-android.sh` runs on a machine with Rust Android targets and NDK.
 - Host JVM unit tests skip FFI smoke when `libheatmap_ffi` is missing; emulator/device tests are not part of Step 31.
-- Maven publish coordinates and signing are out of scope for this step.

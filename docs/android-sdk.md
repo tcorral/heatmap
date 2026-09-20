@@ -4,28 +4,35 @@ Pre-release View and Compose capture adapters over the UniFFI Rust core. They re
 
 ## Install
 
-1. Build `heatmap-ffi` for Android ABIs (requires Rust Android targets and NDK):
+1. Publish the pre-release AAR to Maven Local (from `sdk/android/`):
 
 ```bash
-# Repo root
-export ANDROID_NDK_HOME=/path/to/ndk
-./sdk/android/scripts/build-rust-android.sh
+./gradlew :heatmap-android:publishToMavenLocal
 ```
 
-2. Add the `:heatmap-android` module to your Gradle project (local path or published AAR):
+Native `libheatmap_ffi.so` is included when present under `heatmap-android/src/main/jniLibs/` (produce it with `./sdk/android/scripts/build-rust-android.sh`). A clean consumer does not clone the SDK as a source module or build Rust.
+
+2. Depend on the artifact:
 
 ```kotlin
 // settings.gradle.kts
-include(":heatmap-android")
-project(":heatmap-android").projectDir = file("../heatmap-tool/sdk/android/heatmap-android")
+dependencyResolutionManagement {
+    repositories {
+        mavenLocal()
+        google()
+        mavenCentral()
+    }
+}
 ```
 
 ```kotlin
 // app/build.gradle.kts
 dependencies {
-    implementation(project(":heatmap-android"))
+    implementation("com.heatmap:heatmap-android:0.1.0-pre1")
 }
 ```
+
+In-repo samples may still `include(":heatmap-android")`. Integrators should use the Maven coordinate above.
 
 Regenerate Kotlin bindings after Rust API changes:
 

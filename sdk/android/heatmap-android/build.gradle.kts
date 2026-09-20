@@ -1,6 +1,7 @@
 plugins {
     id("com.android.library")
     id("org.jetbrains.kotlin.android")
+    id("maven-publish")
 }
 
 android {
@@ -45,6 +46,22 @@ android {
     publishing {
         singleVariant("release") {
             withSourcesJar()
+        }
+    }
+}
+
+group = "com.heatmap"
+version = "0.1.0-pre1"
+
+afterEvaluate {
+    publishing {
+        publications {
+            create<MavenPublication>("release") {
+                from(components["release"])
+                groupId = "com.heatmap"
+                artifactId = "heatmap-android"
+                version = "0.1.0-pre1"
+            }
         }
     }
 }
