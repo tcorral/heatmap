@@ -108,7 +108,9 @@ mod tests {
             mask_elements: vec![],
             app_version: heatmap_core::HeatmapConfig::DEFAULT_APP_VERSION.into(),
         };
-        let mut sdk = PublicHeatmapSdk::init(config).expect("init");
+        let mut sdk =
+            PublicHeatmapSdk::init_with_transport(config, heatmap_core::HttpBatchTransport::new())
+                .expect("init");
         sdk.record_android_activation_click(
             0.5,
             0.5,
@@ -142,7 +144,9 @@ mod tests {
             mask_elements: vec![],
             app_version: heatmap_core::HeatmapConfig::DEFAULT_APP_VERSION.into(),
         };
-        let mut sdk = PublicHeatmapSdk::init(config).expect("init");
+        let mut sdk =
+            PublicHeatmapSdk::init_with_transport(config, heatmap_core::HttpBatchTransport::new())
+                .expect("init");
         sdk.screen("Home".into(), None).expect("screen");
         sdk.record_android_screen_view(800, 600, "Android 14".into(), "1.0.0".into())
             .expect("screen_view");
@@ -172,7 +176,9 @@ mod tests {
             mask_elements: vec![],
             app_version: heatmap_core::HeatmapConfig::DEFAULT_APP_VERSION.into(),
         };
-        let mut sdk = PublicHeatmapSdk::init(config).expect("init");
+        let mut sdk =
+            PublicHeatmapSdk::init_with_transport(config, heatmap_core::HttpBatchTransport::new())
+                .expect("init");
         sdk.screen("Checkout".into(), Some("2024-09".into()))
             .expect("screen");
         sdk.record_android_scroll(800, 600, "Android 14".into(), "1.0.0".into())

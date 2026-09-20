@@ -138,7 +138,9 @@ mod tests {
             mask_elements: vec![],
             app_version: heatmap_core::HeatmapConfig::DEFAULT_APP_VERSION.into(),
         };
-        let mut sdk = PublicHeatmapSdk::init(config).expect("init");
+        let mut sdk =
+            PublicHeatmapSdk::init_with_transport(config, heatmap_core::HttpBatchTransport::new())
+                .expect("init");
         sdk.record_windows_activation_click(
             0.5,
             0.5,
