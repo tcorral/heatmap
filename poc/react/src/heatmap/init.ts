@@ -61,32 +61,33 @@ export async function flushHeatmapBatch(): Promise<void> {
   if (!wasmSdk || !activeConfig) {
     return;
   }
-  const batchJson = wasmSdk.beginFlushBatchJson();
-  if (!batchJson) {
-    return;
-  }
   const endpoint = activeConfig.endpoint.replace(/\/$/, "");
-  let completed = false;
+  while (await uploadOneBatch(wasmSdk, endpoint, activeConfig.projectKey)) {
+    // drain remaining batches after each successful upload
+  }
+}
+
+async function uploadOneBatch(sdk: HeatmapSdkJs, endpoint: string, projectKey: string): Promise<boolean> {
+  const batchJson = sdk.beginFlushBatchJson();
+  if (!batchJson) {
+    return false;
+  }
+  let response: Response;
   try {
-    const response = await fetch(`${endpoint}/v1/batches`, {
+    response = await fetch(`${endpoint}/v1/batches`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Project-Key": activeConfig.projectKey,
-      },
+      headers: { "Content-Type": "application/json", "X-Project-Key": projectKey },
       body: batchJson,
     });
-    wasmSdk.completeFlushHttp(response.status, parseRetryAfterSeconds(response.headers.get("Retry-After")));
-    completed = true;
-    if (!response.ok) {
-      throw new Error(`batch upload failed with status ${response.status}`);
-    }
   } catch (err) {
-    if (!completed) {
-      wasmSdk.completeFlush(false);
-    }
+    sdk.completeFlush(false);
     throw err;
   }
+  sdk.completeFlushHttp(response.status, parseRetryAfterSeconds(response.headers.get("Retry-After")));
+  if (!response.ok) {
+    throw new Error(`batch upload failed with status ${response.status}`);
+  }
+  return true;
 }
 
 function parseRetryAfterSeconds(header: string | null): number | undefined {
