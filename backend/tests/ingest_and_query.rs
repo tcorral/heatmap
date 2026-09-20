@@ -210,3 +210,30 @@ async fn click_without_element_id_stores_raw_only_no_total_row() {
     let elements = totals["elements"].as_array().expect("elements array");
     assert!(elements.is_empty());
 }
+
+#[tokio::test]
+async fn post_batches_rejects_click_with_out_of_range_position() {
+    let app = test_app();
+    let mut click = read_fixture("click-checkout-pay-web.json");
+    click["position"] = json!({ "x": 1.5, "y": 0.5 });
+    let batch = json!({
+        "batch_id": "batch_bad_position",
+        "events": [click]
+    });
+    let response = app
+        .oneshot(
+            Request::builder()
+                .method("POST")
+                .uri("/v1/batches")
+                .header("X-Project-Key", TEST_PROJECT_KEY)
+                .header("content-type", "application/json")
+                .body(Body::from(batch.to_string()))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(response.status(), StatusCode::ACCEPTED);
+    let body = response_json(response).await;
+    assert_eq!(body["accepted_count"], 0);
+    assert_eq!(body["rejected_count"], 1);
+}

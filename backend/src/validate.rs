@@ -32,7 +32,23 @@ pub fn validate_event(event: &Value) -> bool {
     if !validate_event_payload(event.get("event")) {
         return false;
     }
+    if !validate_position(event.get("position")) {
+        return false;
+    }
     true
+}
+
+fn validate_position(value: Option<&Value>) -> bool {
+    let Some(position) = value else {
+        return true;
+    };
+    let Some(x) = position.get("x").and_then(|v| v.as_f64()) else {
+        return false;
+    };
+    let Some(y) = position.get("y").and_then(|v| v.as_f64()) else {
+        return false;
+    };
+    (0.0..=1.0).contains(&x) && (0.0..=1.0).contains(&y)
 }
 
 fn non_empty_string(value: Option<&Value>) -> bool {
