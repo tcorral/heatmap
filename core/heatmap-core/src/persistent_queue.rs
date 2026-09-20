@@ -22,7 +22,9 @@ impl QueueLimits {
 }
 
 pub fn event_json_bytes(event: &HeatmapEvent) -> usize {
-    serde_json::to_vec(event).map(|bytes| bytes.len()).unwrap_or(0)
+    serde_json::to_vec(event)
+        .map(|bytes| bytes.len())
+        .unwrap_or(0)
 }
 
 pub fn queue_json_bytes(queue: &VecDeque<HeatmapEvent>) -> usize {
@@ -67,7 +69,7 @@ fn trim_oldest_until_within_limits(
     limits: &QueueLimits,
 ) -> u64 {
     let mut dropped = 0u64;
-    while queue.len() > 1 && queue_over_limits(queue.len(), *queued_bytes, limits) {
+    while !queue.is_empty() && queue_over_limits(queue.len(), *queued_bytes, limits) {
         if let Some(removed) = queue.pop_front() {
             *queued_bytes = queued_bytes.saturating_sub(event_json_bytes(&removed));
             dropped = dropped.saturating_add(1);
@@ -138,5 +140,21 @@ mod tests {
         assert_eq!(dropped, 1);
         assert_eq!(queue.len(), 1);
         assert_eq!(queue[0].timestamp, 2);
+    }
+
+    #[test]
+    fn should_drop_event_when_it_alone_exceeds_byte_limit() {
+        let event = sample_event(1);
+        let event_bytes = event_json_bytes(&event);
+        let limits = QueueLimits {
+            max_events: usize::MAX,
+            max_bytes: event_bytes.saturating_sub(1),
+        };
+        let mut queue = VecDeque::new();
+        let mut queued_bytes = 0;
+        let dropped = push_with_overflow(&mut queue, &mut queued_bytes, event, &limits);
+        assert_eq!(dropped, 1);
+        assert!(queue.is_empty());
+        assert_eq!(queued_bytes, 0);
     }
 }
