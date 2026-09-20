@@ -2,7 +2,7 @@ use axum::{
     body::Body,
     http::{Request, StatusCode},
 };
-use heatmap_backend::{app, db, AppConfig, test_app, TEST_PROJECT_KEY};
+use heatmap_backend::{app, db, test_app, AppConfig, TEST_PROJECT_KEY};
 use http_body_util::BodyExt;
 use serde_json::{json, Value};
 use tower::ServiceExt;

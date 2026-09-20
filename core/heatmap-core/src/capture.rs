@@ -89,10 +89,7 @@ fn screen_id_is_excluded(
     exclude_screens.iter().any(|id| id == screen_id)
 }
 
-fn click_element_is_excluded(
-    interaction: &InteractionEvent,
-    exclude_elements: &[String],
-) -> bool {
+fn click_element_is_excluded(interaction: &InteractionEvent, exclude_elements: &[String]) -> bool {
     if interaction.interaction_type != InteractionType::Click {
         return false;
     }

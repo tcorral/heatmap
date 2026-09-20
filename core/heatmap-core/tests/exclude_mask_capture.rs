@@ -94,7 +94,9 @@ fn should_drop_capture_when_inherited_screen_is_excluded() {
         }),
         window_id: None,
     };
-    let err = sdk.enqueue_candidate(candidate).expect_err("excluded inherited screen");
+    let err = sdk
+        .enqueue_candidate(candidate)
+        .expect_err("excluded inherited screen");
     assert!(matches!(err, CaptureError::Excluded));
 }
 

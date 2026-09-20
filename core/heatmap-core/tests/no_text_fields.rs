@@ -93,6 +93,13 @@ fn capture_candidate_shape_has_no_text_label_or_value_fields() {
     } = candidate;
     assert_eq!(interaction.interaction_type, InteractionType::Click);
     let _ = (
-        timestamp, sdk, platform, screen, interaction, position, viewport, window_id,
+        timestamp,
+        sdk,
+        platform,
+        screen,
+        interaction,
+        position,
+        viewport,
+        window_id,
     );
 }

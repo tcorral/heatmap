@@ -65,7 +65,10 @@ fn is_loopback_http(endpoint: &str) -> bool {
         return false;
     };
     let hostport = rest.split(['/', '?']).next().unwrap_or(rest);
-    let host = hostport.rsplit_once('@').map(|(_, host)| host).unwrap_or(hostport);
+    let host = hostport
+        .rsplit_once('@')
+        .map(|(_, host)| host)
+        .unwrap_or(hostport);
     let hostname = host.rsplit_once(':').map(|(name, _)| name).unwrap_or(host);
     hostname == "127.0.0.1" || hostname == "localhost"
 }

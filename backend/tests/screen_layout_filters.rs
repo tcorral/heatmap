@@ -2,7 +2,7 @@ use axum::{
     body::Body,
     http::{Request, StatusCode},
 };
-use heatmap_backend::{app, db, AppConfig, test_app, TEST_PROJECT_KEY};
+use heatmap_backend::{app, db, test_app, AppConfig, TEST_PROJECT_KEY};
 use http_body_util::BodyExt;
 use serde_json::{json, Value};
 use tower::ServiceExt;
@@ -169,10 +169,8 @@ async fn missing_layout_version_query_uses_unspecified_bucket() {
 
     let named_layout = fetch_element_totals(&app, Some("2024-09")).await;
     assert_eq!(pay_click_count(&named_layout), 0);
-    assert!(
-        named_layout["elements"]
-            .as_array()
-            .expect("elements")
-            .is_empty()
-    );
+    assert!(named_layout["elements"]
+        .as_array()
+        .expect("elements")
+        .is_empty());
 }

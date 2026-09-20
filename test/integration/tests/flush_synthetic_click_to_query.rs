@@ -155,11 +155,12 @@ async fn should_post_batch_to_configured_https_ingest_base() {
         .expect("enqueue");
     sdk.flush().expect("flush");
 
-    let recorded = last_url.lock().expect("lock").clone().expect("recorded url");
-    assert_eq!(
-        recorded,
-        "https://ingest.example.test/base/v1/batches"
-    );
+    let recorded = last_url
+        .lock()
+        .expect("lock")
+        .clone()
+        .expect("recorded url");
+    assert_eq!(recorded, "https://ingest.example.test/base/v1/batches");
 }
 
 struct UnreachableTransport;

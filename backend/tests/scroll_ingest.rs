@@ -2,7 +2,7 @@ use axum::{
     body::Body,
     http::{Request, StatusCode},
 };
-use heatmap_backend::{app, db, AppConfig, test_app, TEST_PROJECT_KEY};
+use heatmap_backend::{app, db, test_app, AppConfig, TEST_PROJECT_KEY};
 use http_body_util::BodyExt;
 use serde_json::{json, Value};
 use tower::ServiceExt;
@@ -24,8 +24,7 @@ fn app_with_test_events() -> axum::Router {
 }
 
 fn fixtures_dir() -> std::path::PathBuf {
-    std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-        .join("../test/fixtures")
+    std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../test/fixtures")
 }
 
 fn read_fixture(name: &str) -> Value {

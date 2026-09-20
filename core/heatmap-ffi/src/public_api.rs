@@ -1,12 +1,12 @@
 use std::path::PathBuf;
 use std::sync::Arc;
 
+#[cfg(test)]
+use heatmap_core::{BatchTransport, InMemoryIdentityStore};
 use heatmap_core::{
     FileIdentityStore, FlushError, HeatmapConfig, HeatmapSdk as CoreHeatmapSdk, HttpBatchTransport,
     IdentityError, IdentityStore, InitError, ScreenContextError,
 };
-#[cfg(test)]
-use heatmap_core::{BatchTransport, InMemoryIdentityStore};
 
 use crate::config::InitConfigJson;
 

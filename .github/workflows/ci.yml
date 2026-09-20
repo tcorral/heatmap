@@ -122,7 +122,7 @@ jobs:
           distribution: temurin
           java-version: "17"
 
-      - uses: android-actions/setup-android@v3
+      - uses: android-actions/setup-android@v4
 
       - name: :heatmap-android:testDebugUnitTest
         working-directory: sdk/android
@@ -144,6 +144,9 @@ jobs:
 
       - name: Build host libheatmap_ffi.dylib
         run: sdk/windows/scripts/build-rust-windows.sh --host-dylib
+
+      - name: Ensure local NuGet feed directory exists
+        run: mkdir -p sdk/windows/artifacts
 
       - name: dotnet test Heatmap.Sdk.Tests
         working-directory: sdk/windows

@@ -1,9 +1,7 @@
 use std::fs;
 use std::path::PathBuf;
 
-use heatmap_wasm::public_api::{
-    export_names, forbidden_export_names, PublicHeatmapSdk,
-};
+use heatmap_wasm::public_api::{export_names, forbidden_export_names, PublicHeatmapSdk};
 
 fn lib_rs_source() -> String {
     let manifest = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
@@ -17,9 +15,7 @@ fn should_expose_public_sdk_methods_on_wasm_bindings() {
     assert!(source.contains(&format!("js_name = {}", export_names::IDENTIFY)));
     assert!(source.contains(&format!("js_name = {}", export_names::SIGN_OUT)));
     assert!(source.contains(&format!("js_name = {}", export_names::SCREEN)));
-    assert!(
-        source.contains(&format!("js_name = {}", export_names::SET_TRACKING_ENABLED))
-    );
+    assert!(source.contains(&format!("js_name = {}", export_names::SET_TRACKING_ENABLED)));
     assert!(source.contains(&format!("js_name = {}", export_names::FLUSH)));
 }
 

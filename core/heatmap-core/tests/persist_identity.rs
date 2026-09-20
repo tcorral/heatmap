@@ -42,8 +42,7 @@ fn minimal_click_candidate() -> CaptureCandidate {
 }
 
 fn init_with_store(store: Arc<dyn IdentityStore>) -> HeatmapSdk {
-    HeatmapSdk::init_with_transport_and_store(valid_config(), StubTransport, store)
-        .expect("init")
+    HeatmapSdk::init_with_transport_and_store(valid_config(), StubTransport, store).expect("init")
 }
 
 struct StubTransport;

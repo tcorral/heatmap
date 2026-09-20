@@ -35,8 +35,7 @@ impl ManualClock {
     }
 
     pub fn advance_ms(&self, delta: u64) {
-        self.millis
-            .fetch_add(delta as i64, Ordering::SeqCst);
+        self.millis.fetch_add(delta as i64, Ordering::SeqCst);
     }
 }
 

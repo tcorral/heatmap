@@ -1,9 +1,9 @@
 use std::fmt;
 
 use heatmap_core::{
-    BatchError as CoreBatchError, CaptureError as CoreCaptureError,
-    FlushError as CoreFlushError, IdentityError as CoreIdentityError,
-    InitError as CoreInitError, ScreenContextError as CoreScreenContextError,
+    BatchError as CoreBatchError, CaptureError as CoreCaptureError, FlushError as CoreFlushError,
+    IdentityError as CoreIdentityError, InitError as CoreInitError,
+    ScreenContextError as CoreScreenContextError,
 };
 
 #[derive(Debug, uniffi::Error)]

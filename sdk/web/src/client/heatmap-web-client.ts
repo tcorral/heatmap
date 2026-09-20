@@ -15,7 +15,7 @@ const FLUSH_INTERVAL_MS = 10_000;
 
 function startFlushTimer(
   flush: (() => void | Promise<void>) | undefined,
-): ReturnType<typeof setInterval> | null {
+): number | null {
   if (!flush || typeof window === "undefined") {
     return null;
   }
@@ -48,7 +48,7 @@ export function createHeatmapWebClient(
 ): HeatmapWebClient {
   const gate = options.gate ?? createTrackingGate(true);
   let stopListeners: (() => void) | null = null;
-  let flushTimer: ReturnType<typeof setInterval> | null = null;
+  let flushTimer: number | null = null;
 
   return {
     setTrackingEnabled(enabled: boolean) {

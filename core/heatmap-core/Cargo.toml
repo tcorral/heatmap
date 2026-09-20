@@ -10,7 +10,7 @@ url = "=2.4.1"
 uuid = { version = "1", features = ["v4"] }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-ureq = { version = "=2.6.2", default-features = true, features = ["json"] }
+ureq = { version = "=2.9.7", default-features = true, features = ["json"] }
 getrandom = "0.2"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]

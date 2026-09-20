@@ -275,19 +275,16 @@ fn should_omit_absent_optional_fields_from_serialized_json() {
 
     let value = serde_json::to_value(&event).expect("serialize");
     let object = value.as_object().expect("object");
-    for key in [
-        "user_id",
-        "window_id",
-        "screen",
-        "position",
-        "viewport",
-    ] {
+    for key in ["user_id", "window_id", "screen", "position", "viewport"] {
         assert!(
             !object.contains_key(key),
             "expected {key} to be omitted, got {value}"
         );
     }
-    let event_obj = object.get("event").and_then(Value::as_object).expect("event");
+    let event_obj = object
+        .get("event")
+        .and_then(Value::as_object)
+        .expect("event");
     assert!(!event_obj.contains_key("element_id"));
 }
 

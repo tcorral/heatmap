@@ -21,8 +21,16 @@ pub fn web_platform_info(app_version: &str) -> PlatformInfo {
 pub fn viewport_from_window() -> Viewport {
     let window = web_sys::window().unwrap_or_else(|| unreachable!("browser window"));
     Viewport {
-        width: window.inner_width().ok().and_then(|v| v.as_f64()).unwrap_or(0.0) as u32,
-        height: window.inner_height().ok().and_then(|v| v.as_f64()).unwrap_or(0.0) as u32,
+        width: window
+            .inner_width()
+            .ok()
+            .and_then(|v| v.as_f64())
+            .unwrap_or(0.0) as u32,
+        height: window
+            .inner_height()
+            .ok()
+            .and_then(|v| v.as_f64())
+            .unwrap_or(0.0) as u32,
     }
 }
 
