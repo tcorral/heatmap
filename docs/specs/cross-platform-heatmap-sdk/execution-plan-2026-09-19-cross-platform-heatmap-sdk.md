@@ -216,7 +216,7 @@ Greenfield V1 POC: lock the nested event contract, prove a synthetic click throu
   - **Tests:** Pay with dedicated Compose identity is attributed as Pay; testTag is used when dedicated identity is absent; unmarked non-secret composable may contribute coordinates and has no element total; password visual transformation / password semantics are dropped; adapter does not read text
   - **Depends:** Step 31
 
-- [ ] **Step 34: Build Android checkout POC and docs** — TDD: No
+- [x] **Step 34: Build Android checkout POC and docs** — TDD: No
   - **Description:** Add the Android sample app with both View and Compose screens for the shared journey, plus Android integrator docs.
   - **Files:** poc/android/; docs/
   - **Tests:** View screen and Compose screen each have Pay with the same business identity; journey matches the shared sequence; docs cover install, init, screen, annotate, disable, identify, and sign-out

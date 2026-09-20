@@ -31,9 +31,10 @@ class HeatmapClient private constructor(
         ),
     )
 
-    /** Share the same [HeatmapSdk] instance as a future capture adapter backend. */
-    internal companion object {
-        fun wrapping(sdk: HeatmapSdk): HeatmapClient = HeatmapClient(sdk)
+    /** Share one [HeatmapSdk] with View/Compose capture backends. */
+    companion object {
+        @JvmStatic
+        fun fromSdk(sdk: HeatmapSdk): HeatmapClient = HeatmapClient(sdk)
     }
 
     fun identify(userId: String) {
