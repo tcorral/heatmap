@@ -5,7 +5,9 @@
   "scripts": {
     "validate-fixtures": "node validate-fixtures.mjs",
     "test:contract": "node --test contract/*.test.mjs",
-    "contract": "npm run validate-fixtures && npm run test:contract"
+    "test:privacy": "node --test privacy/cross-platform-secrets.test.mjs",
+    "contract": "npm run validate-fixtures && npm run test:contract",
+    "privacy-gate": "npm run test:privacy"
   },
   "dependencies": {
     "ajv": "^8.17.1"
