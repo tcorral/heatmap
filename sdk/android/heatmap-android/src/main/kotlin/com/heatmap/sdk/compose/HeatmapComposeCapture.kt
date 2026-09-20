@@ -2,8 +2,9 @@ package com.heatmap.sdk.compose
 
 import android.view.MotionEvent
 import android.view.View
+import android.view.ViewGroup
 import androidx.compose.ui.platform.AbstractComposeView
-import androidx.compose.ui.platform.AndroidComposeView
+import androidx.compose.ui.platform.ViewRootForTest
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ProcessLifecycleOwner
@@ -74,7 +75,7 @@ class HeatmapComposeCapture private constructor(
         event: MotionEvent,
         compose: AbstractComposeView,
     ): Boolean {
-        val androidCompose = compose as? AndroidComposeView ?: return false
+        val androidCompose = findViewRootForTest(compose) ?: return false
         val root = compose.rootView
         val windowWidth = root.width.toFloat()
         val windowHeight = root.height.toFloat()
@@ -102,5 +103,27 @@ class HeatmapComposeCapture private constructor(
             ) ?: return false
         backend.recordActivationClick(payload)
         return false
+    }
+
+    /**
+     * [AbstractComposeView] is a [ViewGroup] container; the actual Compose root view that
+     * implements [ViewRootForTest] (and exposes [ViewRootForTest.semanticsOwner] via the public
+     * `RootForTest` interface) is added as a child once content is set. Walk the view subtree to
+     * find it rather than assuming [compose] itself implements the interface.
+     */
+    private fun findViewRootForTest(view: View): ViewRootForTest? {
+        if (view is ViewRootForTest) {
+            return view
+        }
+        if (view !is ViewGroup) {
+            return null
+        }
+        for (index in 0 until view.childCount) {
+            val found = findViewRootForTest(view.getChildAt(index))
+            if (found != null) {
+                return found
+            }
+        }
+        return null
     }
 }

@@ -1996,10 +1996,10 @@ sealed class CaptureException: kotlin.Exception() {
     
     class InvalidField(
         
-        val `message`: kotlin.String
+        val `errorMessage`: kotlin.String
         ) : CaptureException() {
         override val message
-            get() = "message=${ `message` }"
+            get() = "errorMessage=${ `errorMessage` }"
     }
     
     class EmptyQueue(
@@ -2052,7 +2052,7 @@ public object FfiConverterTypeCaptureError : FfiConverterRustBuffer<CaptureExcep
             is CaptureException.InvalidField -> (
                 // Add the size for the Int that specifies the variant plus the size needed for all fields
                 4UL
-                + FfiConverterString.allocationSize(value.`message`)
+                + FfiConverterString.allocationSize(value.`errorMessage`)
             )
             is CaptureException.EmptyQueue -> (
                 // Add the size for the Int that specifies the variant plus the size needed for all fields
@@ -2077,7 +2077,7 @@ public object FfiConverterTypeCaptureError : FfiConverterRustBuffer<CaptureExcep
             }
             is CaptureException.InvalidField -> {
                 buf.putInt(4)
-                FfiConverterString.write(value.`message`, buf)
+                FfiConverterString.write(value.`errorMessage`, buf)
                 Unit
             }
             is CaptureException.EmptyQueue -> {
@@ -2097,10 +2097,10 @@ sealed class FlushException: kotlin.Exception() {
     
     class Transport(
         
-        val `message`: kotlin.String
+        val `errorMessage`: kotlin.String
         ) : FlushException() {
         override val message
-            get() = "message=${ `message` }"
+            get() = "errorMessage=${ `errorMessage` }"
     }
     
     class HttpStatus(
@@ -2142,7 +2142,7 @@ public object FfiConverterTypeFlushError : FfiConverterRustBuffer<FlushException
             is FlushException.Transport -> (
                 // Add the size for the Int that specifies the variant plus the size needed for all fields
                 4UL
-                + FfiConverterString.allocationSize(value.`message`)
+                + FfiConverterString.allocationSize(value.`errorMessage`)
             )
             is FlushException.HttpStatus -> (
                 // Add the size for the Int that specifies the variant plus the size needed for all fields
@@ -2156,7 +2156,7 @@ public object FfiConverterTypeFlushError : FfiConverterRustBuffer<FlushException
         when(value) {
             is FlushException.Transport -> {
                 buf.putInt(1)
-                FfiConverterString.write(value.`message`, buf)
+                FfiConverterString.write(value.`errorMessage`, buf)
                 Unit
             }
             is FlushException.HttpStatus -> {

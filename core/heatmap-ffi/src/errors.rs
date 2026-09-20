@@ -80,14 +80,14 @@ impl From<CoreScreenContextError> for ScreenContextError {
 
 #[derive(Debug, uniffi::Error)]
 pub enum FlushError {
-    Transport { message: String },
+    Transport { error_message: String },
     HttpStatus { code: u16 },
 }
 
 impl fmt::Display for FlushError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::Transport { message } => write!(f, "batch upload failed: {message}"),
+            Self::Transport { error_message } => write!(f, "batch upload failed: {error_message}"),
             Self::HttpStatus { code } => {
                 write!(f, "batch upload failed with HTTP status {code}")
             }
@@ -98,7 +98,9 @@ impl fmt::Display for FlushError {
 impl From<CoreFlushError> for FlushError {
     fn from(value: CoreFlushError) -> Self {
         match value {
-            CoreFlushError::Transport(message) => Self::Transport { message },
+            CoreFlushError::Transport(message) => Self::Transport {
+                error_message: message,
+            },
             CoreFlushError::HttpStatus { code, .. } => Self::HttpStatus { code },
         }
     }
@@ -109,7 +111,7 @@ pub enum CaptureError {
     TrackingDisabled,
     SampledOut,
     Excluded,
-    InvalidField { message: String },
+    InvalidField { error_message: String },
     EmptyQueue,
 }
 
@@ -119,7 +121,7 @@ impl fmt::Display for CaptureError {
             Self::TrackingDisabled => write!(f, "tracking is disabled"),
             Self::SampledOut => write!(f, "session is sampled out"),
             Self::Excluded => write!(f, "capture excluded by config"),
-            Self::InvalidField { message } => write!(f, "{message}"),
+            Self::InvalidField { error_message } => write!(f, "{error_message}"),
             Self::EmptyQueue => write!(f, "no queued events"),
         }
     }
@@ -132,10 +134,10 @@ impl From<CoreCaptureError> for CaptureError {
             CoreCaptureError::SampledOut => Self::SampledOut,
             CoreCaptureError::Excluded => Self::Excluded,
             CoreCaptureError::InvalidEventField(err) => Self::InvalidField {
-                message: err.to_string(),
+                error_message: err.to_string(),
             },
             CoreCaptureError::InvalidPosition(err) => Self::InvalidField {
-                message: err.to_string(),
+                error_message: err.to_string(),
             },
         }
     }

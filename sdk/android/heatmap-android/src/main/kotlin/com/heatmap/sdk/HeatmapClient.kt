@@ -31,7 +31,7 @@ class HeatmapClient private constructor(
             InitConfig(
                 projectKey = projectKey,
                 endpoint = endpoint,
-                sessionTimeoutMs = 1_800_000,
+                sessionTimeoutMs = 1_800_000UL,
                 sampleRate = 1.0,
                 excludeElements = emptyList(),
                 excludeScreens = emptyList(),

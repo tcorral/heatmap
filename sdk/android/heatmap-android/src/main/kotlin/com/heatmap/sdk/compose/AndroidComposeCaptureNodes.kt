@@ -1,6 +1,7 @@
 package com.heatmap.sdk.compose
 
 import androidx.compose.ui.semantics.SemanticsNode
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import com.heatmap.sdk.capture.compose.ComposeCaptureNode
@@ -46,5 +47,5 @@ internal fun captureNodeFor(node: SemanticsNode): ComposeCaptureNode {
 
 private fun isComposeTextField(node: SemanticsNode): Boolean {
     return node.config.contains(SemanticsProperties.EditableText) ||
-        node.config.contains(SemanticsProperties.SetText)
+        node.config.contains(SemanticsActions.SetText)
 }

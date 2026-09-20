@@ -25,7 +25,7 @@ object ComposeSemanticsHitTest {
         xInWindow: Float,
         yInWindow: Float,
     ): SemanticsNode? {
-        val nodes = owner.getAllSemanticsNodes(mergeDescendants = false)
+        val nodes = collectSemanticsNodes(owner.unmergedRootSemanticsNode)
         val candidates =
             nodes.map { node ->
                 SemanticsHitCandidate(node)
@@ -72,4 +72,10 @@ object ComposeSemanticsHitTest {
             return depth
         }
     }
+}
+
+private fun collectSemanticsNodes(node: SemanticsNode): List<SemanticsNode> {
+    val nodes = mutableListOf(node)
+    node.children.forEach { child -> nodes.addAll(collectSemanticsNodes(child)) }
+    return nodes
 }

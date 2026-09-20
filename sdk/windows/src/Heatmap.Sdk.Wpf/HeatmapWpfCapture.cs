@@ -145,18 +145,14 @@ public sealed class HeatmapWpfCapture
 
     private static ICaptureElement? HitTestElement(Window window, Point positionInWindow)
     {
-        if (window.Content is not Visual root)
+        if (window.Content is not UIElement root)
         {
             return null;
         }
 
         var pointInRoot = window.TranslatePoint(positionInWindow, root);
-        if (pointInRoot is null)
-        {
-            return null;
-        }
 
-        var hit = VisualTreeHelper.HitTest(root, pointInRoot.Value)?.VisualHit;
+        var hit = VisualTreeHelper.HitTest(root, pointInRoot)?.VisualHit;
         return hit is null ? null : new WpfCaptureElement(hit);
     }
 }

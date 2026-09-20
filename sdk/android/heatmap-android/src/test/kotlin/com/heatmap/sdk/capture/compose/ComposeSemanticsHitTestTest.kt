@@ -19,7 +19,7 @@ class ComposeSemanticsHitTestTest {
                 parent = root,
             )
         val nodes = listOf(root, pay)
-        val hit = ComposeSemanticsHitTest.selectDeepestNodeAt(nodes, xInWindow = 20f, yInWindow = 20f)
+        val hit = ComposeSemanticsHitTest.selectDeepestNodeAt(nodes, xInWindow = 20f, yInWindow = 20f) as? HitTestNode
         assertEquals("pay", hit?.id)
     }
 

@@ -38,10 +38,13 @@ class MockTextInput(
 
     override fun captureParent(): ViewCaptureNode? = parent
 
-    override fun inputTypeFlags(): Int {
-        onTextRead?.invoke()
-        return inputType
-    }
+    override fun inputTypeFlags(): Int = inputType
 
     override fun autofillHints(): List<String>? = autofillHints
+
+    @Suppress("unused")
+    fun enteredTextForTest(): String? {
+        onTextRead?.invoke()
+        return null
+    }
 }
