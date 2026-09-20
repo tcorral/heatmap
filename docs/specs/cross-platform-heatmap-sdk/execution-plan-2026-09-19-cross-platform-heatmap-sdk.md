@@ -240,13 +240,13 @@ Greenfield V1 POC: lock the nested event contract, prove a synthetic click throu
   - **Tests:** Pay with AutomationProperties.AutomationId=checkout.pay is attributed as Pay; unmarked non-secret control paints coordinates only; password boxes are dropped; events carry opaque window_id; coordinates are relative to that window and stay 0–1 after DPI/scale or resize; adapter does not read text or window titles
   - **Depends:** Step 36
 
-- [ ] **Step 38: Build Windows checkout POC and docs** — TDD: No
+- [x] **Step 38: Build Windows checkout POC and docs** — TDD: No
   - **Description:** Add the WPF sample app for the shared checkout journey and Windows integrator docs.
   - **Files:** poc/windows/; docs/
   - **Tests:** Journey matches the shared sequence; Pay uses AutomationId=checkout.pay; docs cover install, init, screen, annotate, disable, identify, and sign-out
   - **Depends:** Step 37
 
-- [ ] **Step 39: Prove Windows checkout through ingest** — TDD: Yes
+- [x] **Step 39: Prove Windows checkout through ingest** — TDD: Yes
   - **Description:** Add Windows E2E for checkout, resize, DPI/scale, and multiple windows.
   - **Files:** test/e2e/
   - **Tests:** Shared journey sequence is stored; new events after resize or DPI/scale use the current window; second-window interaction is attributable to that window; host stays up when ingest is down; introduce the Windows E2E runner

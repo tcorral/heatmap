@@ -1,0 +1,19 @@
+<Page x:Class="HeatmapCheckout.Views.HomePage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      Title="Home">
+    <StackPanel Margin="16" VerticalAlignment="Top">
+        <TextBlock Text="Home" FontSize="32" Margin="0,0,0,16" />
+        <TextBlock Text="Shared checkout journey starts here." Margin="0,0,0,16" />
+        <Button Content="Browse products"
+                Click="OnBrowseProducts"
+                Padding="12,6"
+                HorizontalAlignment="Left" />
+        <Button Content="Open auxiliary window"
+                Click="OnOpenAuxiliaryWindow"
+                AutomationProperties.AutomationId="e2e.open.aux"
+                Padding="12,6"
+                Margin="0,12,0,0"
+                HorizontalAlignment="Left" />
+    </StackPanel>
+</Page>

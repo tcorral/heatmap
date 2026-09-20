@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <RootNamespace>HeatmapCheckout</RootNamespace>
+    <AssemblyName>HeatmapCheckout</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\HeatmapCheckout.Contract\HeatmapCheckout.Contract.csproj" />
+    <ProjectReference Include="..\..\..\sdk\windows\src\Heatmap.Sdk\Heatmap.Sdk.csproj" />
+    <ProjectReference Include="..\..\..\sdk\windows\src\Heatmap.Sdk.Wpf\Heatmap.Sdk.Wpf.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="..\Config\heatmap.json">
+      <Link>Config\heatmap.json</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+</Project>
