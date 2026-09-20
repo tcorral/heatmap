@@ -27,11 +27,12 @@ test("offline upload restores once without double-counting pay clicks", async ({
 
   await page.unroute("**/v1/batches");
   const flushOk = page.waitForResponse(
-    (response) =>
+    async (response) =>
       response.url().includes("/v1/batches") &&
       response.request().method() === "POST" &&
       response.status() >= 200 &&
-      response.status() < 300,
+      response.status() < 300 &&
+      (await response.request().postData())?.includes("checkout.pay") === true,
   );
   const payButton = page.locator('[data-heatmap-id="checkout.pay"]');
   await payButton.scrollIntoViewIfNeeded();
