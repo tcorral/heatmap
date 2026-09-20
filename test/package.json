@@ -3,7 +3,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "validate-fixtures": "node validate-fixtures.mjs"
+    "validate-fixtures": "node validate-fixtures.mjs",
+    "test:contract": "node --test contract/*.test.mjs",
+    "contract": "npm run validate-fixtures && npm run test:contract"
   },
   "dependencies": {
     "ajv": "^8.17.1"

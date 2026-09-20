@@ -4,4 +4,6 @@ playwright-report
 blob-report
 ios/results
 macos/results
+windows/**/bin/
+windows/**/obj/
 *.xcresult

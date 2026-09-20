@@ -252,7 +252,7 @@ Greenfield V1 POC: lock the nested event contract, prove a synthetic click throu
   - **Tests:** Shared journey sequence is stored; new events after resize or DPI/scale use the current window; second-window interaction is attributable to that window; host stays up when ingest is down; introduce the Windows E2E runner
   - **Depends:** Step 38, Step 19
 
-- [ ] **Step 40: Assert five-platform Pay contract** — TDD: Yes
+- [x] **Step 40: Assert five-platform Pay contract** — TDD: Yes
   - **Description:** Add contract tests that the five SDKs emit semantically equivalent nested events for the same annotated Pay activation.
   - **Files:** test/contract/; test/fixtures/
   - **Tests:** Web click and iOS/Android/macOS/Windows activations of Pay agree on click type, screen, element_id checkout.pay, and 0–1 position meaning; platform remains a filter dimension; introduce the contract runner

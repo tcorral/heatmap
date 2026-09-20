@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "session_id": "sess_ios_journey_001",
+  "anonymous_id": "anon_ios_001",
+  "timestamp": 1726771205000,
+  "window_id": "win_checkout_primary",
+  "sdk": { "name": "heatmap-ios", "version": "0.1.0" },
+  "platform": {
+    "type": "ios",
+    "os_version": "iOS 18.0",
+    "app_version": "1.0.0"
+  },
+  "screen": { "id": "Checkout", "layout_version": "2024-09" },
+  "event": { "type": "click", "element_id": "checkout.pay" },
+  "position": { "x": 0.5, "y": 0.5 },
+  "viewport": { "width": 800, "height": 600 }
+}
