@@ -4,7 +4,8 @@
   "type": "module",
   "scripts": {
     "test": "playwright test",
-    "test:headed": "playwright test --headed"
+    "test:headed": "playwright test --headed",
+    "test:ios": "bash scripts/run-ios-e2e.sh"
   },
   "devDependencies": {
     "@playwright/test": "^1.49.1"

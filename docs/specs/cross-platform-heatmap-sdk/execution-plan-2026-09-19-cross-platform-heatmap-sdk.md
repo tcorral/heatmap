@@ -174,7 +174,7 @@ Greenfield V1 POC: lock the nested event contract, prove a synthetic click throu
   - **Tests:** Journey matches the shared sequence; Pay uses accessibilityIdentifier=checkout.pay; docs cover install, init, screen, annotate, disable, identify, and sign-out
   - **Depends:** Step 25
 
-- [ ] **Step 27: Prove iOS checkout through ingest** — TDD: Yes
+- [x] **Step 27: Prove iOS checkout through ingest** — TDD: Yes
   - **Description:** Add iOS E2E for the checkout journey, background/resume, and fail-closed delivery.
   - **Files:** test/e2e/
   - **Tests:** Shared journey sequence is stored; background/resume stays one session; coordinates stay 0–1 of the current window; host stays up when ingest is down; introduce the iOS E2E runner

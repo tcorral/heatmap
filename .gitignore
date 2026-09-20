@@ -1,6 +1,9 @@
 node_modules/
 heatmap-e2e.db
+heatmap-ios-e2e.db
 heatmap-backend.db
+test/heatmap-ios-e2e.db
+test/test/
 target/
 .DS_Store
 .env
