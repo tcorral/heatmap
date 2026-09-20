@@ -168,7 +168,7 @@ Greenfield V1 POC: lock the nested event contract, prove a synthetic click throu
   - **Tests:** Pay with accessibilityIdentifier=checkout.pay is attributed as Pay; unmarked non-secret control paints coordinates only; secure text and password/payment content types are dropped even when unmarked; background then foreground before timeout keeps the session; adapter does not read labels or typed values; introduce XCTest
   - **Depends:** Step 24
 
-- [ ] **Step 26: Build iOS checkout POC and docs** — TDD: No
+- [x] **Step 26: Build iOS checkout POC and docs** — TDD: No
   - **Description:** Add the iOS sample app for the shared checkout journey and iOS integrator docs.
   - **Files:** poc/ios/; docs/
   - **Tests:** Journey matches the shared sequence; Pay uses accessibilityIdentifier=checkout.pay; docs cover install, init, screen, annotate, disable, identify, and sign-out

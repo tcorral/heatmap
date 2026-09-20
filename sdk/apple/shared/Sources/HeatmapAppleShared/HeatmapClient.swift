@@ -24,6 +24,11 @@ public final class HeatmapClient: @unchecked Sendable {
         sdk = try HeatmapSdk.`init`(config: config)
     }
 
+    /// Use the same `HeatmapSdk` instance as `HeatmapIosRustCaptureBackend`.
+    public init(sdk: HeatmapSdk) {
+        self.sdk = sdk
+    }
+
     public func identify(userId: String) throws {
         try sdk.identify(userId: userId)
     }

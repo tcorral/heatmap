@@ -42,4 +42,11 @@ cargo build -p heatmap-ffi
 cd sdk/apple && swift test
 ```
 
-iOS consumers need a matching `libheatmap_ffi` built for the iOS SDK (not included in this POC step).
+iOS Simulator (Apple Silicon):
+
+```bash
+rustup target add aarch64-apple-ios-sim
+cargo build -p heatmap-ffi --target aarch64-apple-ios-sim
+```
+
+The Swift package links `target/aarch64-apple-ios-sim/debug` when building for iOS. See [`poc/ios/README.md`](../../../poc/ios/README.md).

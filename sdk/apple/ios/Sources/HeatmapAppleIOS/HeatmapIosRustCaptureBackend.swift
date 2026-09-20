@@ -33,6 +33,26 @@ public final class HeatmapIosRustCaptureBackend: HeatmapIosCaptureBackend {
         )
     }
 
+    public func recordIdentifiedActivationClick(
+        elementId: String,
+        normalizedX: Double,
+        normalizedY: Double,
+        viewportWidth: UInt32,
+        viewportHeight: UInt32,
+        timestampMs: Int64 = Int64(Date().timeIntervalSince1970 * 1000)
+    ) {
+        try? sdk.recordActivationClick(
+            x: normalizedX,
+            y: normalizedY,
+            elementId: elementId,
+            viewportWidth: viewportWidth,
+            viewportHeight: viewportHeight,
+            timestampMs: timestampMs,
+            osVersion: osVersion,
+            appVersion: appVersion
+        )
+    }
+
     public func recordScreenView(viewportWidth: UInt32, viewportHeight: UInt32) {
         try? sdk.recordIosScreenView(
             viewportWidth: viewportWidth,

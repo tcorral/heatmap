@@ -1,0 +1,4 @@
+#include "Heatmap.xcconfig"
+
+E2E_BACKEND_PORT = 18081
+HEATMAP_ENDPOINT = http:/$()/127.0.0.1:$(E2E_BACKEND_PORT)

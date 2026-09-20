@@ -1,8 +1,9 @@
 // swift-tools-version: 5.9
 import PackageDescription
 
-/// Relative to `sdk/apple/` — repo-root `target/debug` after `cargo build -p heatmap-ffi`.
-private let heatmapFfiLibrarySearchPath = "../../target/debug"
+/// Relative to `sdk/apple/` — repo-root targets after `cargo build -p heatmap-ffi`.
+private let heatmapFfiMacLibrarySearchPath = "../../target/debug"
+private let heatmapFfiIosSimLibrarySearchPath = "../../target/aarch64-apple-ios-sim/debug"
 
 let package = Package(
     name: "HeatmapApple",
@@ -41,9 +42,12 @@ let package = Package(
             linkerSettings: [
                 .linkedLibrary("heatmap_ffi"),
                 .unsafeFlags([
-                    "-L", heatmapFfiLibrarySearchPath,
-                    "-Xlinker", "-rpath", "-Xlinker", heatmapFfiLibrarySearchPath,
-                ]),
+                    "-L", heatmapFfiMacLibrarySearchPath,
+                    "-Xlinker", "-rpath", "-Xlinker", heatmapFfiMacLibrarySearchPath,
+                ], .when(platforms: [.macOS])),
+                .unsafeFlags([
+                    "-L", heatmapFfiIosSimLibrarySearchPath,
+                ], .when(platforms: [.iOS])),
             ]
         ),
         .target(

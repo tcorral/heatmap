@@ -10,7 +10,8 @@ extension UIView: IosCaptureViewNode {
 
 extension UITextField: IosTextInputCaptureNode {
     public var textContentType: IosTextContentType? {
-        IosTextContentTypeMapping.from(uiTextContentType)
+        let uiType = value(forKey: "textContentType") as? UITextContentType
+        return IosTextContentTypeMapping.from(uiType)
     }
 }
 
@@ -18,13 +19,24 @@ extension UITextView: IosTextInputCaptureNode {
     public var isSecureTextEntry: Bool { false }
 
     public var textContentType: IosTextContentType? {
-        IosTextContentTypeMapping.from(uiTextContentType)
+        let uiType = value(forKey: "textContentType") as? UITextContentType
+        return IosTextContentTypeMapping.from(uiType)
     }
 }
 
 enum IosTextContentTypeMapping {
     static func from(_ type: UITextContentType?) -> IosTextContentType? {
         guard let type else { return nil }
+        if #available(iOS 17.0, *) {
+            switch type {
+            case .creditCardExpiration:
+                return .creditCardExpiration
+            case .creditCardSecurityCode:
+                return .creditCardSecurityCode
+            default:
+                break
+            }
+        }
         switch type {
         case .password:
             return .password
@@ -32,10 +44,6 @@ enum IosTextContentTypeMapping {
             return .newPassword
         case .creditCardNumber:
             return .creditCardNumber
-        case .creditCardExpiration:
-            return .creditCardExpiration
-        case .creditCardSecurityCode:
-            return .creditCardSecurityCode
         default:
             return .other
         }
