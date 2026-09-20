@@ -1,3 +1,7 @@
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+
 import { expect, test } from "@playwright/test";
 
 import {
@@ -11,8 +15,38 @@ import {
   seedNativePayClicks,
 } from "./five-platform-seed.js";
 
+const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "../../..");
+
 test.describe("five-platform dashboard acceptance", () => {
-  test("web live journey plus seeded native ingests show Pay totals and heatmap bins per platform", async ({
+  test("android Compose checkout does not report scroll from the host", () => {
+    const session = readFileSync(
+      join(
+        repoRoot,
+        "poc/android/app/src/main/kotlin/com/heatmap/checkout/heatmap/HeatmapSession.kt",
+      ),
+      "utf8",
+    );
+    const composeScreen = readFileSync(
+      join(
+        repoRoot,
+        "poc/android/app/src/main/kotlin/com/heatmap/checkout/ui/screens/ComposeCheckoutScreen.kt",
+      ),
+      "utf8",
+    );
+    const adapter = readFileSync(
+      join(
+        repoRoot,
+        "sdk/android/heatmap-android/src/main/kotlin/com/heatmap/sdk/compose/HeatmapComposeCapture.kt",
+      ),
+      "utf8",
+    );
+    expect(session).not.toMatch(/recordViewportScroll/);
+    expect(composeScreen).not.toMatch(/recordViewportScroll/);
+    expect(composeScreen).not.toMatch(/snapshotFlow/);
+    expect(adapter).toMatch(/ComposeScrollObserver/);
+  });
+
+  test("web live journey plus seeded native ingests show Pay counts together and overlay per platform", async ({
     page,
     browser,
     request,
@@ -36,13 +70,23 @@ test.describe("five-platform dashboard acceptance", () => {
 
     const dashboard = await browser.newPage();
     await dashboard.goto(DASHBOARD_BASE);
+    await dashboard.getByRole("button", { name: "Load totals" }).click();
+
+    const comparison = dashboard.getByRole("table", {
+      name: /checkout pay by platform/i,
+    });
+    await expect(comparison).toBeVisible();
+
+    for (const header of ["web", "iOS", "Android", "macOS", "Windows"] as const) {
+      const row = comparison.getByRole("row").filter({
+        has: dashboard.getByRole("rowheader", { name: header, exact: true }),
+      });
+      await expect(row.locator("td")).not.toHaveText("0");
+    }
 
     for (const platform of ACCEPTANCE_PLATFORMS) {
       await dashboard.getByRole("combobox", { name: /platform/i }).selectOption(platform);
       await dashboard.getByRole("button", { name: "Load totals" }).click();
-
-      const payRow = dashboard.locator("tr", { hasText: "Checkout → Pay" });
-      await expect(payRow.locator("td").nth(1)).not.toHaveText("0");
 
       const heatmapResponse = await request.get(heatmapQueryUrl(platform));
       expect(heatmapResponse.ok()).toBeTruthy();

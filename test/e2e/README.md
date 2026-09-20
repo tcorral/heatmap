@@ -17,7 +17,8 @@ Backend default port: `18080`. See `playwright.config.ts`.
 - Fresh backend DB with `HEATMAP_EXPOSE_TEST_EVENTS=1` (see `playwright.config.ts` webServer).
 - Live **web** checkout journey (same flow as `web-checkout-journey.spec.ts`).
 - **Seeded ingest** for iOS, Android, macOS, and Windows via `POST /v1/batches` using `test/fixtures/click-checkout-pay-*.json` (native SDK E2E is not required in the same job).
-- Optional checkout still at `poc/stills/checkout-layout-2024-09.png`, registered with `POST /v1/stills` when the overlay panel is asserted.
+- Dashboard **Checkout Pay by platform** table lists all five Pay counts in one result; overlay stays a single-platform view after the platform filter.
+- Compose checkout scroll is adapter-owned: the Android host has no `recordViewportScroll` / `snapshotFlow` reporter.
 
 ```bash
 npm run test:acceptance
