@@ -6,6 +6,8 @@ use crate::event::HeatmapEvent;
 pub const FLUSH_MAX_EVENTS: usize = 50;
 pub const FLUSH_MAX_BYTES: usize = 65536;
 pub const FLUSH_INTERVAL_MS: u64 = 10_000;
+pub const INGEST_MAX_EVENTS: usize = 200;
+pub const INGEST_MAX_BYTES: usize = 256 * 1024;
 
 const BYTE_PROBE_BATCH_ID: &str = "batch_probe_00000000000000000000000000000000";
 

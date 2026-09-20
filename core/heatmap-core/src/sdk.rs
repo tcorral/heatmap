@@ -18,7 +18,7 @@ use crate::identity_store::{
 };
 use crate::flush_policy::{
     flush_error_is_permanent, flush_error_is_transient, flush_event_limit_reached,
-    flush_interval_elapsed, queue_flush_byte_limit_reached,
+    flush_interval_elapsed, queue_flush_byte_limit_reached, INGEST_MAX_BYTES, INGEST_MAX_EVENTS,
 };
 use crate::persistent_queue::{
     event_json_bytes, load_persisted_queue, persist_queue, push_with_overflow, queue_json_bytes,
@@ -376,7 +376,7 @@ impl HeatmapSdk {
             .retry_batch_id
             .take()
             .unwrap_or_else(|| new_id("batch"));
-        let events = self.take_queued_events();
+        let events = self.take_queued_events_for_ingest();
         self.sync_persisted_queue();
         Ok(HeatmapBatch { batch_id, events })
     }
@@ -384,6 +384,27 @@ impl HeatmapSdk {
     fn take_queued_events(&mut self) -> Vec<HeatmapEvent> {
         self.queue_events_bytes = 0;
         self.queue.drain(..).collect()
+    }
+
+    fn take_queued_events_for_ingest(&mut self) -> Vec<HeatmapEvent> {
+        let mut events = Vec::new();
+        let mut bytes = 0usize;
+        while let Some(front) = self.queue.front() {
+            if events.len() >= INGEST_MAX_EVENTS {
+                break;
+            }
+            let event_bytes = event_json_bytes(front);
+            if !events.is_empty() && bytes.saturating_add(event_bytes) > INGEST_MAX_BYTES {
+                break;
+            }
+            let Some(event) = self.queue.pop_front() else {
+                break;
+            };
+            self.queue_events_bytes = self.queue_events_bytes.saturating_sub(event_bytes);
+            bytes = bytes.saturating_add(event_bytes);
+            events.push(event);
+        }
+        events
     }
 
     fn finish_successful_upload(&mut self) {

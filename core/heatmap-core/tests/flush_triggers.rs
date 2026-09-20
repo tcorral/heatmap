@@ -3,7 +3,7 @@ use std::sync::{Arc, Mutex};
 use heatmap_core::{
     batch_ingest_url, CaptureCandidate, FlushError, HeatmapBatch, HeatmapConfig, HeatmapSdk,
     InteractionEvent, ManualClock, PlatformInfo, PlatformType, Position, ScreenInfo, SdkInfo,
-    FLUSH_INTERVAL_MS, FLUSH_MAX_BYTES, FLUSH_MAX_EVENTS, Viewport,
+    FLUSH_INTERVAL_MS, FLUSH_MAX_BYTES, FLUSH_MAX_EVENTS, INGEST_MAX_EVENTS, Viewport,
 };
 
 fn valid_config() -> HeatmapConfig {
@@ -76,6 +76,15 @@ impl RecordingTransport {
 
     fn send_count(&self) -> usize {
         self.batches.lock().expect("lock").len()
+    }
+
+    fn last_batch_event_count(&self) -> usize {
+        self.batches
+            .lock()
+            .expect("lock")
+            .last()
+            .map(|batch| batch.events.len())
+            .unwrap_or(0)
     }
 }
 
@@ -301,4 +310,23 @@ fn flush_limits_constants_match_spec() {
     assert_eq!(FLUSH_MAX_EVENTS, 50);
     assert_eq!(FLUSH_MAX_BYTES, 65536);
     assert_eq!(FLUSH_INTERVAL_MS, 10_000);
+    assert_eq!(INGEST_MAX_EVENTS, 200);
+    assert_eq!(heatmap_core::INGEST_MAX_BYTES, 256 * 1024);
+}
+
+#[test]
+fn should_upload_at_most_ingest_event_ceiling_per_batch() {
+    let clock = Arc::new(ManualClock::new(0));
+    let transport = RecordingTransport::new(TransportOutcome::Transport("down".into()));
+    let (mut sdk, transport) = sdk_with_clock(transport, Arc::clone(&clock));
+    let mut ts = 1_000_i64;
+    while sdk.queued_event_count_for_testing() < INGEST_MAX_EVENTS + 5 {
+        sdk.enqueue_candidate(click_candidate(ts, "checkout.pay"))
+            .expect("enqueue");
+        ts += 1;
+    }
+    *transport.outcome.lock().expect("lock") = TransportOutcome::Ok;
+    sdk.flush().expect("flush");
+    assert_eq!(transport.last_batch_event_count(), INGEST_MAX_EVENTS);
+    assert!(sdk.queued_event_count_for_testing() > 0);
 }
