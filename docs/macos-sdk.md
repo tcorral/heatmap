@@ -4,14 +4,7 @@ Pre-release AppKit capture adapter over the UniFFI Rust core. It records clicks 
 
 ## Install
 
-1. Build `heatmap-ffi` for macOS:
-
-```bash
-# Repo root
-cargo build -p heatmap-ffi
-```
-
-2. Add the local Swift package in Xcode: **File → Add Package Dependencies → Add Local…** → `sdk/apple`.
+1. Add the local Swift package in Xcode: **File → Add Package Dependencies → Add Local…** → `sdk/apple`.
 
    Or in another `Package.swift`:
 
@@ -19,14 +12,14 @@ cargo build -p heatmap-ffi
 .package(path: "../heatmap-tool/sdk/apple")
 ```
 
-3. Link products:
+2. Link products:
 
 - `HeatmapAppleShared` — `HeatmapClient`
 - `HeatmapAppleMacOS` — `HeatmapMacosCapture`, `HeatmapMacosRustCaptureBackend`
 
-The package links `libheatmap_ffi` from repo `target/debug` on macOS.
+The package ships `libheatmap_ffi` under `sdk/apple/vendor/macos`. A clean consumer does not build Rust or point at `target/debug`.
 
-Regenerate Swift bindings after Rust API changes: `./sdk/apple/scripts/generate-uniffi.sh`.
+Regenerate Swift bindings after Rust API changes: `./sdk/apple/scripts/generate-uniffi.sh`. Rebuild vendor dylibs as in `sdk/apple/vendor/README.md`.
 
 ## Init
 

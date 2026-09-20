@@ -1,9 +1,10 @@
 // swift-tools-version: 5.9
 import PackageDescription
 
-/// Relative to `sdk/apple/` — repo-root targets after `cargo build -p heatmap-ffi`.
-private let heatmapFfiMacLibrarySearchPath = "../../target/debug"
-private let heatmapFfiIosSimLibrarySearchPath = "../../target/aarch64-apple-ios-sim/debug"
+/// Pre-release native libraries shipped in the package. A clean consumer does not
+/// build Rust or search the repository cargo output tree.
+private let heatmapFfiMacLibrarySearchPath = Context.packageDirectory + "/vendor/macos"
+private let heatmapFfiIosSimLibrarySearchPath = Context.packageDirectory + "/vendor/ios-sim"
 
 let package = Package(
     name: "HeatmapApple",
