@@ -8,12 +8,20 @@ import org.junit.Test
 
 class ComposeScrollObserverTest {
     @Test
-    fun shouldRecordScrollWhenPointerMoves() {
+    fun shouldNotRecordScrollWhenPointerMovesWithoutConsumedDelta() {
         val backend = RecordingBackend()
-        ComposeScrollObserver.onPointerAction(
-            actionMasked = ComposeScrollObserver.ACTION_MOVE,
-            viewportWidth = 800u,
-            viewportHeight = 600u,
+        ComposeScrollObserver().onPointerAction(
+            signal = move(consumedDeltaY = 1f),
+            backend = backend,
+        )
+        assertTrue(backend.scrolls.isEmpty())
+    }
+
+    @Test
+    fun shouldRecordScrollWhenConsumedDeltaExceedsThreshold() {
+        val backend = RecordingBackend()
+        ComposeScrollObserver().onPointerAction(
+            signal = move(consumedDeltaY = 16f),
             backend = backend,
         )
         assertEquals(listOf(800u to 600u), backend.scrolls)
@@ -21,12 +29,40 @@ class ComposeScrollObserverTest {
     }
 
     @Test
+    fun shouldCoalesceScrollsInTheSameGesture() {
+        val backend = RecordingBackend()
+        val observer = ComposeScrollObserver()
+        observer.onPointerAction(signal = move(consumedDeltaY = 16f), backend = backend)
+        observer.onPointerAction(signal = move(consumedDeltaY = 16f), backend = backend)
+        assertEquals(1, backend.scrolls.size)
+    }
+
+    @Test
+    fun shouldRecordScrollAgainAfterGestureEnds() {
+        val backend = RecordingBackend()
+        val observer = ComposeScrollObserver()
+        observer.onPointerAction(signal = move(consumedDeltaY = 16f), backend = backend)
+        observer.onPointerAction(
+            signal = ComposeScrollSignal(
+                actionMasked = ComposeScrollObserver.ACTION_UP,
+                viewportWidth = 800u,
+                viewportHeight = 600u,
+            ),
+            backend = backend,
+        )
+        observer.onPointerAction(signal = move(consumedDeltaY = 16f), backend = backend)
+        assertEquals(2, backend.scrolls.size)
+    }
+
+    @Test
     fun shouldNotRecordScrollOnPointerUp() {
         val backend = RecordingBackend()
-        ComposeScrollObserver.onPointerAction(
-            actionMasked = 1,
-            viewportWidth = 800u,
-            viewportHeight = 600u,
+        ComposeScrollObserver().onPointerAction(
+            signal = ComposeScrollSignal(
+                actionMasked = ComposeScrollObserver.ACTION_UP,
+                viewportWidth = 800u,
+                viewportHeight = 600u,
+            ),
             backend = backend,
         )
         assertTrue(backend.scrolls.isEmpty())
@@ -35,14 +71,25 @@ class ComposeScrollObserverTest {
     @Test
     fun shouldNotRecordScrollWhenViewportIsZero() {
         val backend = RecordingBackend()
-        ComposeScrollObserver.onPointerAction(
-            actionMasked = ComposeScrollObserver.ACTION_MOVE,
-            viewportWidth = 0u,
-            viewportHeight = 600u,
+        ComposeScrollObserver().onPointerAction(
+            signal = ComposeScrollSignal(
+                actionMasked = ComposeScrollObserver.ACTION_MOVE,
+                viewportWidth = 0u,
+                viewportHeight = 600u,
+                consumedDeltaY = 16f,
+            ),
             backend = backend,
         )
         assertTrue(backend.scrolls.isEmpty())
     }
+
+    private fun move(consumedDeltaY: Float): ComposeScrollSignal =
+        ComposeScrollSignal(
+            actionMasked = ComposeScrollObserver.ACTION_MOVE,
+            viewportWidth = 800u,
+            viewportHeight = 600u,
+            consumedDeltaY = consumedDeltaY,
+        )
 
     private class RecordingBackend : HeatmapViewCaptureBackend {
         val scrolls = mutableListOf<Pair<UInt, UInt>>()

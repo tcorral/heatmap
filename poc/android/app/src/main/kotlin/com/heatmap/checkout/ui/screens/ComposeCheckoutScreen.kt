@@ -20,11 +20,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import com.heatmap.checkout.CheckoutIdentifiers
 import com.heatmap.checkout.heatmap.HeatmapSession
 import com.heatmap.sdk.compose.heatmapId
+import com.heatmap.sdk.compose.heatmapScrollCapture
 
 @Composable
 fun ComposeCheckoutScreen(
@@ -35,6 +37,7 @@ fun ComposeCheckoutScreen(
     var couponCode by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     val scrollState = rememberScrollState()
+    val rootView = LocalView.current.rootView
 
     LaunchedEffect(Unit) {
         heatmap.trackScreen("Checkout", layoutVersion = "2024-09")
@@ -44,6 +47,11 @@ fun ComposeCheckoutScreen(
         modifier =
             Modifier
                 .fillMaxSize()
+                .heatmapScrollCapture(
+                    backend = heatmap.composeCaptureBackend,
+                    viewportWidth = { rootView.width.toUInt() },
+                    viewportHeight = { rootView.height.toUInt() },
+                )
                 .verticalScroll(scrollState)
                 .padding(16.dp),
     ) {

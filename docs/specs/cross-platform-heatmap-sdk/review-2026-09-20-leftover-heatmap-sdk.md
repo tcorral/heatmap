@@ -35,7 +35,7 @@ Verdict: Changes requested.
   - **Why it matters:** Element totals, unique sessions, and top elements cannot be restricted by selected platform.
   - **Suggested action:** Keep filtered elements request platform-specific and issue separate unfiltered request for five-platform Pay comparison.
 
-- [ ] **Finding** — `sdk/android/heatmap-android/src/main/kotlin/com/heatmap/sdk/capture/compose/ComposeScrollObserver.kt:8` — Pointer movement is misclassified as scrolling
+- [x] **Finding** — `sdk/android/heatmap-android/src/main/kotlin/com/heatmap/sdk/capture/compose/ComposeScrollObserver.kt:8` — Pointer movement is misclassified as scrolling
   - **Issue:** Every `ACTION_MOVE` records scroll, including tap jitter and drags on non-scrollable content.
   - **Why it matters:** Produces many false scroll events and records drag/movement behavior excluded from V1.
   - **Suggested action:** Observe actual Compose scroll-state or nested-scroll deltas and coalesce meaningful scroll activity.
@@ -74,7 +74,7 @@ Verdict: Changes required — 2 critical, 3 findings.
   - **Why it matters:** Network runs on another thread, but lifecycle/UI caller remains blocked for full request duration.
   - **Suggested action:** Enqueue lifecycle flush onto long-lived scheduler and return immediately; test caller does not wait.
 
-- [ ] **Finding** — `sdk/android/heatmap-android/src/main/kotlin/com/heatmap/sdk/capture/compose/ComposeScrollObserver.kt:13` — AC: Android View and Compose; Design: adapter-owned Compose scroll — Pointer movement is misclassified as scroll
+- [x] **Finding** — `sdk/android/heatmap-android/src/main/kotlin/com/heatmap/sdk/capture/compose/ComposeScrollObserver.kt:13` — AC: Android View and Compose; Design: adapter-owned Compose scroll — Pointer movement is misclassified as scroll
   - **Issue:** Every `ACTION_MOVE` emits scroll without confirming scrollable content moved.
   - **Why it matters:** Drags and ordinary pointer motion create false scroll events and potentially many events per gesture.
   - **Suggested action:** Observe actual Compose scroll/nested-scroll changes and coalesce each scroll gesture appropriately.
@@ -129,7 +129,7 @@ Verdict: Changes required. Five actionable product gaps remain at HEAD `46e70b6`
   - **Why it matters:** UI-thread tap/click callback can wait behind slow HTTP despite scheduler running transport on another thread.
   - **Suggested action:** Take and persist batch under short lock, release lock before HTTP, then reacquire for acknowledgement/failure handling. Add blocked-transport concurrency test proving capture returns promptly.
 
-- [ ] **Finding** — `sdk/android/heatmap-android/src/main/kotlin/com/heatmap/sdk/capture/compose/ComposeScrollObserver.kt:9` — AC: V1 interaction set / Android Compose scroll — Every pointer move is reported as scroll
+- [x] **Finding** — `sdk/android/heatmap-android/src/main/kotlin/com/heatmap/sdk/capture/compose/ComposeScrollObserver.kt:9` — AC: V1 interaction set / Android Compose scroll — Every pointer move is reported as scroll
   - **Issue:** Any `ACTION_MOVE` emits scroll, including drag/gesture movement where no composable scrolled.
   - **Why it matters:** Non-scroll gestures become false scroll events, weakening journey and interaction semantics.
   - **Suggested action:** Observe actual Compose scroll state or nested-scroll consumption and emit only when viewport content changes.

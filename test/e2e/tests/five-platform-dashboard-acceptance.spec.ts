@@ -36,13 +36,14 @@ test.describe("five-platform dashboard acceptance", () => {
     const adapter = readFileSync(
       join(
         repoRoot,
-        "sdk/android/heatmap-android/src/main/kotlin/com/heatmap/sdk/compose/HeatmapComposeCapture.kt",
+        "sdk/android/heatmap-android/src/main/kotlin/com/heatmap/sdk/compose/HeatmapScrollCapture.kt",
       ),
       "utf8",
     );
     expect(session).not.toMatch(/recordViewportScroll/);
     expect(composeScreen).not.toMatch(/recordViewportScroll/);
     expect(composeScreen).not.toMatch(/snapshotFlow/);
+    expect(composeScreen).toMatch(/heatmapScrollCapture/);
     expect(adapter).toMatch(/ComposeScrollObserver/);
   });
 

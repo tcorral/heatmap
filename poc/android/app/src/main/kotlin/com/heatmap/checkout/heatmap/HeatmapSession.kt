@@ -9,13 +9,16 @@ class HeatmapSession(
     private val captureBackend: HeatmapViewCaptureBackend,
     private val application: Application,
 ) {
+    val composeCaptureBackend: HeatmapViewCaptureBackend
+        get() = captureBackend
+
     fun trackScreen(
         screenId: String,
         layoutVersion: String? = null,
     ) {
         client.screen(screenId, layoutVersion)
         viewportSize()?.let { (width, height) ->
-            captureBackend.recordScreenView(width, height)
+            composeCaptureBackend.recordScreenView(width, height)
         }
     }
 
