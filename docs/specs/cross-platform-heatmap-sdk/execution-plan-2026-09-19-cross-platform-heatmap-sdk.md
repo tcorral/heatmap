@@ -186,7 +186,7 @@ Greenfield V1 POC: lock the nested event contract, prove a synthetic click throu
   - **Tests:** Pay identity uses accessibilityIdentifier first and identifier.rawValue when empty; events carry opaque window_id for the window used; coordinates are relative to that window; resize and scale change affect only new events; secure text fields are dropped; adapter does not send window titles or control text; introduce XCTest for macOS
   - **Depends:** Step 24
 
-- [ ] **Step 29: Build macOS checkout POC and docs** — TDD: No
+- [x] **Step 29: Build macOS checkout POC and docs** — TDD: No
   - **Description:** Add the macOS sample app for the shared checkout journey and macOS integrator docs.
   - **Files:** poc/macos/; docs/
   - **Tests:** Journey matches the shared sequence; Pay uses the agreed macOS identity; docs cover install, init, screen, annotate, disable, identify, and sign-out
