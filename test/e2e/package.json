@@ -5,7 +5,8 @@
   "scripts": {
     "test": "playwright test",
     "test:headed": "playwright test --headed",
-    "test:ios": "bash scripts/run-ios-e2e.sh"
+    "test:ios": "bash scripts/run-ios-e2e.sh",
+    "test:macos": "bash scripts/run-macos-e2e.sh"
   },
   "devDependencies": {
     "@playwright/test": "^1.49.1"

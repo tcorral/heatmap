@@ -12,6 +12,7 @@ struct ProductView: View {
                 CheckoutView()
             }
             .accessibilityIdentifier(CheckoutIdentifiers.productActivate)
+            .heatmapE2EIdentifiedTap(CheckoutIdentifiers.productActivate, heatmap: heatmap)
             .buttonStyle(.borderedProminent)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)

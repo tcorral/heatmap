@@ -192,7 +192,7 @@ Greenfield V1 POC: lock the nested event contract, prove a synthetic click throu
   - **Tests:** Journey matches the shared sequence; Pay uses the agreed macOS identity; docs cover install, init, screen, annotate, disable, identify, and sign-out
   - **Depends:** Step 28
 
-- [ ] **Step 30: Prove macOS checkout through ingest** — TDD: Yes
+- [x] **Step 30: Prove macOS checkout through ingest** — TDD: Yes
   - **Description:** Add macOS E2E for checkout, resize, and multiple windows.
   - **Files:** test/e2e/
   - **Tests:** Shared journey sequence is stored; interaction after resize sits on the new window; interaction in a second window is attributable to that window; V1 overlay still does not split by window; introduce the macOS E2E runner

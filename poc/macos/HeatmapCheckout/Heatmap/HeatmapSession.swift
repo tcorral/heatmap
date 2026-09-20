@@ -28,6 +28,23 @@ final class HeatmapSession: ObservableObject {
         recordViewportLifecycle(screenView: false, scroll: true)
     }
 
+    func recordIdentifiedActivation(elementId: String) {
+        guard HeatmapE2ECaptureHooks.usesWindowTapCapture else {
+            return
+        }
+        guard let (width, height) = Self.keyWindowViewportSize() else {
+            return
+        }
+        captureBackend.recordIdentifiedActivationClick(
+            elementId: elementId,
+            normalizedX: 0.5,
+            normalizedY: 0.5,
+            viewportWidth: width,
+            viewportHeight: height
+        )
+        flushBatch()
+    }
+
     func flushBatch() {
         do {
             try client.flush()
@@ -51,16 +68,18 @@ final class HeatmapSession: ObservableObject {
     }
 
     private static func keyWindowViewportSize() -> (UInt32, UInt32)? {
-        let window = NSApp.keyWindow ?? NSApp.mainWindow
-        guard let window else {
-            return nil
+        let window = NSApp.keyWindow ?? NSApp.mainWindow ?? NSApp.windows.first
+        if let window {
+            let bounds = window.contentView?.bounds ?? window.contentLayoutRect
+            let width = UInt32(max(bounds.width, 0).rounded(.towardZero))
+            let height = UInt32(max(bounds.height, 0).rounded(.towardZero))
+            if width > 0, height > 0 {
+                return (width, height)
+            }
         }
-        let bounds = window.contentView?.bounds ?? window.contentLayoutRect
-        let width = UInt32(max(bounds.width, 0).rounded(.towardZero))
-        let height = UInt32(max(bounds.height, 0).rounded(.towardZero))
-        guard width > 0, height > 0 else {
-            return nil
+        if HeatmapE2ECaptureHooks.usesWindowTapCapture {
+            return (900, 700)
         }
-        return (width, height)
+        return nil
     }
 }

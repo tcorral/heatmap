@@ -1,3 +1,4 @@
+import AppKit
 import Foundation
 import HeatmapAppleMacOSCapture
 import HeatmapFFI
@@ -47,6 +48,29 @@ public final class HeatmapMacosRustCaptureBackend: HeatmapMacosCaptureBackend {
         try? sdk.recordMacosScroll(
             viewportWidth: viewportWidth,
             viewportHeight: viewportHeight,
+            osVersion: osVersion,
+            appVersion: appVersion
+        )
+    }
+
+    public func recordIdentifiedActivationClick(
+        elementId: String,
+        normalizedX: Double,
+        normalizedY: Double,
+        viewportWidth: UInt32,
+        viewportHeight: UInt32,
+        timestampMs: Int64 = Int64(Date().timeIntervalSince1970 * 1000)
+    ) {
+        let window = NSApp.keyWindow ?? NSApp.mainWindow
+        let windowId = window.map { MacosWindowIdentity.opaqueId(for: $0) } ?? "e2e"
+        try? sdk.recordMacosActivationClick(
+            x: normalizedX,
+            y: normalizedY,
+            elementId: elementId,
+            viewportWidth: viewportWidth,
+            viewportHeight: viewportHeight,
+            timestampMs: timestampMs,
+            windowId: windowId,
             osVersion: osVersion,
             appVersion: appVersion
         )

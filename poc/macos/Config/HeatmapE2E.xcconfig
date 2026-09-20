@@ -1,0 +1,5 @@
+#include "Heatmap.xcconfig"
+
+E2E_BACKEND_PORT = 18082
+HEATMAP_ENDPOINT = http:/$()/127.0.0.1:$(E2E_BACKEND_PORT)
+SWIFT_ACTIVE_COMPILATION_CONDITIONS[sdk=macosx*] = $(inherited) HEATMAP_E2E_BUILD

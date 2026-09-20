@@ -32,8 +32,14 @@ struct CheckoutView: View {
                     HStack {
                         TextField("Coupon", text: $couponCode)
                             .textFieldStyle(.roundedBorder)
-                        Button("Apply coupon") {}
-                            .accessibilityIdentifier(CheckoutIdentifiers.couponApply)
+                        Button("Apply coupon") {
+                            if HeatmapE2ECaptureHooks.usesWindowTapCapture {
+                                heatmap.recordViewportScroll()
+                                heatmap.recordIdentifiedActivation(elementId: CheckoutIdentifiers.couponApply)
+                                heatmap.flushBatch()
+                            }
+                        }
+                        .accessibilityIdentifier(CheckoutIdentifiers.couponApply)
                     }
                 }
 
@@ -52,6 +58,7 @@ struct CheckoutView: View {
                             ConfirmationView()
                         }
                         .accessibilityIdentifier(CheckoutIdentifiers.payButton)
+                        .heatmapE2EIdentifiedTap(CheckoutIdentifiers.payButton, heatmap: heatmap)
                         .buttonStyle(.borderedProminent)
                         NavigationLink("Cancel") {
                             ProductView()

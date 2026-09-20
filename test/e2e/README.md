@@ -19,3 +19,11 @@ npm run test:ios
 ```
 
 (from this directory)
+
+## macOS (XCUITest)
+
+See [`macos/README.md`](./macos/README.md).
+
+```bash
+npm run test:macos
+```

@@ -3,4 +3,5 @@ test-results
 playwright-report
 blob-report
 ios/results
+macos/results
 *.xcresult

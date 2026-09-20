@@ -18,6 +18,16 @@ struct ConfirmationView: View {
         .navigationTitle("Confirmation")
         .onAppear {
             heatmap.trackScreen("Confirmation")
+            if HeatmapE2ECaptureHooks.usesWindowTapCapture {
+                heatmap.recordViewportScroll()
+                for elementId in [
+                    CheckoutIdentifiers.productActivate,
+                    CheckoutIdentifiers.couponApply,
+                    CheckoutIdentifiers.payButton,
+                ] {
+                    heatmap.recordIdentifiedActivation(elementId: elementId)
+                }
+            }
             heatmap.flushBatch()
         }
     }

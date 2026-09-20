@@ -40,6 +40,17 @@
                ReferencedContainer = "container:HeatmapCheckout.xcodeproj">
             </BuildableReference>
          </TestableReference>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "MF000003"
+               BuildableName = "HeatmapCheckoutUITests.xctest"
+               BlueprintName = "HeatmapCheckoutUITests"
+               ReferencedContainer = "container:HeatmapCheckout.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
       </Testables>
    </TestAction>
    <LaunchAction
