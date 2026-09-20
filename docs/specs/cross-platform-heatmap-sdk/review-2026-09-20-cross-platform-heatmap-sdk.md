@@ -28,7 +28,7 @@ _Each finding should carry enough context for arbitration without becoming a ful
   - **Why it matters:** Process termination during upload permanently loses unacknowledged events.
   - **Suggested action:** Persist in-flight batch until successful acknowledgment; test restart between batch creation and completion.
 
-- [ ] **Critical** — `core/heatmap-ffi/src/c_abi.rs:35` — Windows C ABI handle is not concurrency-safe
+- [x] **Critical** — `core/heatmap-ffi/src/c_abi.rs:35` — Windows C ABI handle is not concurrency-safe
   - **Issue:** `with_sdk` creates unsynchronized mutable references from raw pointer while Windows timer and WPF callbacks can call same handle concurrently; disposal can also free it during a call.
   - **Why it matters:** Aliased Rust mutable references and use-after-free cause undefined behavior.
   - **Suggested action:** Add synchronized, lifetime-safe native handle ownership and make managed disposal wait for active callbacks.

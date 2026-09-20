@@ -122,14 +122,15 @@ public sealed class HeatmapClient : IDisposable
             return;
         }
 
-        _flushTimer.Dispose();
+        _disposed = true;
+        using var flushed = new ManualResetEvent(false);
+        _flushTimer.Dispose(flushed);
+        flushed.WaitOne();
         if (_handle != IntPtr.Zero)
         {
             HeatmapNative.heatmap_sdk_free(_handle);
             _handle = IntPtr.Zero;
         }
-
-        _disposed = true;
     }
 
     private Timer StartFlushTimer()

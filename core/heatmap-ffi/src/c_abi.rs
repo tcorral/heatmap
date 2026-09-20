@@ -1,5 +1,6 @@
 use std::ffi::{c_char, c_void, CStr};
 use std::ptr;
+use std::sync::{Condvar, Mutex};
 
 use crate::public_api::PublicHeatmapSdk;
 
@@ -14,7 +15,16 @@ pub const HEATMAP_ERR_SCREEN: i32 = 5;
 pub const HEATMAP_ERR_FLUSH: i32 = 6;
 pub const HEATMAP_ERR_CAPTURE: i32 = 7;
 
-struct SdkBox(PublicHeatmapSdk);
+struct HandleGate {
+    in_flight: usize,
+    closed: bool,
+}
+
+struct HandleInner {
+    sdk: Mutex<PublicHeatmapSdk>,
+    gate: Mutex<HandleGate>,
+    wait: Condvar,
+}
 
 fn read_cstr(ptr: *const c_char) -> Result<String, i32> {
     if ptr.is_null() {
@@ -26,6 +36,29 @@ fn read_cstr(ptr: *const c_char) -> Result<String, i32> {
         .map_err(|_| HEATMAP_ERR_UTF8)
 }
 
+fn lock_mutex<T>(mutex: &Mutex<T>) -> std::sync::MutexGuard<'_, T> {
+    mutex
+        .lock()
+        .unwrap_or_else(|poisoned| poisoned.into_inner())
+}
+
+fn begin_sdk_use(inner: &HandleInner) -> Result<(), i32> {
+    let mut gate = lock_mutex(&inner.gate);
+    if gate.closed {
+        return Err(HEATMAP_ERR_NULL);
+    }
+    gate.in_flight += 1;
+    Ok(())
+}
+
+fn end_sdk_use(inner: &HandleInner) {
+    let mut gate = lock_mutex(&inner.gate);
+    gate.in_flight -= 1;
+    if gate.in_flight == 0 {
+        inner.wait.notify_all();
+    }
+}
+
 fn with_sdk<F>(handle: HeatmapSdkHandle, action: F) -> i32
 where
     F: FnOnce(&mut PublicHeatmapSdk) -> i32,
@@ -33,8 +66,38 @@ where
     if handle.is_null() {
         return HEATMAP_ERR_NULL;
     }
-    let sdk = unsafe { &mut (*(handle as *mut SdkBox)).0 };
-    action(sdk)
+    let inner = unsafe { &*(handle as *mut HandleInner) };
+    if begin_sdk_use(inner).is_err() {
+        return HEATMAP_ERR_NULL;
+    }
+    let result = {
+        let mut sdk = lock_mutex(&inner.sdk);
+        action(&mut sdk)
+    };
+    end_sdk_use(inner);
+    result
+}
+
+fn wait_until_idle_then_close(inner: &HandleInner) {
+    let mut gate = lock_mutex(&inner.gate);
+    gate.closed = true;
+    while gate.in_flight > 0 {
+        gate = inner
+            .wait
+            .wait(gate)
+            .unwrap_or_else(|poisoned| poisoned.into_inner());
+    }
+}
+
+fn into_handle(sdk: PublicHeatmapSdk) -> HeatmapSdkHandle {
+    Box::into_raw(Box::new(HandleInner {
+        sdk: Mutex::new(sdk),
+        gate: Mutex::new(HandleGate {
+            in_flight: 0,
+            closed: false,
+        }),
+        wait: Condvar::new(),
+    })) as HeatmapSdkHandle
 }
 
 #[no_mangle]
@@ -51,9 +114,8 @@ pub extern "C" fn heatmap_sdk_init(
     };
     match PublicHeatmapSdk::init_from_json(&json) {
         Ok(sdk) => {
-            let boxed = Box::new(SdkBox(sdk));
             unsafe {
-                *out_handle = Box::into_raw(boxed) as HeatmapSdkHandle;
+                *out_handle = into_handle(sdk);
             }
             HEATMAP_OK
         }
@@ -66,8 +128,10 @@ pub extern "C" fn heatmap_sdk_free(handle: HeatmapSdkHandle) {
     if handle.is_null() {
         return;
     }
+    let inner = unsafe { &*(handle as *mut HandleInner) };
+    wait_until_idle_then_close(inner);
     unsafe {
-        drop(Box::from_raw(handle as *mut SdkBox));
+        drop(Box::from_raw(handle as *mut HandleInner));
     }
 }
 
