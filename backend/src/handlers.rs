@@ -13,7 +13,7 @@ use serde_json::{json, Value};
 use crate::config::AppConfig;
 use crate::db::{self, ElementsFilter, HeatmapFilter};
 use crate::error::ApiError;
-use crate::rate_limit::RateLimiter;
+use crate::rate_limit::{RateLimitDecision, RateLimiter};
 use crate::service;
 
 #[derive(Clone)]
@@ -105,8 +105,13 @@ fn enforce_rate_limit_if_new(
         .map_err(|_| ApiError::Internal)?
         .is_none();
     drop(conn);
-    if is_new && !acquire_rate_slot(state, project_key) {
-        return Err(ApiError::TooManyRequests);
+    if is_new {
+        match acquire_rate_slot(state, project_key) {
+            RateLimitDecision::Allowed => {}
+            RateLimitDecision::Denied { retry_after_secs } => {
+                return Err(ApiError::TooManyRequests { retry_after_secs });
+            }
+        }
     }
     Ok(())
 }
@@ -115,8 +120,8 @@ fn ingest_and_accept(
     state: &AppState,
     parsed: &BatchBody,
 ) -> Result<(StatusCode, Json<Value>), ApiError> {
-    let conn = state.db.lock().map_err(|_| ApiError::Internal)?;
-    let result = service::ingest_batch(&conn, &parsed.batch_id, &parsed.events)
+    let mut conn = state.db.lock().map_err(|_| ApiError::Internal)?;
+    let result = service::ingest_batch(&mut conn, &parsed.batch_id, &parsed.events)
         .map_err(|_| ApiError::Internal)?;
     Ok((
         StatusCode::ACCEPTED,
@@ -276,9 +281,9 @@ fn reject_if_oversize_events(count: usize, max_events: usize) -> Result<(), ApiE
     Ok(())
 }
 
-fn acquire_rate_slot(state: &AppState, project_key: &str) -> bool {
+fn acquire_rate_slot(state: &AppState, project_key: &str) -> RateLimitDecision {
     let mut limiter = state.rate_limiter.lock().expect("rate limiter lock");
-    limiter.allow(project_key, state.config.batches_per_minute())
+    limiter.check(project_key, state.config.batches_per_minute())
 }
 
 fn parse_batch_body(body: &Bytes) -> Result<BatchBody, ApiError> {

@@ -184,6 +184,45 @@ async fn rate_limit_returns_429_after_window_capacity() {
 }
 
 #[tokio::test]
+async fn rate_limit_429_includes_retry_after_header() {
+    let config = AppConfig::default().with_batches_per_minute(1);
+    let db = db::open_in_memory().expect("db");
+    let app = app(config, db);
+    let status = post_batch(
+        &app,
+        "batch_rl_header_1",
+        json!([valid_click("h1", 0.1, 0.1, "")]),
+    )
+    .await;
+    assert_eq!(status, StatusCode::ACCEPTED);
+    let response = app
+        .clone()
+        .oneshot(
+            Request::builder()
+                .method("POST")
+                .uri("/v1/batches")
+                .header("X-Project-Key", TEST_PROJECT_KEY)
+                .header("content-type", "application/json")
+                .body(Body::from(
+                    json!({
+                        "batch_id": "batch_rl_header_2",
+                        "events": [valid_click("h2", 0.1, 0.1, "")]
+                    })
+                    .to_string(),
+                ))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(response.status(), StatusCode::TOO_MANY_REQUESTS);
+    let retry_after = response
+        .headers()
+        .get("retry-after")
+        .expect("Retry-After header");
+    assert!(retry_after.to_str().unwrap().parse::<u64>().unwrap() >= 1);
+}
+
+#[tokio::test]
 async fn unknown_fields_on_valid_event_still_persist() {
     let app = test_app();
     let mut click = valid_click("extra", 0.5, 0.5, "2024-09");
