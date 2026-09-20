@@ -208,6 +208,16 @@ pub fn query_element_totals(
     conn: &Connection,
     filter: &ElementsFilter<'_>,
 ) -> SqlResult<Vec<ElementTotalRow>> {
+    if filter.from.is_some() || filter.to.is_some() {
+        return query_element_totals_from_events(conn, filter);
+    }
+    query_element_totals_materialized(conn, filter)
+}
+
+fn query_element_totals_materialized(
+    conn: &Connection,
+    filter: &ElementsFilter<'_>,
+) -> SqlResult<Vec<ElementTotalRow>> {
     let layout = filter.layout_version.unwrap_or("");
     let mut statement = conn.prepare(
         "SELECT element_id, click_count FROM element_totals
@@ -231,73 +241,68 @@ pub fn query_element_totals(
     Ok(results)
 }
 
+fn query_element_totals_from_events(
+    conn: &Connection,
+    filter: &ElementsFilter<'_>,
+) -> SqlResult<Vec<ElementTotalRow>> {
+    let layout = filter.layout_version.unwrap_or("");
+    let mut statement = conn.prepare(
+        "SELECT element_id, COUNT(*) AS click_count FROM raw_events
+         WHERE platform_type = ?1 AND screen_id = ?2 AND layout_version = ?3
+           AND app_version = ?4 AND event_type = 'click' AND element_id IS NOT NULL
+           AND element_id != ''
+           AND (?5 IS NULL OR timestamp >= ?5)
+           AND (?6 IS NULL OR timestamp <= ?6)
+         GROUP BY element_id",
+    )?;
+    let rows = statement.query_map(
+        params![
+            filter.platform,
+            filter.screen,
+            layout,
+            filter.app_version,
+            filter.from,
+            filter.to
+        ],
+        |row| Ok((row.get::<_, String>(0)?, row.get::<_, i64>(1)?)),
+    )?;
+
+    let mut results = Vec::new();
+    for row in rows {
+        let (element_id, click_count) = row?;
+        let unique_sessions = count_unique_sessions(conn, filter, &element_id)?;
+        results.push(ElementTotalRow {
+            element_id,
+            click_count,
+            unique_sessions,
+        });
+    }
+    Ok(results)
+}
+
 fn count_unique_sessions(
     conn: &Connection,
     filter: &ElementsFilter<'_>,
     element_id: &str,
 ) -> SqlResult<i64> {
     let layout = filter.layout_version.unwrap_or("");
-    match (filter.from, filter.to) {
-        (Some(from), Some(to)) => conn.query_row(
-            "SELECT COUNT(DISTINCT session_id) FROM raw_events
-             WHERE platform_type = ?1 AND screen_id = ?2 AND layout_version = ?3
-             AND app_version = ?4 AND event_type = 'click' AND element_id = ?5
-             AND timestamp >= ?6 AND timestamp <= ?7",
-            params![
-                filter.platform,
-                filter.screen,
-                layout,
-                filter.app_version,
-                element_id,
-                from,
-                to
-            ],
-            |row| row.get(0),
-        ),
-        (Some(from), None) => conn.query_row(
-            "SELECT COUNT(DISTINCT session_id) FROM raw_events
-             WHERE platform_type = ?1 AND screen_id = ?2 AND layout_version = ?3
-             AND app_version = ?4 AND event_type = 'click' AND element_id = ?5
-             AND timestamp >= ?6",
-            params![
-                filter.platform,
-                filter.screen,
-                layout,
-                filter.app_version,
-                element_id,
-                from
-            ],
-            |row| row.get(0),
-        ),
-        (None, Some(to)) => conn.query_row(
-            "SELECT COUNT(DISTINCT session_id) FROM raw_events
-             WHERE platform_type = ?1 AND screen_id = ?2 AND layout_version = ?3
-             AND app_version = ?4 AND event_type = 'click' AND element_id = ?5
-             AND timestamp <= ?6",
-            params![
-                filter.platform,
-                filter.screen,
-                layout,
-                filter.app_version,
-                element_id,
-                to
-            ],
-            |row| row.get(0),
-        ),
-        (None, None) => conn.query_row(
-            "SELECT COUNT(DISTINCT session_id) FROM raw_events
-             WHERE platform_type = ?1 AND screen_id = ?2 AND layout_version = ?3
-             AND app_version = ?4 AND event_type = 'click' AND element_id = ?5",
-            params![
-                filter.platform,
-                filter.screen,
-                layout,
-                filter.app_version,
-                element_id
-            ],
-            |row| row.get(0),
-        ),
-    }
+    conn.query_row(
+        "SELECT COUNT(DISTINCT session_id) FROM raw_events
+         WHERE platform_type = ?1 AND screen_id = ?2 AND layout_version = ?3
+           AND app_version = ?4 AND event_type = 'click' AND element_id = ?5
+           AND (?6 IS NULL OR timestamp >= ?6)
+           AND (?7 IS NULL OR timestamp <= ?7)",
+        params![
+            filter.platform,
+            filter.screen,
+            layout,
+            filter.app_version,
+            element_id,
+            filter.from,
+            filter.to
+        ],
+        |row| row.get(0),
+    )
 }
 
 pub fn upsert_click_bin(
@@ -485,61 +490,20 @@ pub fn count_slice_unique_sessions(
     filter: &ElementsFilter<'_>,
 ) -> SqlResult<i64> {
     let layout = filter.layout_version.unwrap_or("");
-    match (filter.from, filter.to) {
-        (Some(from), Some(to)) => conn.query_row(
-            "SELECT COUNT(DISTINCT session_id) FROM raw_events
-             WHERE platform_type = ?1 AND screen_id = ?2 AND layout_version = ?3
-             AND app_version = ?4 AND event_type = 'click' AND element_id IS NOT NULL
-             AND timestamp >= ?5 AND timestamp <= ?6",
-            params![
-                filter.platform,
-                filter.screen,
-                layout,
-                filter.app_version,
-                from,
-                to
-            ],
-            |row| row.get(0),
-        ),
-        (Some(from), None) => conn.query_row(
-            "SELECT COUNT(DISTINCT session_id) FROM raw_events
-             WHERE platform_type = ?1 AND screen_id = ?2 AND layout_version = ?3
-             AND app_version = ?4 AND event_type = 'click' AND element_id IS NOT NULL
-             AND timestamp >= ?5",
-            params![
-                filter.platform,
-                filter.screen,
-                layout,
-                filter.app_version,
-                from
-            ],
-            |row| row.get(0),
-        ),
-        (None, Some(to)) => conn.query_row(
-            "SELECT COUNT(DISTINCT session_id) FROM raw_events
-             WHERE platform_type = ?1 AND screen_id = ?2 AND layout_version = ?3
-             AND app_version = ?4 AND event_type = 'click' AND element_id IS NOT NULL
-             AND timestamp <= ?5",
-            params![
-                filter.platform,
-                filter.screen,
-                layout,
-                filter.app_version,
-                to
-            ],
-            |row| row.get(0),
-        ),
-        (None, None) => conn.query_row(
-            "SELECT COUNT(DISTINCT session_id) FROM raw_events
-             WHERE platform_type = ?1 AND screen_id = ?2 AND layout_version = ?3
-             AND app_version = ?4 AND event_type = 'click' AND element_id IS NOT NULL",
-            params![
-                filter.platform,
-                filter.screen,
-                layout,
-                filter.app_version
-            ],
-            |row| row.get(0),
-        ),
-    }
+    conn.query_row(
+        "SELECT COUNT(DISTINCT session_id) FROM raw_events
+         WHERE platform_type = ?1 AND screen_id = ?2 AND layout_version = ?3
+           AND app_version = ?4 AND event_type = 'click' AND element_id IS NOT NULL
+           AND (?5 IS NULL OR timestamp >= ?5)
+           AND (?6 IS NULL OR timestamp <= ?6)",
+        params![
+            filter.platform,
+            filter.screen,
+            layout,
+            filter.app_version,
+            filter.from,
+            filter.to
+        ],
+        |row| row.get(0),
+    )
 }

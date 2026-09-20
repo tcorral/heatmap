@@ -141,6 +141,79 @@ async fn heatmap_date_range_excludes_clicks_outside_slice() {
     assert!(!bins.iter().any(|b| b["bin_x"] == 10 && b["bin_y"] == 10));
 }
 
+fn pay_click_at(ts: f64, layout: &str) -> Value {
+    json!({
+        "schema_version": 1,
+        "session_id": "sess_pay_date",
+        "anonymous_id": "anon_pay_date",
+        "timestamp": ts,
+        "sdk": { "name": "heatmap-web", "version": "0.1.0" },
+        "platform": {
+            "type": "web",
+            "os_version": "macOS",
+            "app_version": "1.0.0"
+        },
+        "screen": { "id": "Checkout", "layout_version": layout },
+        "event": { "type": "click", "element_id": "checkout.pay" },
+        "position": { "x": 0.5, "y": 0.5 }
+    })
+}
+
+#[tokio::test]
+async fn element_totals_click_count_respects_date_range() {
+    let app = test_app();
+    post_batch(
+        &app,
+        "batch_pay_early",
+        json!([pay_click_at(1000.0, "2024-09")]),
+    )
+    .await;
+    post_batch(
+        &app,
+        "batch_pay_late",
+        json!([pay_click_at(9000.0, "2024-09")]),
+    )
+    .await;
+
+    let all_time = app
+        .clone()
+        .oneshot(
+            Request::builder()
+                .uri("/v1/elements?platform=web&screen=Checkout&layout_version=2024-09&app_version=1.0.0")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    let all_time_body = response_json(all_time).await;
+    let all_pay = all_time_body["elements"]
+        .as_array()
+        .expect("elements")
+        .iter()
+        .find(|row| row["element_id"] == "checkout.pay")
+        .expect("pay row");
+    assert_eq!(all_pay["click_count"], 2);
+
+    let sliced = app
+        .clone()
+        .oneshot(
+            Request::builder()
+                .uri("/v1/elements?platform=web&screen=Checkout&layout_version=2024-09&app_version=1.0.0&from=5000&to=10000")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    let sliced_body = response_json(sliced).await;
+    let sliced_pay = sliced_body["elements"]
+        .as_array()
+        .expect("elements")
+        .iter()
+        .find(|row| row["element_id"] == "checkout.pay")
+        .expect("pay row in slice");
+    assert_eq!(sliced_pay["click_count"], 1);
+}
+
 #[tokio::test]
 async fn heatmap_layout_versions_do_not_mix_bins() {
     let app = test_app();
