@@ -10,7 +10,7 @@ pub struct IngestResult {
 }
 
 pub fn ingest_batch(
-    conn: &Connection,
+    conn: &mut Connection,
     batch_id: &str,
     events: &[Value],
 ) -> Result<IngestResult, rusqlite::Error> {
@@ -24,7 +24,7 @@ pub fn ingest_batch(
 
     let mut accepted_count = 0_i64;
     let mut rejected_count = 0_i64;
-    let tx = conn.unchecked_transaction()?;
+    let tx = conn.transaction()?;
     for event in events {
         if validate::validate_event(event) {
             persist_accepted_event(&tx, batch_id, event)?;
