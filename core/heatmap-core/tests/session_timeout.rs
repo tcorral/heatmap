@@ -107,10 +107,7 @@ fn should_keep_session_id_after_background_then_foreground_before_timeout() {
     let mut sdk = sdk_with_clock(timeout, Arc::clone(&clock));
     sdk.enqueue_candidate(click_candidate(clock.now_ms()))
         .expect("click");
-    let session_id = sdk
-        .build_batch()
-        .expect("batch")
-        .events[1]
+    let session_id = sdk.build_batch().expect("batch").events[1]
         .session_id
         .clone();
 
@@ -131,10 +128,7 @@ fn should_start_new_session_after_inactivity_timeout() {
     let mut sdk = sdk_with_clock(timeout, Arc::clone(&clock));
     sdk.enqueue_candidate(click_candidate(clock.now_ms()))
         .expect("first click");
-    let first_session = sdk
-        .build_batch()
-        .expect("batch")
-        .events[1]
+    let first_session = sdk.build_batch().expect("batch").events[1]
         .session_id
         .clone();
 
@@ -142,12 +136,36 @@ fn should_start_new_session_after_inactivity_timeout() {
     sdk.enqueue_candidate(click_candidate(clock.now_ms()))
         .expect("click after timeout");
     let batch = sdk.build_batch().expect("batch");
-    assert_eq!(batch.events.len(), 2);
+    assert_eq!(batch.events.len(), 3);
     assert_eq!(
         batch.events[0].event.interaction_type,
+        InteractionType::SessionEnd
+    );
+    assert_eq!(batch.events[0].session_id, first_session);
+    assert_eq!(
+        batch.events[1].event.interaction_type,
         InteractionType::SessionStart
     );
     assert_ne!(batch.events[1].session_id, first_session);
+    assert_eq!(
+        batch.events[2].event.interaction_type,
+        InteractionType::Click
+    );
+    assert_eq!(batch.events[2].session_id, batch.events[1].session_id);
+}
+
+#[test]
+fn should_not_emit_session_end_on_first_capture_after_init() {
+    let clock = Arc::new(ManualClock::new(0));
+    let mut sdk = sdk_with_clock(1_000, Arc::clone(&clock));
+    sdk.enqueue_candidate(click_candidate(clock.now_ms()))
+        .expect("first capture");
+    let batch = sdk.build_batch().expect("batch");
+    assert_eq!(batch.events.len(), 2);
+    assert!(batch
+        .events
+        .iter()
+        .all(|event| event.event.interaction_type != InteractionType::SessionEnd));
 }
 
 #[test]

@@ -310,7 +310,7 @@ Canonical Event:
 | Buffer full | Host stays up; newest kept | Drop oldest at limit |
 | Sign-out after identify | Later events keep anonymous_id, lose user_id | Core clears user_id only |
 | Background then resume before timeout | Same session | Core does not rotate on background |
-| Inactivity timeout or expired session | New session on next interaction | Default 30 minutes from last captured event |
+| Inactivity timeout or expired session | `session_end` (prior session) then new session on next interaction | Default 30 minutes from last captured event; first capture after init emits no `session_end` |
 | Resize, rotation, DPI / scale change | New points sit on the new window | Adapter recomputes viewport; normalize 0–1 |
 | Multiple windows (macOS, Windows) | Interaction belongs to that window | Opaque `window_id` + that viewport; V1 overlay does not split by window |
 | Invalid project key | Host stays up; no retry loop | Permanent failure; diagnostic increment |
@@ -391,3 +391,9 @@ No product toolchain exists on disk today. Commands below are not runnable until
 - **What changed:** WASM init sets `defer_network_flush`. Enqueue, `poll_flush`, and background no longer call `BatchTransport` (sync XHR). Hosts upload with `beginFlushBatchJson` / `completeFlush` over async `fetch`, on a 10s timer and after capture.
 - **Why:** Cross-origin XHR is blocked; sync XHR on the UI thread violates the performance NFR. Shared `BatchTransport` stays synchronous for native.
 - **Supersedes:** Browser auto-flush and `pollFlush` delivering batches through `FetchBatchTransport` on the main thread.
+
+### Note 3
+
+- **What changed:** Inactivity timeout rotation enqueues `session_end` on the prior `session_id` (then `session_start` for the new session) on the next capture. First capture after init still emits only `session_start` when needed. Sampled-out sessions still enqueue nothing, including no `session_end`.
+- **Why:** V1 lifecycle set includes `session_end`; timeout closure was missing from the shared enqueue path.
+- **Supersedes:** Table row “Inactivity timeout or expired session” implying rotation without an explicit `session_end` event.

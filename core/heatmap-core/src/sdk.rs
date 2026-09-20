@@ -327,12 +327,21 @@ impl HeatmapSdk {
             return Err(CaptureError::TrackingDisabled);
         }
         let now = self.clock.now_ms();
-        let new_session = self.ensure_active_session(now);
+        let new_session = self.rotate_session_if_needed(&candidate)?;
         if !self.sample_in {
             self.diagnostics.record_sampled_out();
             self.record_session_activity(now);
             return Err(CaptureError::SampledOut);
         }
+        self.enqueue_after_session_ready(candidate, new_session, now)
+    }
+
+    fn enqueue_after_session_ready(
+        &mut self,
+        candidate: CaptureCandidate,
+        new_session: bool,
+        now: i64,
+    ) -> Result<(), CaptureError> {
         if capture_is_excluded(
             &candidate,
             self.current_screen.as_ref(),
@@ -341,8 +350,7 @@ impl HeatmapSdk {
         ) {
             return Err(CaptureError::Excluded);
         }
-        let is_session_start = interaction_is_session_start(&candidate.interaction);
-        if new_session && !is_session_start {
+        if new_session && !interaction_is_session_start(&candidate.interaction) {
             self.push_capture_event(session_start_from(&candidate)?)?;
         }
         self.push_capture_event(candidate)?;
@@ -499,17 +507,34 @@ impl HeatmapSdk {
         }
     }
 
-    fn ensure_active_session(&mut self, now: i64) -> bool {
+    fn rotate_session_if_needed(
+        &mut self,
+        candidate: &CaptureCandidate,
+    ) -> Result<bool, CaptureError> {
+        let now = self.clock.now_ms();
         if session_still_active(
             self.session_id.as_deref(),
             self.last_event_at,
             now,
             self.config.session_timeout_ms,
         ) {
-            return false;
+            return Ok(false);
+        }
+        if let Some(old_id) = self.prior_sampled_in_session_id() {
+            self.push_capture_event_as_session(session_end_from(candidate)?, old_id.as_str())?;
         }
         self.start_new_session();
-        true
+        Ok(true)
+    }
+
+    fn prior_sampled_in_session_id(&self) -> Option<String> {
+        if !self.sample_in {
+            return None;
+        }
+        self.session_id
+            .as_ref()
+            .filter(|id| !id.trim().is_empty())
+            .cloned()
     }
 
     fn start_new_session(&mut self) {
@@ -547,8 +572,16 @@ impl HeatmapSdk {
     fn push_capture_event(&mut self, candidate: CaptureCandidate) -> Result<(), CaptureError> {
         let session_id = self
             .session_id
-            .as_deref()
+            .clone()
             .expect("active session required before capture");
+        self.push_capture_event_as_session(candidate, session_id.as_str())
+    }
+
+    fn push_capture_event_as_session(
+        &mut self,
+        candidate: CaptureCandidate,
+        session_id: &str,
+    ) -> Result<(), CaptureError> {
         let event = candidate_to_event(
             candidate,
             CaptureContext {
@@ -559,6 +592,10 @@ impl HeatmapSdk {
                 mask_elements: &self.config.mask_elements,
             },
         )?;
+        self.enqueue_heatmap_event(event)
+    }
+
+    fn enqueue_heatmap_event(&mut self, event: HeatmapEvent) -> Result<(), CaptureError> {
         let dropped = push_with_overflow(
             &mut self.queue,
             &mut self.queue_events_bytes,
@@ -601,12 +638,23 @@ fn interaction_is_session_start(interaction: &InteractionEvent) -> bool {
 }
 
 fn session_start_from(candidate: &CaptureCandidate) -> Result<CaptureCandidate, CaptureError> {
+    lifecycle_candidate_from(candidate, InteractionEvent::session_start())
+}
+
+fn session_end_from(candidate: &CaptureCandidate) -> Result<CaptureCandidate, CaptureError> {
+    lifecycle_candidate_from(candidate, InteractionEvent::session_end())
+}
+
+fn lifecycle_candidate_from(
+    candidate: &CaptureCandidate,
+    interaction: Result<InteractionEvent, crate::event::InvalidEventField>,
+) -> Result<CaptureCandidate, CaptureError> {
     Ok(CaptureCandidate {
         timestamp: candidate.timestamp,
         sdk: candidate.sdk.clone(),
         platform: candidate.platform.clone(),
         screen: candidate.screen.clone(),
-        interaction: InteractionEvent::session_start().map_err(CaptureError::InvalidEventField)?,
+        interaction: interaction.map_err(CaptureError::InvalidEventField)?,
         position: None,
         viewport: candidate.viewport.clone(),
         window_id: candidate.window_id.clone(),
