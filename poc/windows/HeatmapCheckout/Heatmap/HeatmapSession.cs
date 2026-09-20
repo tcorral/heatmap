@@ -57,6 +57,7 @@ public sealed class HeatmapSession
         try
         {
             _client.Screen(screenId, layoutVersion);
+            RecordViewportScreenView();
         }
         catch (Exception ex)
         {
@@ -64,6 +65,18 @@ public sealed class HeatmapSession
             System.Diagnostics.Debug.WriteLine($"[heatmap] screen({screenId}) failed: {ex}");
 #endif
         }
+    }
+
+    private void RecordViewportScreenView()
+    {
+        if (Application.Current?.MainWindow is not Window window)
+        {
+            return;
+        }
+
+        var width = (uint)Math.Max(1.0, window.ActualWidth);
+        var height = (uint)Math.Max(1.0, window.ActualHeight);
+        _captureBackend.RecordScreenView(width, height);
     }
 
     public void FlushBatch()

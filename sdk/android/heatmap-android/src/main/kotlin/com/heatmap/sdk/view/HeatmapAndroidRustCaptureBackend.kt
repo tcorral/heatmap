@@ -31,6 +31,15 @@ class HeatmapAndroidRustCaptureBackend(
         )
     }
 
+    override fun recordScreenView(viewportWidth: UInt, viewportHeight: UInt) {
+        sdk.recordAndroidScreenView(
+            viewportWidth = viewportWidth,
+            viewportHeight = viewportHeight,
+            osVersion = osVersion,
+            appVersion = appVersion,
+        )
+    }
+
     override fun onBackground() {
         sdk.onBackground()
     }

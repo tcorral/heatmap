@@ -17,6 +17,11 @@ class HeatmapCheckoutApplication : Application() {
         super.onCreate()
         val config = HeatmapConfigReader.load(this)
         heatmapRuntime = HeatmapBootstrap.makeRuntime(this, config)
-        heatmapSession = HeatmapSession(client = heatmapRuntime.client)
+        heatmapSession =
+            HeatmapSession(
+                client = heatmapRuntime.client,
+                captureBackend = heatmapRuntime.captureBackend,
+                application = this,
+            )
     }
 }

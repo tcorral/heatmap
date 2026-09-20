@@ -582,6 +582,8 @@ public protocol HeatmapSdkProtocol : AnyObject {
      */
     func recordAndroidActivationClick(x: Double, y: Double, elementId: String?, viewportWidth: UInt32, viewportHeight: UInt32, timestampMs: Int64, osVersion: String, appVersion: String) throws 
     
+    func recordAndroidScreenView(viewportWidth: UInt32, viewportHeight: UInt32, osVersion: String, appVersion: String) throws 
+    
     func recordIosScreenView(viewportWidth: UInt32, viewportHeight: UInt32, osVersion: String, appVersion: String) throws 
     
     func recordIosScroll(viewportWidth: UInt32, viewportHeight: UInt32, osVersion: String, appVersion: String) throws 
@@ -754,6 +756,16 @@ open func recordAndroidActivationClick(x: Double, y: Double, elementId: String?,
         FfiConverterUInt32.lower(viewportWidth),
         FfiConverterUInt32.lower(viewportHeight),
         FfiConverterInt64.lower(timestampMs),
+        FfiConverterString.lower(osVersion),
+        FfiConverterString.lower(appVersion),$0
+    )
+}
+}
+    
+open func recordAndroidScreenView(viewportWidth: UInt32, viewportHeight: UInt32, osVersion: String, appVersion: String)throws  {try rustCallWithError(FfiConverterTypeCaptureError.lift) {
+    uniffi_heatmap_ffi_fn_method_heatmapsdk_record_android_screen_view(self.uniffiClonePointer(),
+        FfiConverterUInt32.lower(viewportWidth),
+        FfiConverterUInt32.lower(viewportHeight),
         FfiConverterString.lower(osVersion),
         FfiConverterString.lower(appVersion),$0
     )
@@ -1419,6 +1431,9 @@ private var initializationResult: InitializationResult = {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_heatmap_ffi_checksum_method_heatmapsdk_record_android_activation_click() != 38507) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_heatmap_ffi_checksum_method_heatmapsdk_record_android_screen_view() != 58408) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_heatmap_ffi_checksum_method_heatmapsdk_record_ios_screen_view() != 8553) {

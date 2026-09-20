@@ -47,6 +47,20 @@ class AndroidSessionIntegrationTest {
         sdk.close()
     }
 
+    @Test
+    fun recordScreenViewAfterScreenDoesNotThrowWhenNativeLibLoaded() {
+        val sdk = tryCreateSdk() ?: return
+        val backend =
+            HeatmapAndroidRustCaptureBackend(
+                sdk = sdk,
+                osVersion = "Android 14",
+                appVersion = "1.0.0",
+            )
+        sdk.screen("Home", null)
+        backend.recordScreenView(800u, 600u)
+        sdk.close()
+    }
+
     private fun tryCreateSdk(): HeatmapSdk? {
         return try {
             HeatmapSdk.init(

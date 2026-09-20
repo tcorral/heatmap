@@ -36,6 +36,24 @@ impl PublicHeatmapSdk {
         };
         self.inner.enqueue_candidate(candidate)
     }
+
+    pub fn record_android_screen_view(
+        &mut self,
+        viewport_width: u32,
+        viewport_height: u32,
+        os_version: String,
+        app_version: String,
+    ) -> Result<(), CaptureError> {
+        let viewport = Viewport {
+            width: viewport_width,
+            height: viewport_height,
+        };
+        self.inner.record_screen_view(
+            android_sdk_info(),
+            android_platform_info(os_version, app_version),
+            viewport,
+        )
+    }
 }
 
 fn android_sdk_info() -> SdkInfo {
@@ -68,7 +86,7 @@ mod tests {
             exclude_elements: vec![],
             exclude_screens: vec![],
             mask_elements: vec![],
-        app_version: heatmap_core::HeatmapConfig::DEFAULT_APP_VERSION.into(),
+            app_version: heatmap_core::HeatmapConfig::DEFAULT_APP_VERSION.into(),
         };
         let mut sdk = PublicHeatmapSdk::init(config).expect("init");
         sdk.record_android_activation_click(
@@ -90,5 +108,35 @@ mod tests {
             .expect("click");
         assert_eq!(click.sdk.name, "heatmap-android");
         assert_eq!(click.platform.platform_type, PlatformType::Android);
+    }
+
+    #[test]
+    fn should_enqueue_screen_view_when_android_screen_is_set() {
+        let config = heatmap_core::HeatmapConfig {
+            project_key: "pk_test".into(),
+            endpoint: "https://ingest.example.com".into(),
+            session_timeout_ms: 10_000,
+            sample_rate: 1.0,
+            exclude_elements: vec![],
+            exclude_screens: vec![],
+            mask_elements: vec![],
+            app_version: heatmap_core::HeatmapConfig::DEFAULT_APP_VERSION.into(),
+        };
+        let mut sdk = PublicHeatmapSdk::init(config).expect("init");
+        sdk.screen("Home".into(), None).expect("screen");
+        sdk.record_android_screen_view(800, 600, "Android 14".into(), "1.0.0".into())
+            .expect("screen_view");
+        let batch = sdk.inner.build_batch().expect("batch");
+        let screen_view = batch
+            .events
+            .iter()
+            .find(|event| event.event.interaction_type == InteractionType::ScreenView)
+            .expect("screen_view");
+        assert_eq!(
+            screen_view.screen.as_ref().map(|screen| screen.id.as_str()),
+            Some("Home")
+        );
+        assert_eq!(screen_view.sdk.name, "heatmap-android");
+        assert_eq!(screen_view.platform.platform_type, PlatformType::Android);
     }
 }
