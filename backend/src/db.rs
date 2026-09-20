@@ -122,7 +122,9 @@ pub fn insert_raw_event(conn: &Connection, batch_id: &str, event: &Value) -> Sql
     let session_id = event["session_id"].as_str().unwrap_or_default();
     let timestamp = event["timestamp"].as_f64().unwrap_or(0.0);
     let platform_type = event["platform"]["type"].as_str().unwrap_or_default();
-    let app_version = event["platform"]["app_version"].as_str().unwrap_or_default();
+    let app_version = event["platform"]["app_version"]
+        .as_str()
+        .unwrap_or_default();
     let screen_id = event
         .get("screen")
         .and_then(|screen| screen.get("id"))
@@ -134,9 +136,7 @@ pub fn insert_raw_event(conn: &Connection, batch_id: &str, event: &Value) -> Sql
         .and_then(|version| version.as_str())
         .unwrap_or("");
     let event_type = event["event"]["type"].as_str().unwrap_or_default();
-    let element_id = event["event"]
-        .get("element_id")
-        .and_then(|id| id.as_str());
+    let element_id = event["event"].get("element_id").and_then(|id| id.as_str());
     let event_json = event.to_string();
 
     conn.execute(
@@ -162,15 +162,15 @@ pub fn insert_raw_event(conn: &Connection, batch_id: &str, event: &Value) -> Sql
 
 pub fn upsert_element_total(conn: &Connection, event: &Value) -> SqlResult<()> {
     let platform_type = event["platform"]["type"].as_str().unwrap_or_default();
-    let app_version = event["platform"]["app_version"].as_str().unwrap_or_default();
+    let app_version = event["platform"]["app_version"]
+        .as_str()
+        .unwrap_or_default();
     let screen_id = event["screen"]["id"].as_str().unwrap_or_default();
     let layout_version = event["screen"]
         .get("layout_version")
         .and_then(|version| version.as_str())
         .unwrap_or("");
-    let element_id = event["event"]["element_id"]
-        .as_str()
-        .unwrap_or_default();
+    let element_id = event["event"]["element_id"].as_str().unwrap_or_default();
 
     conn.execute(
         "INSERT INTO element_totals (
@@ -305,14 +305,11 @@ fn count_unique_sessions(
     )
 }
 
-pub fn upsert_click_bin(
-    conn: &Connection,
-    event: &Value,
-    bin_x: i64,
-    bin_y: i64,
-) -> SqlResult<()> {
+pub fn upsert_click_bin(conn: &Connection, event: &Value, bin_x: i64, bin_y: i64) -> SqlResult<()> {
     let platform_type = event["platform"]["type"].as_str().unwrap_or_default();
-    let app_version = event["platform"]["app_version"].as_str().unwrap_or_default();
+    let app_version = event["platform"]["app_version"]
+        .as_str()
+        .unwrap_or_default();
     let screen_id = event["screen"]["id"].as_str().unwrap_or_default();
     let layout_version = event["screen"]
         .get("layout_version")
@@ -352,7 +349,10 @@ pub struct HeatmapFilter<'a> {
     pub to: Option<f64>,
 }
 
-pub fn query_click_bins(conn: &Connection, filter: &HeatmapFilter<'_>) -> SqlResult<Vec<ClickBinRow>> {
+pub fn query_click_bins(
+    conn: &Connection,
+    filter: &HeatmapFilter<'_>,
+) -> SqlResult<Vec<ClickBinRow>> {
     if filter.from.is_some() || filter.to.is_some() {
         return query_click_bins_from_events(conn, filter);
     }
@@ -493,7 +493,7 @@ pub fn count_slice_unique_sessions(
     conn.query_row(
         "SELECT COUNT(DISTINCT session_id) FROM raw_events
          WHERE platform_type = ?1 AND screen_id = ?2 AND layout_version = ?3
-           AND app_version = ?4 AND event_type = 'click' AND element_id IS NOT NULL
+           AND app_version = ?4
            AND (?5 IS NULL OR timestamp >= ?5)
            AND (?6 IS NULL OR timestamp <= ?6)",
         params![

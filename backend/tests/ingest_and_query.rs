@@ -8,8 +8,7 @@ use serde_json::{json, Value};
 use tower::ServiceExt;
 
 fn fixtures_dir() -> std::path::PathBuf {
-    std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-        .join("../test/fixtures")
+    std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../test/fixtures")
 }
 
 fn read_fixture(name: &str) -> Value {
@@ -70,8 +69,7 @@ async fn post_batches_invalid_project_key_returns_unauthorized() {
         .unwrap();
 
     assert!(
-        response.status() == StatusCode::UNAUTHORIZED
-            || response.status() == StatusCode::FORBIDDEN
+        response.status() == StatusCode::UNAUTHORIZED || response.status() == StatusCode::FORBIDDEN
     );
 }
 
@@ -120,9 +118,7 @@ async fn post_batches_duplicate_batch_id_is_idempotent() {
     assert_eq!(totals_before, totals_after);
 }
 
-async fn fetch_checkout_pay_totals(
-    app: &axum::Router,
-) -> Value {
+async fn fetch_checkout_pay_totals(app: &axum::Router) -> Value {
     let response = app
         .clone()
         .oneshot(
@@ -209,6 +205,145 @@ async fn click_without_element_id_stores_raw_only_no_total_row() {
     let totals = response_json(response).await;
     let elements = totals["elements"].as_array().expect("elements array");
     assert!(elements.is_empty());
+}
+
+async fn fetch_android_checkout_unspecified_layout(app: &axum::Router) -> Value {
+    let response = app
+        .clone()
+        .oneshot(
+            Request::builder()
+                .uri("/v1/elements?platform=android&screen=Checkout&app_version=1.0.0")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(response.status(), StatusCode::OK);
+    response_json(response).await
+}
+
+#[tokio::test]
+async fn slice_unique_sessions_counts_unmarked_click_and_screen_view() {
+    let app = test_app();
+
+    let unmarked = read_fixture("click-unmarked-cancel-android.json");
+    let unmarked_batch = json!({
+        "batch_id": "batch_slice_unique_unmarked",
+        "events": [unmarked]
+    });
+    let ingest = app
+        .clone()
+        .oneshot(
+            Request::builder()
+                .method("POST")
+                .uri("/v1/batches")
+                .header("X-Project-Key", TEST_PROJECT_KEY)
+                .header("content-type", "application/json")
+                .body(Body::from(unmarked_batch.to_string()))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(ingest.status(), StatusCode::ACCEPTED);
+
+    let android_totals = fetch_android_checkout_unspecified_layout(&app).await;
+    assert_eq!(android_totals["unique_sessions"], 1);
+    let android_elements = android_totals["elements"]
+        .as_array()
+        .expect("elements array");
+    assert!(android_elements.is_empty());
+
+    let screen_view = read_fixture("screen-view-home-ios.json");
+    let screen_view_batch = json!({
+        "batch_id": "batch_slice_unique_screen_view",
+        "events": [screen_view]
+    });
+    let ingest_sv = app
+        .clone()
+        .oneshot(
+            Request::builder()
+                .method("POST")
+                .uri("/v1/batches")
+                .header("X-Project-Key", TEST_PROJECT_KEY)
+                .header("content-type", "application/json")
+                .body(Body::from(screen_view_batch.to_string()))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(ingest_sv.status(), StatusCode::ACCEPTED);
+
+    let ios_response = app
+        .clone()
+        .oneshot(
+            Request::builder()
+                .uri("/v1/elements?platform=ios&screen=Home&layout_version=2024-09&app_version=1.0.0")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(ios_response.status(), StatusCode::OK);
+    let ios_totals = response_json(ios_response).await;
+    assert_eq!(ios_totals["unique_sessions"], 1);
+    assert!(ios_totals["elements"]
+        .as_array()
+        .expect("elements array")
+        .is_empty());
+}
+
+fn android_checkout_pay_click(session_id: &str) -> Value {
+    json!({
+        "schema_version": 1,
+        "session_id": session_id,
+        "anonymous_id": "anon_android_pay",
+        "timestamp": 1726771204600.0,
+        "sdk": { "name": "heatmap-android", "version": "0.1.0" },
+        "platform": {
+            "type": "android",
+            "os_version": "Android 14",
+            "app_version": "1.0.0"
+        },
+        "screen": { "id": "Checkout" },
+        "event": { "type": "click", "element_id": "checkout.pay" },
+        "position": { "x": 0.5, "y": 0.5 },
+        "viewport": { "width": 412, "height": 915 }
+    })
+}
+
+#[tokio::test]
+async fn slice_unique_sessions_distinct_from_per_element_unique_sessions() {
+    let app = test_app();
+
+    let unmarked = read_fixture("click-unmarked-cancel-android.json");
+    let pay = android_checkout_pay_click("sess_android_pay_identified");
+    let batch = json!({
+        "batch_id": "batch_slice_two_sessions",
+        "events": [unmarked, pay]
+    });
+    let ingest = app
+        .clone()
+        .oneshot(
+            Request::builder()
+                .method("POST")
+                .uri("/v1/batches")
+                .header("X-Project-Key", TEST_PROJECT_KEY)
+                .header("content-type", "application/json")
+                .body(Body::from(batch.to_string()))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(ingest.status(), StatusCode::ACCEPTED);
+
+    let totals = fetch_android_checkout_unspecified_layout(&app).await;
+    assert_eq!(totals["unique_sessions"], 2);
+    let elements = totals["elements"].as_array().expect("elements array");
+    let pay_row = elements
+        .iter()
+        .find(|row| row["element_id"] == "checkout.pay")
+        .expect("checkout.pay row");
+    assert_eq!(pay_row["unique_sessions"], 1);
 }
 
 #[tokio::test]
