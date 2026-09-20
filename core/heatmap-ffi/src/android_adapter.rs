@@ -54,6 +54,24 @@ impl PublicHeatmapSdk {
             viewport,
         )
     }
+
+    pub fn record_android_scroll(
+        &mut self,
+        viewport_width: u32,
+        viewport_height: u32,
+        os_version: String,
+        app_version: String,
+    ) -> Result<(), CaptureError> {
+        let viewport = Viewport {
+            width: viewport_width,
+            height: viewport_height,
+        };
+        self.inner.record_scroll(
+            android_sdk_info(),
+            android_platform_info(os_version, app_version),
+            viewport,
+        )
+    }
 }
 
 fn android_sdk_info() -> SdkInfo {
@@ -138,5 +156,36 @@ mod tests {
         );
         assert_eq!(screen_view.sdk.name, "heatmap-android");
         assert_eq!(screen_view.platform.platform_type, PlatformType::Android);
+    }
+
+    #[test]
+    fn should_enqueue_scroll_when_android_screen_is_set() {
+        let config = heatmap_core::HeatmapConfig {
+            project_key: "pk_test".into(),
+            endpoint: "https://ingest.example.com".into(),
+            session_timeout_ms: 10_000,
+            sample_rate: 1.0,
+            exclude_elements: vec![],
+            exclude_screens: vec![],
+            mask_elements: vec![],
+            app_version: heatmap_core::HeatmapConfig::DEFAULT_APP_VERSION.into(),
+        };
+        let mut sdk = PublicHeatmapSdk::init(config).expect("init");
+        sdk.screen("Checkout".into(), Some("2024-09".into()))
+            .expect("screen");
+        sdk.record_android_scroll(800, 600, "Android 14".into(), "1.0.0".into())
+            .expect("scroll");
+        let batch = sdk.inner.build_batch().expect("batch");
+        let scroll = batch
+            .events
+            .iter()
+            .find(|event| event.event.interaction_type == InteractionType::Scroll)
+            .expect("scroll");
+        assert_eq!(
+            scroll.screen.as_ref().map(|screen| screen.id.as_str()),
+            Some("Checkout")
+        );
+        assert_eq!(scroll.sdk.name, "heatmap-android");
+        assert_eq!(scroll.platform.platform_type, PlatformType::Android);
     }
 }

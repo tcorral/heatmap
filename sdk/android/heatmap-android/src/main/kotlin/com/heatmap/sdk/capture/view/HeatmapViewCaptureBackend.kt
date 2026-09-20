@@ -5,6 +5,8 @@ interface HeatmapViewCaptureBackend {
 
     fun recordScreenView(viewportWidth: UInt, viewportHeight: UInt)
 
+    fun recordScroll(viewportWidth: UInt, viewportHeight: UInt)
+
     fun onBackground()
 
     fun onForeground()

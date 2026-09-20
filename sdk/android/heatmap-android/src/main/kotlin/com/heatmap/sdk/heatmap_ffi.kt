@@ -754,6 +754,8 @@ internal interface UniffiForeignFutureCompleteVoid : com.sun.jna.Callback {
 
 
 
+
+
 // A JNA Library to expose the extern-C FFI definitions.
 // This is an implementation detail which will be called internally by the public API.
 
@@ -800,6 +802,8 @@ internal interface UniffiLib : Library {
     fun uniffi_heatmap_ffi_fn_method_heatmapsdk_record_android_activation_click(`ptr`: Pointer,`x`: Double,`y`: Double,`elementId`: RustBuffer.ByValue,`viewportWidth`: Int,`viewportHeight`: Int,`timestampMs`: Long,`osVersion`: RustBuffer.ByValue,`appVersion`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
     fun uniffi_heatmap_ffi_fn_method_heatmapsdk_record_android_screen_view(`ptr`: Pointer,`viewportWidth`: Int,`viewportHeight`: Int,`osVersion`: RustBuffer.ByValue,`appVersion`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): Unit
+    fun uniffi_heatmap_ffi_fn_method_heatmapsdk_record_android_scroll(`ptr`: Pointer,`viewportWidth`: Int,`viewportHeight`: Int,`osVersion`: RustBuffer.ByValue,`appVersion`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
     fun uniffi_heatmap_ffi_fn_method_heatmapsdk_record_ios_screen_view(`ptr`: Pointer,`viewportWidth`: Int,`viewportHeight`: Int,`osVersion`: RustBuffer.ByValue,`appVersion`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
@@ -949,6 +953,8 @@ internal interface UniffiLib : Library {
     ): Short
     fun uniffi_heatmap_ffi_checksum_method_heatmapsdk_record_android_screen_view(
     ): Short
+    fun uniffi_heatmap_ffi_checksum_method_heatmapsdk_record_android_scroll(
+    ): Short
     fun uniffi_heatmap_ffi_checksum_method_heatmapsdk_record_ios_screen_view(
     ): Short
     fun uniffi_heatmap_ffi_checksum_method_heatmapsdk_record_ios_scroll(
@@ -1014,6 +1020,9 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_heatmap_ffi_checksum_method_heatmapsdk_record_android_screen_view() != 58408.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_heatmap_ffi_checksum_method_heatmapsdk_record_android_scroll() != 41824.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_heatmap_ffi_checksum_method_heatmapsdk_record_ios_screen_view() != 8553.toShort()) {
@@ -1490,6 +1499,8 @@ public interface HeatmapSdkInterface {
     
     fun `recordAndroidScreenView`(`viewportWidth`: kotlin.UInt, `viewportHeight`: kotlin.UInt, `osVersion`: kotlin.String, `appVersion`: kotlin.String)
     
+    fun `recordAndroidScroll`(`viewportWidth`: kotlin.UInt, `viewportHeight`: kotlin.UInt, `osVersion`: kotlin.String, `appVersion`: kotlin.String)
+    
     fun `recordIosScreenView`(`viewportWidth`: kotlin.UInt, `viewportHeight`: kotlin.UInt, `osVersion`: kotlin.String, `appVersion`: kotlin.String)
     
     fun `recordIosScroll`(`viewportWidth`: kotlin.UInt, `viewportHeight`: kotlin.UInt, `osVersion`: kotlin.String, `appVersion`: kotlin.String)
@@ -1725,6 +1736,18 @@ open class HeatmapSdk: Disposable, AutoCloseable, HeatmapSdkInterface {
     callWithPointer {
     uniffiRustCallWithError(CaptureException) { _status ->
     UniffiLib.INSTANCE.uniffi_heatmap_ffi_fn_method_heatmapsdk_record_android_screen_view(
+        it, FfiConverterUInt.lower(`viewportWidth`),FfiConverterUInt.lower(`viewportHeight`),FfiConverterString.lower(`osVersion`),FfiConverterString.lower(`appVersion`),_status)
+}
+    }
+    
+    
+
+    
+    @Throws(CaptureException::class)override fun `recordAndroidScroll`(`viewportWidth`: kotlin.UInt, `viewportHeight`: kotlin.UInt, `osVersion`: kotlin.String, `appVersion`: kotlin.String)
+        = 
+    callWithPointer {
+    uniffiRustCallWithError(CaptureException) { _status ->
+    UniffiLib.INSTANCE.uniffi_heatmap_ffi_fn_method_heatmapsdk_record_android_scroll(
         it, FfiConverterUInt.lower(`viewportWidth`),FfiConverterUInt.lower(`viewportHeight`),FfiConverterString.lower(`osVersion`),FfiConverterString.lower(`appVersion`),_status)
 }
     }

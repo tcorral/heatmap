@@ -40,6 +40,15 @@ class HeatmapAndroidRustCaptureBackend(
         )
     }
 
+    override fun recordScroll(viewportWidth: UInt, viewportHeight: UInt) {
+        sdk.recordAndroidScroll(
+            viewportWidth = viewportWidth,
+            viewportHeight = viewportHeight,
+            osVersion = osVersion,
+            appVersion = appVersion,
+        )
+    }
+
     override fun onBackground() {
         sdk.onBackground()
     }

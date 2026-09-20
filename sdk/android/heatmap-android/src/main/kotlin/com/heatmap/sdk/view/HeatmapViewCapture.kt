@@ -4,6 +4,7 @@ import android.app.Activity
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ScrollView
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ProcessLifecycleOwner
@@ -17,6 +18,7 @@ class HeatmapViewCapture private constructor(
 ) {
     private var decorView: View? = null
     private var touchListenerAttached = false
+    private val scrollViewsWithListeners = mutableListOf<ScrollView>()
     private val processObserver =
         object : DefaultLifecycleObserver {
             override fun onStop(owner: LifecycleOwner) {
@@ -44,18 +46,53 @@ class HeatmapViewCapture private constructor(
         uninstall()
         val decor = activity.window?.decorView ?: return
         decorView = decor
-        decor.setOnTouchListener(::onDecorTouch)
-        touchListenerAttached = true
+        attachDecorTouchListener(decor)
+        attachScrollObservers(decor)
         ProcessLifecycleOwner.get().lifecycle.addObserver(processObserver)
     }
 
     fun uninstall() {
+        clearScrollObservers()
         if (touchListenerAttached) {
             decorView?.setOnTouchListener(null)
         }
         touchListenerAttached = false
         decorView = null
         ProcessLifecycleOwner.get().lifecycle.removeObserver(processObserver)
+    }
+
+    private fun attachDecorTouchListener(decor: View) {
+        decor.setOnTouchListener(::onDecorTouch)
+        touchListenerAttached = true
+    }
+
+    private fun attachScrollObservers(root: View) {
+        if (root is ScrollView) {
+            root.setOnScrollChangeListener { _, _, _, _, _ -> onViewportScroll() }
+            scrollViewsWithListeners.add(root)
+        }
+        if (root is ViewGroup) {
+            for (index in 0 until root.childCount) {
+                attachScrollObservers(root.getChildAt(index))
+            }
+        }
+    }
+
+    private fun clearScrollObservers() {
+        for (scrollView in scrollViewsWithListeners) {
+            scrollView.setOnScrollChangeListener(null)
+        }
+        scrollViewsWithListeners.clear()
+    }
+
+    private fun onViewportScroll() {
+        val root = decorView ?: return
+        val windowWidth = root.width
+        val windowHeight = root.height
+        if (windowWidth <= 0 || windowHeight <= 0) {
+            return
+        }
+        backend.recordScroll(windowWidth.toUInt(), windowHeight.toUInt())
     }
 
     private fun onDecorTouch(view: View, event: MotionEvent): Boolean {

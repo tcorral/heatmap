@@ -19,6 +19,12 @@ class HeatmapSession(
         }
     }
 
+    fun recordViewportScroll() {
+        viewportSize()?.let { (width, height) ->
+            captureBackend.recordScroll(width, height)
+        }
+    }
+
     fun flushBatch() {
         client.flush()
     }

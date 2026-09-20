@@ -61,6 +61,20 @@ class AndroidSessionIntegrationTest {
         sdk.close()
     }
 
+    @Test
+    fun recordScrollAfterScreenDoesNotThrowWhenNativeLibLoaded() {
+        val sdk = tryCreateSdk() ?: return
+        val backend =
+            HeatmapAndroidRustCaptureBackend(
+                sdk = sdk,
+                osVersion = "Android 14",
+                appVersion = "1.0.0",
+            )
+        sdk.screen("Checkout", "2024-09")
+        backend.recordScroll(800u, 600u)
+        sdk.close()
+    }
+
     private fun tryCreateSdk(): HeatmapSdk? {
         return try {
             HeatmapSdk.init(
