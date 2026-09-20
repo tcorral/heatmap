@@ -3,7 +3,7 @@ use std::sync::{Arc, Mutex};
 use heatmap_core::{
     batch_ingest_url, CaptureCandidate, FlushError, HeatmapBatch, HeatmapConfig, HeatmapSdk,
     InMemoryIdentityStore, InteractionEvent, PlatformInfo, PlatformType, Position, QueueLimits,
-    SdkInfo, Viewport, FLUSH_MAX_EVENTS, QUEUE_MAX_BYTES, QUEUE_MAX_EVENTS,
+    SdkInfo, Viewport, FLUSH_MAX_EVENTS, INGEST_MAX_BYTES, QUEUE_MAX_BYTES, QUEUE_MAX_EVENTS,
 };
 
 fn valid_config() -> HeatmapConfig {
@@ -327,6 +327,38 @@ fn should_reuse_retry_batch_identity_after_restart_on_transient_failure() {
     let sent = batches.lock().expect("lock");
     assert_eq!(sent.len(), 1);
     assert_eq!(sent[0].batch_id, first_id);
+}
+
+#[test]
+fn should_persist_oversized_event_drop_so_restart_does_not_restore_it() {
+    let store = Arc::new(InMemoryIdentityStore::new());
+    {
+        let mut sdk = HeatmapSdk::init_with_transport_and_store(
+            valid_config(),
+            RecordingTransport::new(Ok(())),
+            store.clone(),
+        )
+        .expect("init");
+        sdk.enqueue_candidate(oversized_click_candidate(1_000))
+            .expect("enqueue oversized");
+        sdk.flush().expect("flush session_start");
+        sdk.flush().expect("drop oversized click");
+        assert_eq!(sdk.queued_event_count_for_testing(), 0);
+    }
+    let restored = HeatmapSdk::init_with_transport_and_store(
+        valid_config(),
+        RecordingTransport::new(Ok(())),
+        store,
+    )
+    .expect("restore");
+    assert_eq!(restored.queued_event_count_for_testing(), 0);
+}
+
+fn oversized_click_candidate(timestamp: i64) -> CaptureCandidate {
+    let mut candidate = minimal_click_candidate(timestamp);
+    candidate.interaction =
+        InteractionEvent::click(Some("x".repeat(INGEST_MAX_BYTES))).expect("click");
+    candidate
 }
 
 #[test]

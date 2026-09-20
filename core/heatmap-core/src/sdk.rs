@@ -425,6 +425,7 @@ impl HeatmapSdk {
         }
         let events = self.take_queued_events_for_ingest();
         if events.is_empty() {
+            self.sync_retry_and_queue();
             return Err(BatchError::EmptyQueue);
         }
         let batch = HeatmapBatch {
