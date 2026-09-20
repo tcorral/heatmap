@@ -116,9 +116,13 @@ public sealed class HeatmapWpfRustCaptureBackend : IWpfCaptureBackend
     public void OnBackground()
     {
         HeatmapNative.EnsureLoaded();
-        HeatmapNative.Check(
-            HeatmapNativeAdapter.heatmap_sdk_adapter_on_background(_client.Handle),
-            "onBackground");
+        using var scheduler = new HeatmapFlushScheduler();
+        scheduler.Perform(() =>
+        {
+            HeatmapNative.Check(
+                HeatmapNativeAdapter.heatmap_sdk_adapter_on_background(_client.Handle),
+                "onBackground");
+        });
     }
 
     public void OnForeground()

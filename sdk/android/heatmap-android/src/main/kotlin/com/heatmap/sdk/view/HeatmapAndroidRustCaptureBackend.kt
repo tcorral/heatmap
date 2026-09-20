@@ -50,7 +50,9 @@ class HeatmapAndroidRustCaptureBackend(
     }
 
     override fun onBackground() {
-        sdk.onBackground()
+        HeatmapFlushScheduler().use { scheduler ->
+            scheduler.perform { sdk.onBackground() }
+        }
     }
 
     override fun onForeground() {

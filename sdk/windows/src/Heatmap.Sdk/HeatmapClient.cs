@@ -15,7 +15,7 @@ public sealed class HeatmapClient : IDisposable
 {
     private IntPtr _handle;
     private bool _disposed;
-    private readonly Timer _flushTimer;
+    private readonly HeatmapFlushScheduler _flushScheduler;
 
     /// <summary>Initialize from JSON matching the core <c>HeatmapConfig</c> shape.</summary>
     public HeatmapClient(string configJson)
@@ -32,7 +32,7 @@ public sealed class HeatmapClient : IDisposable
         {
             Marshal.FreeCoTaskMem(configPtr);
         }
-        _flushTimer = StartFlushTimer();
+        _flushScheduler = StartFlushScheduler();
     }
 
     /// <summary>Initialize with required fields and core defaults for optional settings.</summary>
@@ -50,7 +50,7 @@ public sealed class HeatmapClient : IDisposable
         }
 
         _handle = handle;
-        _flushTimer = StartFlushTimer();
+        _flushScheduler = StartFlushScheduler();
     }
 
     /// <summary>Opaque C ABI handle for adapter-only use.</summary>
@@ -112,7 +112,10 @@ public sealed class HeatmapClient : IDisposable
     public void Flush()
     {
         ThrowIfDisposed();
-        HeatmapNative.Check(HeatmapNative.heatmap_sdk_flush(_handle), "flush");
+        _flushScheduler.Perform(() =>
+        {
+            HeatmapNative.Check(HeatmapNative.heatmap_sdk_flush(_handle), "flush");
+        });
     }
 
     public void Dispose()
@@ -123,9 +126,7 @@ public sealed class HeatmapClient : IDisposable
         }
 
         _disposed = true;
-        using var flushed = new ManualResetEvent(false);
-        _flushTimer.Dispose(flushed);
-        flushed.WaitOne();
+        _flushScheduler.Dispose();
         if (_handle != IntPtr.Zero)
         {
             HeatmapNative.heatmap_sdk_free(_handle);
@@ -133,22 +134,9 @@ public sealed class HeatmapClient : IDisposable
         }
     }
 
-    private Timer StartFlushTimer()
+    private HeatmapFlushScheduler StartFlushScheduler()
     {
-        return new Timer(
-            _ =>
-            {
-                try
-                {
-                    PollFlush();
-                }
-                catch (Exception)
-                {
-                }
-            },
-            null,
-            10_000,
-            10_000);
+        return new HeatmapFlushScheduler(TimeSpan.FromSeconds(10), PollFlush);
     }
 
     private void PollFlush()

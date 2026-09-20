@@ -4,12 +4,12 @@ import HeatmapFFI
 /// App-facing Heatmap SDK client. Wraps UniFFI `HeatmapSdk` with a stable Swift API.
 public final class HeatmapClient: @unchecked Sendable {
     private let sdk: HeatmapSdk
-    private var flushTimer: Timer?
+    private let flushScheduler: HeatmapFlushScheduler
 
     /// Initialize from JSON matching the core `HeatmapConfig` shape.
     public init(configJson: String) throws {
         sdk = try HeatmapSdk.initFromJson(configJson: configJson)
-        startFlushTimer()
+        flushScheduler = HeatmapClient.makeFlushScheduler(sdk: sdk)
     }
 
     /// Initialize with required fields and core defaults for optional settings.
@@ -26,7 +26,7 @@ public final class HeatmapClient: @unchecked Sendable {
             appVersion: "1.0.0"
         )
         sdk = try HeatmapSdk.`init`(config: config)
-        startFlushTimer()
+        flushScheduler = HeatmapClient.makeFlushScheduler(sdk: sdk)
     }
 
     /// Persistent identity and queue directory for this install.
@@ -41,17 +41,16 @@ public final class HeatmapClient: @unchecked Sendable {
     /// Use the same `HeatmapSdk` instance as `HeatmapIosRustCaptureBackend`.
     public init(sdk: HeatmapSdk) {
         self.sdk = sdk
-        startFlushTimer()
+        flushScheduler = HeatmapClient.makeFlushScheduler(sdk: sdk)
     }
 
     deinit {
-        flushTimer?.invalidate()
+        flushScheduler.stop()
     }
 
-    private func startFlushTimer() {
-        flushTimer?.invalidate()
-        flushTimer = Timer.scheduledTimer(withTimeInterval: 10, repeats: true) { [weak self] _ in
-            try? self?.sdk.pollFlush()
+    private static func makeFlushScheduler(sdk: HeatmapSdk) -> HeatmapFlushScheduler {
+        HeatmapFlushScheduler(pollInterval: 10) { [weak sdk] in
+            try? sdk?.pollFlush()
         }
     }
 
@@ -72,6 +71,8 @@ public final class HeatmapClient: @unchecked Sendable {
     }
 
     public func flush() throws {
-        try sdk.flush()
+        try flushScheduler.perform {
+            try self.sdk.flush()
+        }
     }
 }

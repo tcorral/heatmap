@@ -79,7 +79,13 @@ public final class HeatmapMacosRustCaptureBackend: HeatmapMacosCaptureBackend {
     }
 
     public func onBackground() {
-        sdk.onBackground()
+        let sdk = self.sdk
+        let done = DispatchSemaphore(value: 0)
+        DispatchQueue.global(qos: .utility).async {
+            sdk.onBackground()
+            done.signal()
+        }
+        done.wait()
     }
 
     public func onForeground() {

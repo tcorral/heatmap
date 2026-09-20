@@ -11,29 +11,12 @@ import java.io.File
 class HeatmapClient private constructor(
     private val sdk: HeatmapSdk,
 ) : AutoCloseable {
-    private val flushLock = Any()
-    private var flushClosed = false
-    private val flushThread =
-        Thread {
-            while (true) {
-                try {
-                    Thread.sleep(10_000)
-                } catch (_: InterruptedException) {
-                    return@Thread
-                }
-                synchronized(flushLock) {
-                    if (flushClosed) {
-                        return@Thread
-                    }
-                }
-                try {
-                    sdk.pollFlush()
-                } catch (_: Exception) {
-                }
+    private val flushScheduler =
+        HeatmapFlushScheduler {
+            try {
+                sdk.pollFlush()
+            } catch (_: Exception) {
             }
-        }.apply {
-            isDaemon = true
-            start()
         }
 
     /** Initialize from JSON matching the core `HeatmapConfig` shape. */
@@ -82,14 +65,11 @@ class HeatmapClient private constructor(
     }
 
     fun flush() {
-        sdk.flush()
+        flushScheduler.perform { sdk.flush() }
     }
 
     override fun close() {
-        synchronized(flushLock) {
-            flushClosed = true
-        }
-        flushThread.interrupt()
+        flushScheduler.close()
         sdk.close()
     }
 }

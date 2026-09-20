@@ -129,7 +129,7 @@ _Each finding should carry enough context for arbitration without becoming a ful
   - **Why it matters:** Clean consumers cannot install these SDKs through normal package-manager dependency resolution and complete initialization without cloning repository and manually building native artifacts.
   - **Suggested action:** Package Apple XCFramework through SwiftPM and publish/configure Android AAR Maven artifact.
 
-- [ ] **Major** — `sdk/apple/shared/Sources/HeatmapAppleShared/HeatmapClient.swift:51` — NFR: Performance — Apple work can block main UI thread
+- [x] **Major** — `sdk/apple/shared/Sources/HeatmapAppleShared/HeatmapClient.swift:51` — NFR: Performance — Apple work can block main UI thread
   - **Issue:** Run-loop timer synchronously calls `sdk.pollFlush()`. Tap capture also synchronously crosses FFI and persists queue data through `sdk/apple/ios/Sources/HeatmapAppleIOS/HeatmapIosRustCaptureBackend.swift:23` and `core/heatmap-core/src/sdk.rs:599`.
   - **Why it matters:** Disk or network latency can stall host UI, violating non-blocking interaction and fail-closed burst-load requirements.
   - **Suggested action:** Move persistence and transport behind bounded background workers; keep UI callbacks limited to non-blocking enqueue.
