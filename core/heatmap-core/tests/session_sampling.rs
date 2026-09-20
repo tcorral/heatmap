@@ -15,6 +15,7 @@ fn config_with_sample_rate(sample_rate: f64) -> HeatmapConfig {
         exclude_elements: vec![],
         exclude_screens: vec![],
         mask_elements: vec![],
+        app_version: heatmap_core::HeatmapConfig::DEFAULT_APP_VERSION.into(),
     }
 }
 

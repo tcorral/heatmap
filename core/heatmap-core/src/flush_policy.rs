@@ -1,3 +1,5 @@
+use std::sync::OnceLock;
+
 use crate::batch::HeatmapBatch;
 use crate::event::HeatmapEvent;
 
@@ -11,15 +13,36 @@ pub fn batch_wire_bytes(batch: &HeatmapBatch) -> usize {
     serde_json::to_vec(batch).map(|bytes| bytes.len()).unwrap_or(usize::MAX)
 }
 
-pub fn queue_flush_byte_limit_reached(queue: &[HeatmapEvent]) -> bool {
-    if queue.is_empty() {
+fn empty_batch_envelope_bytes() -> usize {
+    static ENVELOPE: OnceLock<usize> = OnceLock::new();
+    *ENVELOPE.get_or_init(|| {
+        let probe = HeatmapBatch {
+            batch_id: BYTE_PROBE_BATCH_ID.into(),
+            events: vec![],
+        };
+        batch_wire_bytes(&probe)
+    })
+}
+
+pub fn estimated_batch_wire_bytes(events_bytes: usize, event_count: usize) -> usize {
+    if event_count == 0 {
+        return 0;
+    }
+    empty_batch_envelope_bytes() + 2 + events_bytes + event_count.saturating_sub(1)
+}
+
+pub fn queue_flush_byte_limit_reached(events_bytes: usize, event_count: usize) -> bool {
+    if event_count == 0 {
         return false;
     }
-    let probe = HeatmapBatch {
-        batch_id: BYTE_PROBE_BATCH_ID.into(),
-        events: queue.to_vec(),
-    };
-    batch_wire_bytes(&probe) >= FLUSH_MAX_BYTES
+    estimated_batch_wire_bytes(events_bytes, event_count) >= FLUSH_MAX_BYTES
+}
+
+pub fn queue_flush_byte_limit_reached_for_queue(
+    queue: &[HeatmapEvent],
+    events_bytes: usize,
+) -> bool {
+    queue_flush_byte_limit_reached(events_bytes, queue.len())
 }
 
 pub fn flush_event_limit_reached(queue_len: usize) -> bool {

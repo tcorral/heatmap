@@ -1,3 +1,4 @@
+use std::collections::VecDeque;
 use std::sync::Arc;
 
 use uuid::Uuid;
@@ -20,7 +21,8 @@ use crate::flush_policy::{
     flush_interval_elapsed, queue_flush_byte_limit_reached,
 };
 use crate::persistent_queue::{
-    load_persisted_queue, persist_queue, push_with_overflow, QueueLimits,
+    event_json_bytes, load_persisted_queue, persist_queue, push_with_overflow, queue_json_bytes,
+    QueueLimits,
 };
 use crate::rng::{session_sampled_in, RandomSource, SystemRng};
 use crate::transport::{BatchTransport, FlushError};
@@ -71,7 +73,8 @@ pub struct HeatmapSdk {
     sample_in: bool,
     rng: Arc<dyn RandomSource>,
     diagnostics: HeatmapDiagnostics,
-    queue: Vec<HeatmapEvent>,
+    queue: VecDeque<HeatmapEvent>,
+    queue_events_bytes: usize,
     queue_limits: QueueLimits,
     queue_pending_since_ms: Option<i64>,
     retry_batch_id: Option<String>,
@@ -141,6 +144,7 @@ impl HeatmapSdk {
             session_id.as_ref().is_some_and(|id| !id.trim().is_empty()),
         );
         let queue = load_persisted_queue(identity_store.as_ref());
+        let queue_events_bytes = queue_json_bytes(&queue);
         Ok(Self {
             config,
             transport: Arc::new(transport),
@@ -156,6 +160,7 @@ impl HeatmapSdk {
             rng,
             diagnostics: HeatmapDiagnostics::default(),
             queue,
+            queue_events_bytes,
             queue_limits: QueueLimits::production(),
             queue_pending_since_ms: None,
             retry_batch_id: None,
@@ -179,7 +184,7 @@ impl HeatmapSdk {
 
     #[doc(hidden)]
     pub fn flush_byte_limit_reached_for_testing(&self) -> bool {
-        queue_flush_byte_limit_reached(&self.queue)
+        queue_flush_byte_limit_reached(self.queue_events_bytes, self.queue.len())
     }
 
     pub fn config(&self) -> &HeatmapConfig {
@@ -193,6 +198,7 @@ impl HeatmapSdk {
     pub fn on_background(&mut self) {
         self.persist_session_state();
         let _ = self.try_flush();
+        self.sync_persisted_queue();
     }
 
     pub fn on_foreground(&mut self) {}
@@ -323,7 +329,7 @@ impl HeatmapSdk {
             return Err(BatchError::EmptyQueue);
         }
         let batch_id = new_id("batch");
-        let events = std::mem::take(&mut self.queue);
+        let events = self.take_queued_events();
         self.sync_persisted_queue();
         Ok(HeatmapBatch { batch_id, events })
     }
@@ -363,9 +369,14 @@ impl HeatmapSdk {
             .retry_batch_id
             .take()
             .unwrap_or_else(|| new_id("batch"));
-        let events = std::mem::take(&mut self.queue);
+        let events = self.take_queued_events();
         self.sync_persisted_queue();
         Ok(HeatmapBatch { batch_id, events })
+    }
+
+    fn take_queued_events(&mut self) -> Vec<HeatmapEvent> {
+        self.queue_events_bytes = 0;
+        self.queue.drain(..).collect()
     }
 
     fn finish_successful_upload(&mut self) {
@@ -391,7 +402,12 @@ impl HeatmapSdk {
             return Err(err);
         }
         self.retry_batch_id = Some(batch.batch_id);
-        self.queue.extend(batch.events);
+        for event in batch.events {
+            self.queue_events_bytes = self
+                .queue_events_bytes
+                .saturating_add(event_json_bytes(&event));
+            self.queue.push_back(event);
+        }
         self.sync_persisted_queue();
         self.retry_not_before_ms = retry_not_before_ms(&err, self.clock.now_ms());
         Err(err)
@@ -411,7 +427,7 @@ impl HeatmapSdk {
         if flush_event_limit_reached(self.queue.len()) {
             return true;
         }
-        if queue_flush_byte_limit_reached(&self.queue) {
+        if queue_flush_byte_limit_reached(self.queue_events_bytes, self.queue.len()) {
             return true;
         }
         self.queue_pending_since_ms
@@ -484,11 +500,15 @@ impl HeatmapSdk {
                 mask_elements: &self.config.mask_elements,
             },
         )?;
-        let dropped = push_with_overflow(&mut self.queue, event, &self.queue_limits);
+        let dropped = push_with_overflow(
+            &mut self.queue,
+            &mut self.queue_events_bytes,
+            event,
+            &self.queue_limits,
+        );
         if dropped > 0 {
             self.diagnostics.record_queue_dropped(dropped);
         }
-        self.sync_persisted_queue();
         self.note_queue_activity(self.clock.now_ms());
         self.maybe_auto_flush(self.clock.now_ms());
         Ok(())

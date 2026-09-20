@@ -9,11 +9,13 @@ pub struct HeatmapConfig {
     pub exclude_elements: Vec<String>,
     pub exclude_screens: Vec<String>,
     pub mask_elements: Vec<String>,
+    pub app_version: String,
 }
 
 impl HeatmapConfig {
     pub const DEFAULT_SESSION_TIMEOUT_MS: u64 = 1_800_000;
     pub const DEFAULT_SAMPLE_RATE: f64 = 1.0;
+    pub const DEFAULT_APP_VERSION: &str = "1.0.0";
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

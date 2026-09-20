@@ -1,3 +1,5 @@
+use std::collections::VecDeque;
+
 use crate::event::HeatmapEvent;
 use crate::identity_store::{IdentityStore, STORE_KEY_QUEUE};
 
@@ -19,17 +21,25 @@ impl QueueLimits {
     }
 }
 
-pub fn load_persisted_queue(store: &dyn IdentityStore) -> Vec<HeatmapEvent> {
+pub fn event_json_bytes(event: &HeatmapEvent) -> usize {
+    serde_json::to_vec(event).map(|bytes| bytes.len()).unwrap_or(0)
+}
+
+pub fn queue_json_bytes(queue: &VecDeque<HeatmapEvent>) -> usize {
+    queue.iter().map(event_json_bytes).sum()
+}
+
+pub fn load_persisted_queue(store: &dyn IdentityStore) -> VecDeque<HeatmapEvent> {
     let Some(raw) = store.read(STORE_KEY_QUEUE) else {
-        return Vec::new();
+        return VecDeque::new();
     };
     if raw.trim().is_empty() {
-        return Vec::new();
+        return VecDeque::new();
     }
     serde_json::from_str(&raw).unwrap_or_default()
 }
 
-pub fn persist_queue(store: &dyn IdentityStore, queue: &[HeatmapEvent]) {
+pub fn persist_queue(store: &dyn IdentityStore, queue: &VecDeque<HeatmapEvent>) {
     if queue.is_empty() {
         store.write(STORE_KEY_QUEUE, None);
         return;
@@ -41,33 +51,33 @@ pub fn persist_queue(store: &dyn IdentityStore, queue: &[HeatmapEvent]) {
 }
 
 pub fn push_with_overflow(
-    queue: &mut Vec<HeatmapEvent>,
+    queue: &mut VecDeque<HeatmapEvent>,
+    queued_bytes: &mut usize,
     event: HeatmapEvent,
     limits: &QueueLimits,
 ) -> u64 {
-    queue.push(event);
-    trim_oldest_until_within_limits(queue, limits)
+    *queued_bytes = queued_bytes.saturating_add(event_json_bytes(&event));
+    queue.push_back(event);
+    trim_oldest_until_within_limits(queue, queued_bytes, limits)
 }
 
-fn trim_oldest_until_within_limits(queue: &mut Vec<HeatmapEvent>, limits: &QueueLimits) -> u64 {
+fn trim_oldest_until_within_limits(
+    queue: &mut VecDeque<HeatmapEvent>,
+    queued_bytes: &mut usize,
+    limits: &QueueLimits,
+) -> u64 {
     let mut dropped = 0u64;
-    while queue.len() > 1 && queue_over_limits(queue, limits) {
-        queue.remove(0);
-        dropped = dropped.saturating_add(1);
+    while queue.len() > 1 && queue_over_limits(queue.len(), *queued_bytes, limits) {
+        if let Some(removed) = queue.pop_front() {
+            *queued_bytes = queued_bytes.saturating_sub(event_json_bytes(&removed));
+            dropped = dropped.saturating_add(1);
+        }
     }
     dropped
 }
 
-fn queue_over_limits(queue: &[HeatmapEvent], limits: &QueueLimits) -> bool {
-    queue.len() > limits.max_events || queue_serialized_bytes(queue) > limits.max_bytes
-}
-
-fn queue_serialized_bytes(queue: &[HeatmapEvent]) -> usize {
-    queue
-        .iter()
-        .filter_map(|event| serde_json::to_vec(event).ok())
-        .map(|bytes| bytes.len())
-        .sum()
+fn queue_over_limits(len: usize, serialized_bytes: usize, limits: &QueueLimits) -> bool {
+    len > limits.max_events || serialized_bytes > limits.max_bytes
 }
 
 #[cfg(test)]
@@ -107,8 +117,9 @@ mod tests {
             max_events: 2,
             max_bytes: usize::MAX,
         };
-        let mut queue = vec![sample_event(1), sample_event(2)];
-        let dropped = push_with_overflow(&mut queue, sample_event(3), &limits);
+        let mut queue = VecDeque::from([sample_event(1), sample_event(2)]);
+        let mut queued_bytes = queue_json_bytes(&queue);
+        let dropped = push_with_overflow(&mut queue, &mut queued_bytes, sample_event(3), &limits);
         assert_eq!(dropped, 1);
         assert_eq!(queue.len(), 2);
         assert_eq!(queue[0].timestamp, 2);
@@ -117,13 +128,13 @@ mod tests {
 
     #[test]
     fn should_drop_oldest_when_serialized_bytes_exceed_limit() {
-        let mut queue = vec![sample_event(1)];
-        let one_event_bytes = queue_serialized_bytes(&queue);
+        let mut queue = VecDeque::from([sample_event(1)]);
+        let mut queued_bytes = queue_json_bytes(&queue);
         let limits = QueueLimits {
             max_events: usize::MAX,
-            max_bytes: one_event_bytes,
+            max_bytes: queued_bytes,
         };
-        let dropped = push_with_overflow(&mut queue, sample_event(2), &limits);
+        let dropped = push_with_overflow(&mut queue, &mut queued_bytes, sample_event(2), &limits);
         assert_eq!(dropped, 1);
         assert_eq!(queue.len(), 1);
         assert_eq!(queue[0].timestamp, 2);

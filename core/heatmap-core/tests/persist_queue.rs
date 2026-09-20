@@ -15,6 +15,7 @@ fn valid_config() -> HeatmapConfig {
         exclude_elements: vec![],
         exclude_screens: vec![],
         mask_elements: vec![],
+        app_version: HeatmapConfig::DEFAULT_APP_VERSION.into(),
     }
 }
 
@@ -61,6 +62,19 @@ impl CountingTransport {
     }
 }
 
+struct OfflineTransport;
+
+impl heatmap_core::BatchTransport for OfflineTransport {
+    fn send_batch(
+        &self,
+        _endpoint: &str,
+        _project_key: &str,
+        _batch: &HeatmapBatch,
+    ) -> Result<(), heatmap_core::FlushError> {
+        Err(heatmap_core::FlushError::Transport("offline".into()))
+    }
+}
+
 impl heatmap_core::BatchTransport for CountingTransport {
     fn send_batch(
         &self,
@@ -82,15 +96,15 @@ impl heatmap_core::BatchTransport for CountingTransport {
 fn should_upload_offline_events_once_after_restore_and_flush() {
     let store = Arc::new(InMemoryIdentityStore::new());
     {
-        let (transport, _, _) = CountingTransport::new();
         let mut sdk = HeatmapSdk::init_with_transport_and_store(
             valid_config(),
-            transport,
+            OfflineTransport,
             store.clone(),
         )
         .expect("init");
         sdk.enqueue_candidate(minimal_click_candidate(1_000))
             .expect("enqueue");
+        sdk.on_background();
     }
     let (transport, restore_sends, restore_events) = CountingTransport::new();
     let mut restored = HeatmapSdk::init_with_transport_and_store(
@@ -118,10 +132,9 @@ fn should_upload_offline_events_once_after_restore_and_flush() {
 fn should_not_crash_when_relaunching_with_pending_persisted_events() {
     let store = Arc::new(InMemoryIdentityStore::new());
     {
-        let (transport, _, _) = CountingTransport::new();
         let mut sdk = HeatmapSdk::init_with_transport_and_store(
             valid_config(),
-            transport,
+            OfflineTransport,
             store.clone(),
         )
         .expect("init");
@@ -129,6 +142,7 @@ fn should_not_crash_when_relaunching_with_pending_persisted_events() {
             .expect("enqueue");
         sdk.enqueue_candidate(minimal_click_candidate(2_001))
             .expect("enqueue");
+        sdk.on_background();
     }
     let (transport, _, _) = CountingTransport::new();
     let mut sdk = HeatmapSdk::init_with_transport_and_store(

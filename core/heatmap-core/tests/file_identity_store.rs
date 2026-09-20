@@ -15,6 +15,7 @@ fn valid_config() -> HeatmapConfig {
         exclude_elements: vec![],
         exclude_screens: vec![],
         mask_elements: vec![],
+        app_version: heatmap_core::HeatmapConfig::DEFAULT_APP_VERSION.into(),
     }
 }
 
@@ -61,6 +62,19 @@ impl CountingTransport {
     }
 }
 
+struct OfflineTransport;
+
+impl heatmap_core::BatchTransport for OfflineTransport {
+    fn send_batch(
+        &self,
+        _endpoint: &str,
+        _project_key: &str,
+        _batch: &HeatmapBatch,
+    ) -> Result<(), heatmap_core::FlushError> {
+        Err(heatmap_core::FlushError::Transport("offline".into()))
+    }
+}
+
 impl heatmap_core::BatchTransport for CountingTransport {
     fn send_batch(
         &self,
@@ -90,15 +104,15 @@ fn should_restore_queued_events_after_process_restart_with_file_store() {
     );
 
     {
-        let (transport, _, _) = CountingTransport::new();
         let mut sdk = HeatmapSdk::init_with_transport_and_store(
             valid_config(),
-            transport,
+            OfflineTransport,
             store.clone(),
         )
         .expect("init");
         sdk.enqueue_candidate(minimal_click_candidate(1_000))
             .expect("enqueue");
+        sdk.on_background();
     }
 
     let (transport, restore_sends, restore_events) = CountingTransport::new();

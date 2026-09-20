@@ -15,13 +15,11 @@ impl RandomSource for SystemRng {
         }
         #[cfg(not(target_arch = "wasm32"))]
         {
-            use std::time::{SystemTime, UNIX_EPOCH};
-            let nanos = SystemTime::now()
-                .duration_since(UNIX_EPOCH)
-                .map(|duration| duration.as_nanos())
-                .unwrap_or(0);
-            let mixed = (nanos as u64).wrapping_mul(0x9E3779B97F4A7C15);
-            (mixed as f64) / (u64::MAX as f64)
+            let mut buf = [0u8; 8];
+            if getrandom::getrandom(&mut buf).is_err() {
+                return 0.0;
+            }
+            (u64::from_le_bytes(buf) as f64) / (u64::MAX as f64)
         }
     }
 }

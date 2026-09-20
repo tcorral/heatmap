@@ -9,6 +9,7 @@ fn base_config(endpoint: &str) -> HeatmapConfig {
         exclude_elements: vec![],
         exclude_screens: vec![],
         mask_elements: vec![],
+        app_version: heatmap_core::HeatmapConfig::DEFAULT_APP_VERSION.into(),
     }
 }
 
