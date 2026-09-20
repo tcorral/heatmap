@@ -15,7 +15,10 @@ final class MacosSessionIntegrationTests: XCTestCase {
             excludeElements: [],
             excludeScreens: [],
             maskElements: [],
-            storageDirectory: nil
+            storageDirectory: FileManager.default.temporaryDirectory
+                .appendingPathComponent(UUID().uuidString, isDirectory: true)
+                .path,
+            appVersion: "1.0.0"
         )
         let sdk = try HeatmapSdk.`init`(config: config)
         let backend = HeatmapMacosRustCaptureBackend(

@@ -58,7 +58,11 @@ class AndroidSessionIntegrationTest {
                     excludeElements = emptyList(),
                     excludeScreens = emptyList(),
                     maskElements = emptyList(),
-                    storageDirectory = null,
+                    storageDirectory = java.io.File(
+                        System.getProperty("java.io.tmpdir"),
+                        java.util.UUID.randomUUID().toString(),
+                    ).absolutePath,
+                    appVersion = "1.0.0",
                 ),
             )
         } catch (e: UnsatisfiedLinkError) {

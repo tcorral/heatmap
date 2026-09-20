@@ -29,6 +29,7 @@ object HeatmapBootstrap {
                 excludeScreens = emptyList(),
                 maskElements = emptyList(),
                 storageDirectory = storageDir,
+                appVersion = BuildConfig.VERSION_NAME,
             )
         val sdk = HeatmapSdk.init(initConfig)
         val client = HeatmapClient.fromSdk(sdk)

@@ -3,7 +3,7 @@ use std::sync::Arc;
 
 use heatmap_core::{
     FileIdentityStore, FlushError, HeatmapConfig, HeatmapSdk as CoreHeatmapSdk, HttpBatchTransport,
-    IdentityError, IdentityStore, InMemoryIdentityStore, InitError, ScreenContextError,
+    IdentityError, IdentityStore, InitError, ScreenContextError,
 };
 
 use crate::config::InitConfigJson;
@@ -56,17 +56,34 @@ impl PublicHeatmapSdk {
     }
 }
 
+pub fn default_native_storage_directory() -> PathBuf {
+    native_user_data_dir().join("heatmap-sdk")
+}
+
+fn native_user_data_dir() -> PathBuf {
+    if let Ok(local) = std::env::var("LOCALAPPDATA") {
+        if !local.trim().is_empty() {
+            return PathBuf::from(local);
+        }
+    }
+    if let Ok(home) = std::env::var("HOME") {
+        if !home.trim().is_empty() {
+            return PathBuf::from(home).join(".local").join("share");
+        }
+    }
+    std::env::temp_dir()
+}
+
 fn core_init_with_storage(
     config: HeatmapConfig,
     storage_directory: Option<String>,
 ) -> Result<CoreHeatmapSdk, InitError> {
-    let store: Arc<dyn IdentityStore> = match storage_directory {
-        Some(dir) if !dir.trim().is_empty() => Arc::new(
-            FileIdentityStore::new(PathBuf::from(dir.trim()))
-                .map_err(|_| InitError::InvalidConfig)?,
-        ),
-        _ => Arc::new(InMemoryIdentityStore::new()),
+    let dir = match storage_directory {
+        Some(dir) if !dir.trim().is_empty() => PathBuf::from(dir.trim()),
+        _ => default_native_storage_directory(),
     };
+    let store: Arc<dyn IdentityStore> =
+        Arc::new(FileIdentityStore::new(dir).map_err(|_| InitError::InvalidConfig)?);
     CoreHeatmapSdk::init_with_transport_and_store(config, HttpBatchTransport::new(), store)
 }
 

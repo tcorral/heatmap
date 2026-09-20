@@ -1851,7 +1851,8 @@ data class InitConfig (
     var `excludeElements`: List<kotlin.String>, 
     var `excludeScreens`: List<kotlin.String>, 
     var `maskElements`: List<kotlin.String>, 
-    var `storageDirectory`: kotlin.String?
+    var `storageDirectory`: kotlin.String?, 
+    var `appVersion`: kotlin.String
 ) {
     
     companion object
@@ -1871,6 +1872,7 @@ public object FfiConverterTypeInitConfig: FfiConverterRustBuffer<InitConfig> {
             FfiConverterSequenceString.read(buf),
             FfiConverterSequenceString.read(buf),
             FfiConverterOptionalString.read(buf),
+            FfiConverterString.read(buf),
         )
     }
 
@@ -1882,7 +1884,8 @@ public object FfiConverterTypeInitConfig: FfiConverterRustBuffer<InitConfig> {
             FfiConverterSequenceString.allocationSize(value.`excludeElements`) +
             FfiConverterSequenceString.allocationSize(value.`excludeScreens`) +
             FfiConverterSequenceString.allocationSize(value.`maskElements`) +
-            FfiConverterOptionalString.allocationSize(value.`storageDirectory`)
+            FfiConverterOptionalString.allocationSize(value.`storageDirectory`) +
+            FfiConverterString.allocationSize(value.`appVersion`)
     )
 
     override fun write(value: InitConfig, buf: ByteBuffer) {
@@ -1894,6 +1897,7 @@ public object FfiConverterTypeInitConfig: FfiConverterRustBuffer<InitConfig> {
             FfiConverterSequenceString.write(value.`excludeScreens`, buf)
             FfiConverterSequenceString.write(value.`maskElements`, buf)
             FfiConverterOptionalString.write(value.`storageDirectory`, buf)
+            FfiConverterString.write(value.`appVersion`, buf)
     }
 }
 

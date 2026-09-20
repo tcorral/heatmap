@@ -1,5 +1,7 @@
 package com.heatmap.sdk
 
+import java.io.File
+
 /**
  * App-facing Heatmap SDK client. Wraps UniFFI [HeatmapSdk] with a stable Kotlin API.
  *
@@ -27,7 +29,8 @@ class HeatmapClient private constructor(
                 excludeElements = emptyList(),
                 excludeScreens = emptyList(),
                 maskElements = emptyList(),
-                storageDirectory = null,
+                storageDirectory = File(System.getProperty("java.io.tmpdir"), "heatmap-sdk").absolutePath,
+                appVersion = "1.0.0",
             ),
         ),
     )

@@ -895,10 +895,11 @@ public struct InitConfig {
     public var excludeScreens: [String]
     public var maskElements: [String]
     public var storageDirectory: String?
+    public var appVersion: String
 
     // Default memberwise initializers are never public by default, so we
     // declare one manually.
-    public init(projectKey: String, endpoint: String, sessionTimeoutMs: UInt64, sampleRate: Double, excludeElements: [String], excludeScreens: [String], maskElements: [String], storageDirectory: String?) {
+    public init(projectKey: String, endpoint: String, sessionTimeoutMs: UInt64, sampleRate: Double, excludeElements: [String], excludeScreens: [String], maskElements: [String], storageDirectory: String?, appVersion: String) {
         self.projectKey = projectKey
         self.endpoint = endpoint
         self.sessionTimeoutMs = sessionTimeoutMs
@@ -907,6 +908,7 @@ public struct InitConfig {
         self.excludeScreens = excludeScreens
         self.maskElements = maskElements
         self.storageDirectory = storageDirectory
+        self.appVersion = appVersion
     }
 }
 
@@ -938,6 +940,9 @@ extension InitConfig: Equatable, Hashable {
         if lhs.storageDirectory != rhs.storageDirectory {
             return false
         }
+        if lhs.appVersion != rhs.appVersion {
+            return false
+        }
         return true
     }
 
@@ -950,6 +955,7 @@ extension InitConfig: Equatable, Hashable {
         hasher.combine(excludeScreens)
         hasher.combine(maskElements)
         hasher.combine(storageDirectory)
+        hasher.combine(appVersion)
     }
 }
 
@@ -968,7 +974,8 @@ public struct FfiConverterTypeInitConfig: FfiConverterRustBuffer {
                 excludeElements: FfiConverterSequenceString.read(from: &buf), 
                 excludeScreens: FfiConverterSequenceString.read(from: &buf), 
                 maskElements: FfiConverterSequenceString.read(from: &buf), 
-                storageDirectory: FfiConverterOptionString.read(from: &buf)
+                storageDirectory: FfiConverterOptionString.read(from: &buf), 
+                appVersion: FfiConverterString.read(from: &buf)
         )
     }
 
@@ -981,6 +988,7 @@ public struct FfiConverterTypeInitConfig: FfiConverterRustBuffer {
         FfiConverterSequenceString.write(value.excludeScreens, into: &buf)
         FfiConverterSequenceString.write(value.maskElements, into: &buf)
         FfiConverterOptionString.write(value.storageDirectory, into: &buf)
+        FfiConverterString.write(value.appVersion, into: &buf)
     }
 }
 

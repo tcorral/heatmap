@@ -1,3 +1,4 @@
+using System.IO;
 using System.Runtime.InteropServices;
 using System.Text.Json;
 using Heatmap.Sdk.Internal;
@@ -142,6 +143,10 @@ public sealed class HeatmapClient : IDisposable
             exclude_elements = Array.Empty<string>(),
             exclude_screens = Array.Empty<string>(),
             mask_elements = Array.Empty<string>(),
+            storage_directory = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "HeatmapSdk"),
+            app_version = "1.0.0",
         };
         return JsonSerializer.Serialize(payload);
     }

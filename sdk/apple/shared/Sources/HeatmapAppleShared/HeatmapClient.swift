@@ -20,9 +20,19 @@ public final class HeatmapClient: @unchecked Sendable {
             excludeElements: [],
             excludeScreens: [],
             maskElements: [],
-            storageDirectory: nil
+            storageDirectory: HeatmapClient.defaultStoragePath,
+            appVersion: "1.0.0"
         )
         sdk = try HeatmapSdk.`init`(config: config)
+    }
+
+    /// Persistent identity and queue directory for this install.
+    public static var defaultStoragePath: String {
+        let base = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
+            ?? FileManager.default.temporaryDirectory
+        let dir = base.appendingPathComponent("heatmap-sdk", isDirectory: true)
+        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        return dir.path
     }
 
     /// Use the same `HeatmapSdk` instance as `HeatmapIosRustCaptureBackend`.

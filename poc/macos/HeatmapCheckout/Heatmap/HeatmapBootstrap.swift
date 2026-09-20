@@ -21,7 +21,9 @@ enum HeatmapBootstrap {
             sampleRate: 1.0,
             excludeElements: [],
             excludeScreens: [],
-            maskElements: []
+            maskElements: [],
+            storageDirectory: HeatmapClient.defaultStoragePath,
+            appVersion: "1.0.0"
         )
         let sdk: HeatmapSdk
         do {

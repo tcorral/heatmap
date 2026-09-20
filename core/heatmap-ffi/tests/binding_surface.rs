@@ -1,9 +1,7 @@
 use std::fs;
 use std::path::PathBuf;
 
-use heatmap_ffi::public_api::{
-    c_export_names, export_names, forbidden_export_names,
-};
+use heatmap_ffi::public_api::{c_export_names, export_names, forbidden_export_names};
 
 fn read_src(name: &str) -> String {
     let manifest = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
@@ -93,4 +91,29 @@ fn should_not_expose_adapter_only_apis_on_integrator_surface() {
             "unexpected C ABI export: {forbidden}"
         );
     }
+}
+
+#[test]
+fn should_keep_generated_init_config_in_sync_with_uniffi_record() {
+    let uniffi = read_src("uniffi_api.rs");
+    assert!(
+        uniffi.contains("pub app_version: String"),
+        "uniffi InitConfig must include app_version"
+    );
+    let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
+    let swift =
+        fs::read_to_string(root.join("sdk/apple/shared/Sources/HeatmapFFI/heatmap_ffi.swift"))
+            .expect("swift bindings");
+    assert!(
+        swift.contains("self.appVersion = appVersion"),
+        "Swift InitConfig missing appVersion"
+    );
+    let kotlin = fs::read_to_string(
+        root.join("sdk/android/heatmap-android/src/main/kotlin/com/heatmap/sdk/heatmap_ffi.kt"),
+    )
+    .expect("kotlin bindings");
+    assert!(
+        kotlin.contains("var `appVersion`"),
+        "Kotlin InitConfig missing appVersion"
+    );
 }
