@@ -25,7 +25,7 @@ Verdict: Changes requested.
   - **Why it matters:** Concurrent capture/poll and disposal can access freed mutex/SDK memory, causing undefined behavior.
   - **Suggested action:** Serialize disposal with handle acquisition outside allocation being freed, or enforce ownership in managed wrappers so no call can overlap disposal. Add concurrent-call-versus-free test.
 
-- [ ] **Finding** — `sdk/android/heatmap-android/src/main/kotlin/com/heatmap/sdk/HeatmapFlushScheduler.kt:22` — Background execution still blocks calling UI thread
+- [x] **Finding** — `sdk/android/heatmap-android/src/main/kotlin/com/heatmap/sdk/HeatmapFlushScheduler.kt:22` — Background execution still blocks calling UI thread
   - **Issue:** Android waits on `Future.get()`, Swift waits on a semaphore at `sdk/apple/shared/Sources/HeatmapAppleShared/HeatmapFlushScheduler.swift:20`, and Windows waits at `sdk/windows/src/Heatmap.Sdk/HeatmapFlushScheduler.cs:50`.
   - **Why it matters:** Network latency still freezes caller despite work executing on another thread, violating non-blocking UI requirement. Capture also synchronously persists queue data.
   - **Suggested action:** Make scheduling asynchronous, expose async completion where required, and move persistence behind bounded background queue.
@@ -69,7 +69,7 @@ Verdict: Changes required — 2 critical, 3 findings.
   - **Why it matters:** Violates required 429 backoff and can amplify rate limiting.
   - **Suggested action:** Gate async batch acquisition on retry deadline and test attempts before and after expiry.
 
-- [ ] **Finding** — `sdk/apple/ios/Sources/HeatmapAppleIOS/HeatmapIosRustCaptureBackend.swift:73` — NFR: Performance; Design: native background flush — Background lifecycle flush still blocks caller
+- [x] **Finding** — `sdk/apple/ios/Sources/HeatmapAppleIOS/HeatmapIosRustCaptureBackend.swift:73` — NFR: Performance; Design: native background flush — Background lifecycle flush still blocks caller
   - **Issue:** Apple waits on a semaphore; Android and Windows equivalents synchronously wait on worker completion.
   - **Why it matters:** Network runs on another thread, but lifecycle/UI caller remains blocked for full request duration.
   - **Suggested action:** Enqueue lifecycle flush onto long-lived scheduler and return immediately; test caller does not wait.

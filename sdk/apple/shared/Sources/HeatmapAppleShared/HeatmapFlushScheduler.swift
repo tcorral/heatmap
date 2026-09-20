@@ -15,26 +15,20 @@ final class HeatmapFlushScheduler: @unchecked Sendable {
         self.timer = timer
     }
 
-    func perform(_ work: @escaping () throws -> Void) throws {
-        let box = ErrorBox()
-        let done = DispatchSemaphore(value: 0)
+    func perform(_ work: @escaping () throws -> Void) {
         queue.async {
-            do {
-                try work()
-            } catch {
-                box.error = error
-            }
-            done.signal()
+            try? work()
         }
-        done.wait()
-        if let error = box.error {
-            throw error
-        }
+    }
+
+    func drain() {
+        queue.sync {}
     }
 
     func stop() {
         timer?.cancel()
         timer = nil
+        drain()
     }
 
     deinit {
@@ -42,6 +36,3 @@ final class HeatmapFlushScheduler: @unchecked Sendable {
     }
 }
 
-private final class ErrorBox: @unchecked Sendable {
-    var error: Error?
-}

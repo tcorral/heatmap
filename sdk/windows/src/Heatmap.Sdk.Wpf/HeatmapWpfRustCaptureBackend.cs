@@ -25,11 +25,62 @@ public sealed class HeatmapWpfRustCaptureBackend : IWpfCaptureBackend
 
     public void RecordActivationClick(WpfActivationClickPayload payload)
     {
+        var elementId = payload.ElementId;
+        var windowId = payload.WindowId;
+        var x = payload.Position.X;
+        var y = payload.Position.Y;
+        var viewportWidth = payload.ViewportWidth;
+        var viewportHeight = payload.ViewportHeight;
+        var timestampMs = payload.TimestampMs;
+        _client.EnqueueNative(() =>
+            RecordActivationClickNative(
+                x, y, elementId, viewportWidth, viewportHeight, timestampMs, windowId));
+    }
+
+    public void RecordScreenView(uint viewportWidth, uint viewportHeight, string windowId)
+    {
+        _client.EnqueueNative(() => RecordScreenViewNative(viewportWidth, viewportHeight, windowId));
+    }
+
+    public void RecordScroll(uint viewportWidth, uint viewportHeight, string windowId)
+    {
+        _client.EnqueueNative(() => RecordScrollNative(viewportWidth, viewportHeight, windowId));
+    }
+
+    public void OnBackground()
+    {
+        _client.EnqueueNative(() =>
+        {
+            HeatmapNative.EnsureLoaded();
+            HeatmapNative.Check(
+                HeatmapNativeAdapter.heatmap_sdk_adapter_on_background(_client.Handle),
+                "onBackground");
+        });
+    }
+
+    public void OnForeground()
+    {
+        _client.EnqueueNative(() =>
+        {
+            HeatmapNative.EnsureLoaded();
+            HeatmapNative.Check(
+                HeatmapNativeAdapter.heatmap_sdk_adapter_on_foreground(_client.Handle),
+                "onForeground");
+        });
+    }
+
+    private void RecordActivationClickNative(
+        double x,
+        double y,
+        string? elementId,
+        uint viewportWidth,
+        uint viewportHeight,
+        long timestampMs,
+        string windowId)
+    {
         HeatmapNative.EnsureLoaded();
-        var elementPtr = payload.ElementId is null
-            ? IntPtr.Zero
-            : Marshal.StringToCoTaskMemUTF8(payload.ElementId);
-        var windowPtr = Marshal.StringToCoTaskMemUTF8(payload.WindowId);
+        var elementPtr = elementId is null ? IntPtr.Zero : Marshal.StringToCoTaskMemUTF8(elementId);
+        var windowPtr = Marshal.StringToCoTaskMemUTF8(windowId);
         var osPtr = Marshal.StringToCoTaskMemUTF8(_osVersion);
         var appPtr = Marshal.StringToCoTaskMemUTF8(_appVersion);
         try
@@ -37,12 +88,12 @@ public sealed class HeatmapWpfRustCaptureBackend : IWpfCaptureBackend
             HeatmapNative.Check(
                 HeatmapNativeAdapter.heatmap_sdk_adapter_record_windows_activation_click(
                     _client.Handle,
-                    payload.Position.X,
-                    payload.Position.Y,
+                    x,
+                    y,
                     elementPtr,
-                    payload.ViewportWidth,
-                    payload.ViewportHeight,
-                    payload.TimestampMs,
+                    viewportWidth,
+                    viewportHeight,
+                    timestampMs,
                     windowPtr,
                     osPtr,
                     appPtr),
@@ -61,7 +112,7 @@ public sealed class HeatmapWpfRustCaptureBackend : IWpfCaptureBackend
         }
     }
 
-    public void RecordScreenView(uint viewportWidth, uint viewportHeight, string windowId)
+    private void RecordScreenViewNative(uint viewportWidth, uint viewportHeight, string windowId)
     {
         HeatmapNative.EnsureLoaded();
         var windowPtr = Marshal.StringToCoTaskMemUTF8(windowId);
@@ -87,7 +138,7 @@ public sealed class HeatmapWpfRustCaptureBackend : IWpfCaptureBackend
         }
     }
 
-    public void RecordScroll(uint viewportWidth, uint viewportHeight, string windowId)
+    private void RecordScrollNative(uint viewportWidth, uint viewportHeight, string windowId)
     {
         HeatmapNative.EnsureLoaded();
         var windowPtr = Marshal.StringToCoTaskMemUTF8(windowId);
@@ -111,25 +162,5 @@ public sealed class HeatmapWpfRustCaptureBackend : IWpfCaptureBackend
             Marshal.FreeCoTaskMem(osPtr);
             Marshal.FreeCoTaskMem(appPtr);
         }
-    }
-
-    public void OnBackground()
-    {
-        HeatmapNative.EnsureLoaded();
-        using var scheduler = new HeatmapFlushScheduler();
-        scheduler.Perform(() =>
-        {
-            HeatmapNative.Check(
-                HeatmapNativeAdapter.heatmap_sdk_adapter_on_background(_client.Handle),
-                "onBackground");
-        });
-    }
-
-    public void OnForeground()
-    {
-        HeatmapNative.EnsureLoaded();
-        HeatmapNative.Check(
-            HeatmapNativeAdapter.heatmap_sdk_adapter_on_foreground(_client.Handle),
-            "onForeground");
     }
 }

@@ -13,7 +13,12 @@ class HeatmapFlushSchedulerTest {
         HeatmapFlushScheduler().use { scheduler ->
             val caller = Thread.currentThread().id
             var workThreadId: Long? = null
-            scheduler.perform { workThreadId = Thread.currentThread().id }
+            val done = CountDownLatch(1)
+            scheduler.perform {
+                workThreadId = Thread.currentThread().id
+                done.countDown()
+            }
+            assertTrue(done.await(1, TimeUnit.SECONDS))
             assertNotNull(workThreadId)
             assertNotEquals(caller, workThreadId)
         }
@@ -37,9 +42,24 @@ class HeatmapFlushSchedulerTest {
     @Test
     fun shouldStillRunPerformWork() {
         HeatmapFlushScheduler().use { scheduler ->
-            var ran = false
-            scheduler.perform { ran = true }
-            assertTrue(ran)
+            val ran = CountDownLatch(1)
+            scheduler.perform { ran.countDown() }
+            assertTrue(ran.await(1, TimeUnit.SECONDS))
+        }
+    }
+
+    @Test
+    fun shouldReturnBeforeBlockedWorkCompletes() {
+        HeatmapFlushScheduler().use { scheduler ->
+            val callerContinued = java.util.concurrent.atomic.AtomicBoolean(false)
+            val finished = CountDownLatch(1)
+            scheduler.perform {
+                Thread.sleep(200)
+                check(callerContinued.get()) { "perform waited for work" }
+                finished.countDown()
+            }
+            callerContinued.set(true)
+            assertTrue(finished.await(1, TimeUnit.SECONDS))
         }
     }
 }

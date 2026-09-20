@@ -20,10 +20,15 @@ internal class HeatmapFlushScheduler(
     }
 
     fun perform(work: () -> Unit) {
-        executor.submit(work).get()
+        executor.submit(work)
+    }
+
+    internal fun drain() {
+        executor.submit {}.get(2, TimeUnit.SECONDS)
     }
 
     override fun close() {
-        executor.shutdownNow()
+        executor.shutdown()
+        executor.awaitTermination(5, TimeUnit.SECONDS)
     }
 }

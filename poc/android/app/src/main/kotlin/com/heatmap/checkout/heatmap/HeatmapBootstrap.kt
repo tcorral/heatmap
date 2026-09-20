@@ -37,6 +37,7 @@ object HeatmapBootstrap {
             HeatmapAndroidRustCaptureBackend(
                 sdk = sdk,
                 appVersion = BuildConfig.VERSION_NAME,
+                runOffUi = client::enqueueNative,
             )
         return HeatmapRuntime(client = client, captureBackend = backend)
     }

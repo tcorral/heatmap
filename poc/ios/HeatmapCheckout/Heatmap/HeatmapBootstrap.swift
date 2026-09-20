@@ -32,7 +32,7 @@ enum HeatmapBootstrap {
             throw HeatmapBootstrapError.sdkInitFailed(String(describing: error))
         }
         let client = HeatmapClient(sdk: sdk)
-        let backend = HeatmapIosRustCaptureBackend(sdk: sdk)
+        let backend = HeatmapIosRustCaptureBackend(sdk: sdk, runOffUi: { client.enqueueNative($0) })
         return HeatmapRuntime(client: client, captureBackend: backend)
     }
 }

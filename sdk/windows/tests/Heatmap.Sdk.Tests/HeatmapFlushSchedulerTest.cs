@@ -10,7 +10,13 @@ public sealed class HeatmapFlushSchedulerTest
         using var scheduler = new HeatmapFlushScheduler();
         var caller = Environment.CurrentManagedThreadId;
         var workThread = 0;
-        scheduler.Perform(() => workThread = Environment.CurrentManagedThreadId);
+        using var done = new ManualResetEventSlim(false);
+        scheduler.Perform(() =>
+        {
+            workThread = Environment.CurrentManagedThreadId;
+            done.Set();
+        });
+        Assert.True(done.Wait(TimeSpan.FromSeconds(1)));
         Assert.NotEqual(0, workThread);
         Assert.NotEqual(caller, workThread);
     }
@@ -37,8 +43,27 @@ public sealed class HeatmapFlushSchedulerTest
     public void PerformStillRunsWork()
     {
         using var scheduler = new HeatmapFlushScheduler();
-        var ran = false;
-        scheduler.Perform(() => ran = true);
-        Assert.True(ran);
+        using var ran = new ManualResetEventSlim(false);
+        scheduler.Perform(() => ran.Set());
+        Assert.True(ran.Wait(TimeSpan.FromSeconds(1)));
+    }
+
+    [Fact]
+    public void PerformReturnsBeforeBlockedWorkCompletes()
+    {
+        using var scheduler = new HeatmapFlushScheduler();
+        using var started = new ManualResetEventSlim(false);
+        using var finished = new ManualResetEventSlim(false);
+        var callerContinued = false;
+        scheduler.Perform(() =>
+        {
+            started.Set();
+            Thread.Sleep(200);
+            Assert.True(callerContinued);
+            finished.Set();
+        });
+        Assert.True(started.Wait(TimeSpan.FromSeconds(1)));
+        callerContinued = true;
+        Assert.True(finished.Wait(TimeSpan.FromSeconds(1)));
     }
 }

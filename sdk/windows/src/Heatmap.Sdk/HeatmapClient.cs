@@ -116,6 +116,19 @@ public sealed class HeatmapClient : IDisposable
         {
             HeatmapNative.Check(HeatmapNative.heatmap_sdk_flush(_handle), "flush");
         });
+        _flushScheduler.Drain();
+    }
+
+    internal void EnqueueNative(Action work)
+    {
+        ThrowIfDisposed();
+        _flushScheduler.Perform(work);
+    }
+
+    internal void DrainNative()
+    {
+        ThrowIfDisposed();
+        _flushScheduler.Drain();
     }
 
     public void Dispose()

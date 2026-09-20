@@ -44,13 +44,16 @@ internal sealed class HeatmapFlushScheduler : IDisposable
 
     public void Perform(Action work)
     {
+        Enqueue(work);
+    }
+
+    internal void Drain()
+    {
         using var done = new ManualResetEventSlim(false);
-        Exception? error = null;
-        Enqueue(() => error = RunCaptured(work, done));
-        done.Wait();
-        if (error is not null)
+        Enqueue(() => done.Set());
+        if (!done.Wait(TimeSpan.FromSeconds(2)))
         {
-            throw error;
+            throw new TimeoutException("Heatmap flush queue did not drain.");
         }
     }
 
@@ -72,23 +75,6 @@ internal sealed class HeatmapFlushScheduler : IDisposable
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         _work.Add(work);
-    }
-
-    private static Exception? RunCaptured(Action work, ManualResetEventSlim done)
-    {
-        try
-        {
-            work();
-            return null;
-        }
-        catch (Exception ex)
-        {
-            return ex;
-        }
-        finally
-        {
-            done.Set();
-        }
     }
 
     private void ProcessWork()

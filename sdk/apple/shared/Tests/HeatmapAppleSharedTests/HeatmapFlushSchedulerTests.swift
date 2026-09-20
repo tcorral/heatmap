@@ -2,12 +2,16 @@ import XCTest
 @testable import HeatmapAppleShared
 
 final class HeatmapFlushSchedulerTests: XCTestCase {
-    func testPerformDoesNotRunOnMainThread() throws {
+    func testPerformDoesNotRunOnMainThread() {
         let scheduler = HeatmapFlushScheduler()
+        let expectation = expectation(description: "perform")
         var workThread: Thread?
-        try scheduler.perform {
+        scheduler.perform {
             workThread = Thread.current
+            expectation.fulfill()
         }
+        wait(for: [expectation], timeout: 1.0)
+        scheduler.stop()
         XCTAssertNotNil(workThread)
         XCTAssertFalse(workThread!.isMainThread)
     }
@@ -25,12 +29,30 @@ final class HeatmapFlushSchedulerTests: XCTestCase {
         XCTAssertFalse(pollThread!.isMainThread)
     }
 
-    func testPerformStillRunsWork() throws {
+    func testPerformStillRunsWork() {
         let scheduler = HeatmapFlushScheduler()
-        var ran = false
-        try scheduler.perform {
-            ran = true
+        let expectation = expectation(description: "ran")
+        scheduler.perform {
+            expectation.fulfill()
         }
-        XCTAssertTrue(ran)
+        wait(for: [expectation], timeout: 1.0)
+        scheduler.stop()
+    }
+
+    func testPerformReturnsBeforeBlockedWorkCompletes() {
+        let scheduler = HeatmapFlushScheduler()
+        let started = expectation(description: "started")
+        let finished = expectation(description: "finished")
+        var callerContinued = false
+        scheduler.perform {
+            started.fulfill()
+            Thread.sleep(forTimeInterval: 0.2)
+            XCTAssertTrue(callerContinued)
+            finished.fulfill()
+        }
+        wait(for: [started], timeout: 1.0)
+        callerContinued = true
+        wait(for: [finished], timeout: 1.0)
+        scheduler.stop()
     }
 }

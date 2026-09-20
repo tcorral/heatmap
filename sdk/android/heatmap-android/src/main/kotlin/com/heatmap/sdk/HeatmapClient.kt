@@ -66,6 +66,11 @@ class HeatmapClient private constructor(
 
     fun flush() {
         flushScheduler.perform { sdk.flush() }
+        flushScheduler.drain()
+    }
+
+    fun enqueueNative(work: () -> Unit) {
+        flushScheduler.perform(work)
     }
 
     override fun close() {

@@ -71,8 +71,13 @@ public final class HeatmapClient: @unchecked Sendable {
     }
 
     public func flush() throws {
-        try flushScheduler.perform {
+        flushScheduler.perform {
             try self.sdk.flush()
         }
+        flushScheduler.drain()
+    }
+
+    public func enqueueNative(_ work: @escaping () -> Void) {
+        flushScheduler.perform(work)
     }
 }
