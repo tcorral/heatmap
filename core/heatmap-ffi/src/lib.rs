@@ -14,14 +14,15 @@
 //! Repo scripts: `sdk/apple/scripts/generate-uniffi.sh` (Swift),
 //! `sdk/android/scripts/generate-uniffi.sh` (Kotlin; run against Android `.so` for release).
 
+mod android_adapter;
 mod config;
 mod errors;
-mod android_adapter;
+mod flush_lock;
 mod ios_adapter;
 mod macos_adapter;
-mod windows_adapter;
 pub mod public_api;
 mod uniffi_api;
+mod windows_adapter;
 
 pub mod c_abi;
 

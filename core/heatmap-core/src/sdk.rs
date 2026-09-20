@@ -69,6 +69,21 @@ impl std::fmt::Display for ScreenContextError {
 
 impl std::error::Error for ScreenContextError {}
 
+#[doc(hidden)]
+pub struct PreparedFlush {
+    batch: HeatmapBatch,
+    transport: Arc<dyn BatchTransport>,
+    endpoint: String,
+    project_key: String,
+}
+
+impl PreparedFlush {
+    pub fn send(&self) -> Result<(), FlushError> {
+        self.transport
+            .send_batch(&self.endpoint, &self.project_key, &self.batch)
+    }
+}
+
 pub struct HeatmapSdk {
     config: HeatmapConfig,
     transport: Arc<dyn BatchTransport>,
@@ -203,6 +218,48 @@ impl HeatmapSdk {
 
     pub fn is_flush_retry_blocked(&self) -> bool {
         self.clock.now_ms() < self.retry_not_before_ms
+    }
+
+    pub fn prepare_flush(&mut self, require_auto: bool) -> Option<PreparedFlush> {
+        if !self.can_prepare_flush(require_auto) {
+            return None;
+        }
+        let batch = match self.take_batch_for_upload() {
+            Ok(batch) => batch,
+            Err(_) => return None,
+        };
+        Some(PreparedFlush {
+            batch,
+            transport: Arc::clone(&self.transport),
+            endpoint: self.config.endpoint.clone(),
+            project_key: self.config.project_key.clone(),
+        })
+    }
+
+    pub fn complete_prepared_flush(
+        &mut self,
+        prepared: PreparedFlush,
+        result: Result<(), FlushError>,
+    ) -> Result<(), FlushError> {
+        match result {
+            Ok(()) => {
+                self.finish_successful_upload();
+                Ok(())
+            }
+            Err(err) => self.handle_upload_failure(prepared.batch, err),
+        }
+    }
+
+    fn can_prepare_flush(&self, require_auto: bool) -> bool {
+        if require_auto
+            && (self.defer_network_flush || !self.should_auto_flush(self.clock.now_ms()))
+        {
+            return false;
+        }
+        if self.is_flush_retry_blocked() {
+            return false;
+        }
+        !self.queue.is_empty() || self.retry_batch.is_some()
     }
 
     pub fn config(&self) -> &HeatmapConfig {
@@ -395,26 +452,11 @@ impl HeatmapSdk {
     }
 
     fn try_flush(&mut self) -> Result<(), FlushError> {
-        if self.is_flush_retry_blocked() {
+        let Some(prepared) = self.prepare_flush(false) else {
             return Ok(());
-        }
-        if self.queue.is_empty() && self.retry_batch.is_none() {
-            return Ok(());
-        }
-        let batch = match self.take_batch_for_upload() {
-            Ok(batch) => batch,
-            Err(BatchError::EmptyQueue) => return Ok(()),
         };
-        match self
-            .transport
-            .send_batch(&self.config.endpoint, &self.config.project_key, &batch)
-        {
-            Ok(()) => {
-                self.finish_successful_upload();
-                Ok(())
-            }
-            Err(err) => self.handle_upload_failure(batch, err),
-        }
+        let result = prepared.send();
+        self.complete_prepared_flush(prepared, result)
     }
 
     #[doc(hidden)]

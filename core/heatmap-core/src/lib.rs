@@ -33,7 +33,7 @@ pub use identity_store::{
 };
 pub use persistent_queue::{QueueLimits, QUEUE_MAX_BYTES, QUEUE_MAX_EVENTS};
 pub use rng::{ManualRng, RandomSource, SystemRng};
-pub use sdk::{HeatmapSdk, IdentityError, ScreenContextError};
+pub use sdk::{HeatmapSdk, IdentityError, PreparedFlush, ScreenContextError};
 #[cfg(not(target_arch = "wasm32"))]
 pub use transport::HttpBatchTransport;
 pub use transport::{batch_ingest_url, BatchTransport, FlushError};

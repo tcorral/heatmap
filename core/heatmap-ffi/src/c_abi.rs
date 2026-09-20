@@ -201,18 +201,28 @@ pub extern "C" fn heatmap_sdk_set_tracking_enabled(handle: HeatmapSdkHandle, ena
 
 #[no_mangle]
 pub extern "C" fn heatmap_sdk_flush(handle: HeatmapSdkHandle) -> i32 {
-    with_sdk(handle, |sdk| match sdk.flush() {
-        Ok(()) => HEATMAP_OK,
-        Err(_) => HEATMAP_ERR_FLUSH,
-    })
+    flush_handle(handle, false)
 }
 
 #[no_mangle]
 pub extern "C" fn heatmap_sdk_poll_flush(handle: HeatmapSdkHandle) -> i32 {
-    with_sdk(handle, |sdk| match sdk.poll_flush() {
+    flush_handle(handle, true)
+}
+
+fn flush_handle(handle: HeatmapSdkHandle, require_auto: bool) -> i32 {
+    let inner = match acquire_handle(handle) {
+        Ok(inner) => inner,
+        Err(code) => return code,
+    };
+    if begin_sdk_use(&inner).is_err() {
+        return HEATMAP_ERR_NULL;
+    }
+    let result = match crate::flush_lock::run_prepared_flush(&inner.sdk, require_auto) {
         Ok(()) => HEATMAP_OK,
         Err(_) => HEATMAP_ERR_FLUSH,
-    })
+    };
+    end_sdk_use(&inner);
+    result
 }
 
 #[no_mangle]

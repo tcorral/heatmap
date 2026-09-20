@@ -5,6 +5,8 @@ use heatmap_core::{
     FileIdentityStore, FlushError, HeatmapConfig, HeatmapSdk as CoreHeatmapSdk, HttpBatchTransport,
     IdentityError, IdentityStore, InitError, ScreenContextError,
 };
+#[cfg(test)]
+use heatmap_core::{BatchTransport, InMemoryIdentityStore};
 
 use crate::config::InitConfigJson;
 
@@ -28,6 +30,19 @@ impl PublicHeatmapSdk {
         storage_directory: Option<String>,
     ) -> Result<Self, InitError> {
         let inner = core_init_with_storage(config, storage_directory)?;
+        Ok(Self { inner })
+    }
+
+    #[cfg(test)]
+    pub(crate) fn init_with_transport(
+        config: HeatmapConfig,
+        transport: impl BatchTransport + 'static,
+    ) -> Result<Self, InitError> {
+        let inner = CoreHeatmapSdk::init_with_transport_and_store(
+            config,
+            transport,
+            Arc::new(InMemoryIdentityStore::new()),
+        )?;
         Ok(Self { inner })
     }
 
@@ -57,6 +72,21 @@ impl PublicHeatmapSdk {
 
     pub fn poll_flush(&mut self) -> Result<(), FlushError> {
         self.inner.poll_flush()
+    }
+
+    pub(crate) fn prepare_flush(
+        &mut self,
+        require_auto: bool,
+    ) -> Option<heatmap_core::PreparedFlush> {
+        self.inner.prepare_flush(require_auto)
+    }
+
+    pub(crate) fn complete_prepared_flush(
+        &mut self,
+        prepared: heatmap_core::PreparedFlush,
+        result: Result<(), FlushError>,
+    ) -> Result<(), FlushError> {
+        self.inner.complete_prepared_flush(prepared, result)
     }
 }
 

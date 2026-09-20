@@ -88,13 +88,11 @@ impl HeatmapSdk {
     }
 
     pub fn flush(&self) -> Result<(), FlushError> {
-        let mut guard = self.state.lock().expect("heatmap sdk lock");
-        guard.flush().map_err(FlushError::from)
+        crate::flush_lock::run_prepared_flush(&self.state, false).map_err(FlushError::from)
     }
 
     pub fn poll_flush(&self) -> Result<(), FlushError> {
-        let mut guard = self.state.lock().expect("heatmap sdk lock");
-        guard.poll_flush().map_err(FlushError::from)
+        crate::flush_lock::run_prepared_flush(&self.state, true).map_err(FlushError::from)
     }
 
     /// Adapter-only lifecycle hook (iOS, Android).
@@ -298,5 +296,118 @@ impl HeatmapSdk {
         guard
             .adapter_click_session_ids_from_batch()
             .map_err(CaptureError::from)
+    }
+}
+
+impl HeatmapSdk {
+    #[cfg(test)]
+    pub(crate) fn from_public(inner: PublicHeatmapSdk) -> Self {
+        Self {
+            state: Mutex::new(inner),
+        }
+    }
+}
+
+#[cfg(test)]
+mod flush_lock_tests {
+    use super::*;
+    use heatmap_core::{BatchTransport, FlushError, HeatmapBatch, HeatmapConfig};
+    use std::sync::{Arc, Condvar, Mutex};
+    use std::thread;
+    use std::time::Duration;
+
+    struct BlockingTransport {
+        started: Arc<(Mutex<bool>, Condvar)>,
+        release: Arc<(Mutex<bool>, Condvar)>,
+    }
+
+    impl BatchTransport for BlockingTransport {
+        fn send_batch(
+            &self,
+            _endpoint: &str,
+            _project_key: &str,
+            _batch: &HeatmapBatch,
+        ) -> Result<(), FlushError> {
+            let (started_lock, started_wait) = &*self.started;
+            *started_lock.lock().expect("started") = true;
+            started_wait.notify_all();
+            let (release_lock, release_wait) = &*self.release;
+            let mut released = release_lock.lock().expect("release");
+            while !*released {
+                released = release_wait.wait(released).expect("wait");
+            }
+            Ok(())
+        }
+    }
+
+    fn test_config() -> HeatmapConfig {
+        HeatmapConfig {
+            project_key: "pk_test".into(),
+            endpoint: "https://ingest.example.com".into(),
+            session_timeout_ms: HeatmapConfig::DEFAULT_SESSION_TIMEOUT_MS,
+            sample_rate: HeatmapConfig::DEFAULT_SAMPLE_RATE,
+            exclude_elements: vec![],
+            exclude_screens: vec![],
+            mask_elements: vec![],
+            app_version: HeatmapConfig::DEFAULT_APP_VERSION.into(),
+        }
+    }
+
+    fn record_click(sdk: &HeatmapSdk, timestamp_ms: i64) -> Result<(), CaptureError> {
+        sdk.record_activation_click(
+            0.5,
+            0.5,
+            Some("checkout.pay".into()),
+            800,
+            600,
+            timestamp_ms,
+            "iOS 18.0".into(),
+            "1.0.0".into(),
+        )
+    }
+
+    #[test]
+    fn should_return_capture_while_flush_http_is_blocked() {
+        let started = Arc::new((Mutex::new(false), Condvar::new()));
+        let release = Arc::new((Mutex::new(false), Condvar::new()));
+        let transport = BlockingTransport {
+            started: Arc::clone(&started),
+            release: Arc::clone(&release),
+        };
+        let sdk = Arc::new(HeatmapSdk::from_public(
+            PublicHeatmapSdk::init_with_transport(test_config(), transport).expect("init"),
+        ));
+        record_click(&sdk, 1_000).expect("seed queue");
+
+        let flush_sdk = Arc::clone(&sdk);
+        let flush = thread::spawn(move || flush_sdk.flush());
+
+        let (started_lock, started_wait) = &*started;
+        let mut is_started = started_lock.lock().expect("started");
+        let timeout = Duration::from_secs(2);
+        while !*is_started {
+            let (guard, timed_out) = started_wait
+                .wait_timeout(is_started, timeout)
+                .expect("wait");
+            is_started = guard;
+            assert!(!timed_out.timed_out(), "flush never reached transport");
+        }
+        drop(is_started);
+
+        let capture_sdk = Arc::clone(&sdk);
+        let (done_tx, done_rx) = std::sync::mpsc::channel();
+        thread::spawn(move || {
+            let result = record_click(&capture_sdk, 2_000);
+            let _ = done_tx.send(result);
+        });
+        let capture = done_rx
+            .recv_timeout(Duration::from_millis(300))
+            .expect("capture blocked behind flush HTTP");
+        capture.expect("capture");
+
+        let (release_lock, release_wait) = &*release;
+        *release_lock.lock().expect("release") = true;
+        release_wait.notify_all();
+        flush.join().expect("flush thread").expect("flush");
     }
 }
