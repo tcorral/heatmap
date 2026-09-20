@@ -129,6 +129,27 @@ fn should_upload_offline_events_once_after_restore_and_flush() {
 }
 
 #[test]
+fn should_restore_queued_events_after_enqueue_without_background() {
+    let store = Arc::new(InMemoryIdentityStore::new());
+    {
+        let mut sdk = HeatmapSdk::init_with_transport_and_store(
+            valid_config(),
+            OfflineTransport,
+            store.clone(),
+        )
+        .expect("init");
+        sdk.enqueue_candidate(minimal_click_candidate(3_000))
+            .expect("enqueue");
+    }
+    let (transport, _, _) = CountingTransport::new();
+    let mut restored =
+        HeatmapSdk::init_with_transport_and_store(valid_config(), transport, store)
+            .expect("restore");
+    let batch = restored.build_batch().expect("pending");
+    assert_eq!(batch.events.len(), 2);
+}
+
+#[test]
 fn should_not_crash_when_relaunching_with_pending_persisted_events() {
     let store = Arc::new(InMemoryIdentityStore::new());
     {

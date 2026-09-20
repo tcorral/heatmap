@@ -509,6 +509,7 @@ impl HeatmapSdk {
         if dropped > 0 {
             self.diagnostics.record_queue_dropped(dropped);
         }
+        self.sync_persisted_queue();
         self.note_queue_activity(self.clock.now_ms());
         self.maybe_auto_flush(self.clock.now_ms());
         Ok(())
