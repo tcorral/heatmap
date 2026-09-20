@@ -18,6 +18,10 @@ async fn response_json(response: axum::response::Response) -> Value {
 }
 
 fn valid_click(batch_suffix: &str, x: f64, y: f64, layout: &str) -> Value {
+    let mut screen = json!({ "id": "Checkout" });
+    if !layout.is_empty() {
+        screen["layout_version"] = json!(layout);
+    }
     json!({
         "schema_version": 1,
         "session_id": format!("sess_{batch_suffix}"),
@@ -29,7 +33,7 @@ fn valid_click(batch_suffix: &str, x: f64, y: f64, layout: &str) -> Value {
             "os_version": "macOS 14.6",
             "app_version": "1.0.0"
         },
-        "screen": { "id": "Checkout", "layout_version": layout },
+        "screen": screen,
         "event": { "type": "click" },
         "position": { "x": x, "y": y }
     })
@@ -246,6 +250,32 @@ async fn unknown_fields_on_valid_event_still_persist() {
 }
 
 #[tokio::test]
+async fn invalid_viewport_rejects_event_siblings_still_persist() {
+    let app = test_app();
+    let mut bad = valid_click("bad_viewport", 0.2, 0.2, "2024-09");
+    bad["viewport"] = json!({ "width": 0, "height": 720 });
+    let good = valid_click("good_viewport", 0.8, 0.8, "2024-09");
+    let batch = json!({ "batch_id": "batch_mixed_viewport", "events": [bad, good] });
+    let response = app
+        .clone()
+        .oneshot(
+            Request::builder()
+                .method("POST")
+                .uri("/v1/batches")
+                .header("X-Project-Key", TEST_PROJECT_KEY)
+                .header("content-type", "application/json")
+                .body(Body::from(batch.to_string()))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(response.status(), StatusCode::ACCEPTED);
+    let body = response_json(response).await;
+    assert_eq!(body["accepted_count"], 1);
+    assert_eq!(body["rejected_count"], 1);
+}
+
+#[tokio::test]
 async fn missing_required_field_rejects_event_siblings_still_persist() {
     let app = test_app();
     let mut bad = valid_click("missing", 0.2, 0.2, "2024-09");
@@ -393,7 +423,7 @@ async fn scroll_events_do_not_increment_click_bins() {
             "app_version": "1.0.0"
         },
         "screen": { "id": "Checkout", "layout_version": "2024-09" },
-        "event": { "type": "scroll", "scroll_y": 0.5 },
+        "event": { "type": "scroll" },
         "position": { "x": 0.5, "y": 0.5 }
     });
     post_batch(&app, "batch_scroll_bins", json!([scroll])).await;
