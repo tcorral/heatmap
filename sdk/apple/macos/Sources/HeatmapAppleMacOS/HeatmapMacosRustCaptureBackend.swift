@@ -35,19 +35,21 @@ public final class HeatmapMacosRustCaptureBackend: HeatmapMacosCaptureBackend {
         )
     }
 
-    public func recordScreenView(viewportWidth: UInt32, viewportHeight: UInt32) {
+    public func recordScreenView(viewportWidth: UInt32, viewportHeight: UInt32, windowId: String) {
         try? sdk.recordMacosScreenView(
             viewportWidth: viewportWidth,
             viewportHeight: viewportHeight,
+            windowId: windowId,
             osVersion: osVersion,
             appVersion: appVersion
         )
     }
 
-    public func recordScroll(viewportWidth: UInt32, viewportHeight: UInt32) {
+    public func recordScroll(viewportWidth: UInt32, viewportHeight: UInt32, windowId: String) {
         try? sdk.recordMacosScroll(
             viewportWidth: viewportWidth,
             viewportHeight: viewportHeight,
+            windowId: windowId,
             osVersion: osVersion,
             appVersion: appVersion
         )

@@ -42,6 +42,7 @@ impl PublicHeatmapSdk {
         &mut self,
         viewport_width: u32,
         viewport_height: u32,
+        window_id: String,
         os_version: String,
         app_version: String,
     ) -> Result<(), CaptureError> {
@@ -49,10 +50,12 @@ impl PublicHeatmapSdk {
             width: viewport_width,
             height: viewport_height,
         };
+        let window_id = window_id.trim().to_string();
         self.inner.record_screen_view(
             macos_sdk_info(),
             macos_platform_info(os_version, app_version),
             viewport,
+            Some(window_id),
         )
     }
 
@@ -60,6 +63,7 @@ impl PublicHeatmapSdk {
         &mut self,
         viewport_width: u32,
         viewport_height: u32,
+        window_id: String,
         os_version: String,
         app_version: String,
     ) -> Result<(), CaptureError> {
@@ -67,8 +71,13 @@ impl PublicHeatmapSdk {
             width: viewport_width,
             height: viewport_height,
         };
-        self.inner
-            .record_scroll(macos_sdk_info(), macos_platform_info(os_version, app_version), viewport)
+        let window_id = window_id.trim().to_string();
+        self.inner.record_scroll(
+            macos_sdk_info(),
+            macos_platform_info(os_version, app_version),
+            viewport,
+            Some(window_id),
+        )
     }
 
     pub fn adapter_macos_click_window_ids_from_batch(&mut self) -> Result<Vec<String>, BatchError> {
@@ -77,6 +86,19 @@ impl PublicHeatmapSdk {
             .events
             .iter()
             .filter(|event| event.event.interaction_type == InteractionType::Click)
+            .filter_map(|event| event.window_id.clone())
+            .collect())
+    }
+
+    pub fn adapter_macos_lifecycle_window_ids_from_batch(
+        &mut self,
+        interaction_type: InteractionType,
+    ) -> Result<Vec<String>, BatchError> {
+        let batch = self.inner.build_batch()?;
+        Ok(batch
+            .events
+            .iter()
+            .filter(|event| event.event.interaction_type == interaction_type)
             .filter_map(|event| event.window_id.clone())
             .collect())
     }
@@ -112,7 +134,7 @@ mod tests {
             exclude_elements: vec![],
             exclude_screens: vec![],
             mask_elements: vec![],
-        app_version: heatmap_core::HeatmapConfig::DEFAULT_APP_VERSION.into(),
+            app_version: heatmap_core::HeatmapConfig::DEFAULT_APP_VERSION.into(),
         };
         let mut sdk = PublicHeatmapSdk::init(config).expect("init");
         sdk.record_macos_activation_click(

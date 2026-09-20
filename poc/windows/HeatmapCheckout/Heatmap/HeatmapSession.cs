@@ -76,7 +76,7 @@ public sealed class HeatmapSession
 
         var width = (uint)Math.Max(1.0, window.ActualWidth);
         var height = (uint)Math.Max(1.0, window.ActualHeight);
-        _captureBackend.RecordScreenView(width, height);
+        _captureBackend.RecordScreenView(width, height, WpfWindowIdentity.OpaqueId(window));
     }
 
     public void FlushBatch()

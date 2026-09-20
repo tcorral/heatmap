@@ -52,6 +52,7 @@ impl PublicHeatmapSdk {
             android_sdk_info(),
             android_platform_info(os_version, app_version),
             viewport,
+            None,
         )
     }
 
@@ -70,6 +71,7 @@ impl PublicHeatmapSdk {
             android_sdk_info(),
             android_platform_info(os_version, app_version),
             viewport,
+            None,
         )
     }
 }

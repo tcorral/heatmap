@@ -811,9 +811,9 @@ internal interface UniffiLib : Library {
     ): Unit
     fun uniffi_heatmap_ffi_fn_method_heatmapsdk_record_macos_activation_click(`ptr`: Pointer,`x`: Double,`y`: Double,`elementId`: RustBuffer.ByValue,`viewportWidth`: Int,`viewportHeight`: Int,`timestampMs`: Long,`windowId`: RustBuffer.ByValue,`osVersion`: RustBuffer.ByValue,`appVersion`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
-    fun uniffi_heatmap_ffi_fn_method_heatmapsdk_record_macos_screen_view(`ptr`: Pointer,`viewportWidth`: Int,`viewportHeight`: Int,`osVersion`: RustBuffer.ByValue,`appVersion`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    fun uniffi_heatmap_ffi_fn_method_heatmapsdk_record_macos_screen_view(`ptr`: Pointer,`viewportWidth`: Int,`viewportHeight`: Int,`windowId`: RustBuffer.ByValue,`osVersion`: RustBuffer.ByValue,`appVersion`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
-    fun uniffi_heatmap_ffi_fn_method_heatmapsdk_record_macos_scroll(`ptr`: Pointer,`viewportWidth`: Int,`viewportHeight`: Int,`osVersion`: RustBuffer.ByValue,`appVersion`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    fun uniffi_heatmap_ffi_fn_method_heatmapsdk_record_macos_scroll(`ptr`: Pointer,`viewportWidth`: Int,`viewportHeight`: Int,`windowId`: RustBuffer.ByValue,`osVersion`: RustBuffer.ByValue,`appVersion`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
     fun uniffi_heatmap_ffi_fn_method_heatmapsdk_screen(`ptr`: Pointer,`screenId`: RustBuffer.ByValue,`layoutVersion`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
@@ -1034,10 +1034,10 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
     if (lib.uniffi_heatmap_ffi_checksum_method_heatmapsdk_record_macos_activation_click() != 49705.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_heatmap_ffi_checksum_method_heatmapsdk_record_macos_screen_view() != 29377.toShort()) {
+    if (lib.uniffi_heatmap_ffi_checksum_method_heatmapsdk_record_macos_screen_view() != 1039.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_heatmap_ffi_checksum_method_heatmapsdk_record_macos_scroll() != 57348.toShort()) {
+    if (lib.uniffi_heatmap_ffi_checksum_method_heatmapsdk_record_macos_scroll() != 47689.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_heatmap_ffi_checksum_method_heatmapsdk_screen() != 18799.toShort()) {
@@ -1510,9 +1510,9 @@ public interface HeatmapSdkInterface {
      */
     fun `recordMacosActivationClick`(`x`: kotlin.Double, `y`: kotlin.Double, `elementId`: kotlin.String?, `viewportWidth`: kotlin.UInt, `viewportHeight`: kotlin.UInt, `timestampMs`: kotlin.Long, `windowId`: kotlin.String, `osVersion`: kotlin.String, `appVersion`: kotlin.String)
     
-    fun `recordMacosScreenView`(`viewportWidth`: kotlin.UInt, `viewportHeight`: kotlin.UInt, `osVersion`: kotlin.String, `appVersion`: kotlin.String)
+    fun `recordMacosScreenView`(`viewportWidth`: kotlin.UInt, `viewportHeight`: kotlin.UInt, `windowId`: kotlin.String, `osVersion`: kotlin.String, `appVersion`: kotlin.String)
     
-    fun `recordMacosScroll`(`viewportWidth`: kotlin.UInt, `viewportHeight`: kotlin.UInt, `osVersion`: kotlin.String, `appVersion`: kotlin.String)
+    fun `recordMacosScroll`(`viewportWidth`: kotlin.UInt, `viewportHeight`: kotlin.UInt, `windowId`: kotlin.String, `osVersion`: kotlin.String, `appVersion`: kotlin.String)
     
     fun `screen`(`screenId`: kotlin.String, `layoutVersion`: kotlin.String?)
     
@@ -1794,24 +1794,24 @@ open class HeatmapSdk: Disposable, AutoCloseable, HeatmapSdkInterface {
     
 
     
-    @Throws(CaptureException::class)override fun `recordMacosScreenView`(`viewportWidth`: kotlin.UInt, `viewportHeight`: kotlin.UInt, `osVersion`: kotlin.String, `appVersion`: kotlin.String)
+    @Throws(CaptureException::class)override fun `recordMacosScreenView`(`viewportWidth`: kotlin.UInt, `viewportHeight`: kotlin.UInt, `windowId`: kotlin.String, `osVersion`: kotlin.String, `appVersion`: kotlin.String)
         = 
     callWithPointer {
     uniffiRustCallWithError(CaptureException) { _status ->
     UniffiLib.INSTANCE.uniffi_heatmap_ffi_fn_method_heatmapsdk_record_macos_screen_view(
-        it, FfiConverterUInt.lower(`viewportWidth`),FfiConverterUInt.lower(`viewportHeight`),FfiConverterString.lower(`osVersion`),FfiConverterString.lower(`appVersion`),_status)
+        it, FfiConverterUInt.lower(`viewportWidth`),FfiConverterUInt.lower(`viewportHeight`),FfiConverterString.lower(`windowId`),FfiConverterString.lower(`osVersion`),FfiConverterString.lower(`appVersion`),_status)
 }
     }
     
     
 
     
-    @Throws(CaptureException::class)override fun `recordMacosScroll`(`viewportWidth`: kotlin.UInt, `viewportHeight`: kotlin.UInt, `osVersion`: kotlin.String, `appVersion`: kotlin.String)
+    @Throws(CaptureException::class)override fun `recordMacosScroll`(`viewportWidth`: kotlin.UInt, `viewportHeight`: kotlin.UInt, `windowId`: kotlin.String, `osVersion`: kotlin.String, `appVersion`: kotlin.String)
         = 
     callWithPointer {
     uniffiRustCallWithError(CaptureException) { _status ->
     UniffiLib.INSTANCE.uniffi_heatmap_ffi_fn_method_heatmapsdk_record_macos_scroll(
-        it, FfiConverterUInt.lower(`viewportWidth`),FfiConverterUInt.lower(`viewportHeight`),FfiConverterString.lower(`osVersion`),FfiConverterString.lower(`appVersion`),_status)
+        it, FfiConverterUInt.lower(`viewportWidth`),FfiConverterUInt.lower(`viewportHeight`),FfiConverterString.lower(`windowId`),FfiConverterString.lower(`osVersion`),FfiConverterString.lower(`appVersion`),_status)
 }
     }
     

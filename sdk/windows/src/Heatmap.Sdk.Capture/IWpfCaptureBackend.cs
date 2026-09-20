@@ -5,9 +5,9 @@ public interface IWpfCaptureBackend
 {
     void RecordActivationClick(WpfActivationClickPayload payload);
 
-    void RecordScreenView(uint viewportWidth, uint viewportHeight);
+    void RecordScreenView(uint viewportWidth, uint viewportHeight, string windowId);
 
-    void RecordScroll(uint viewportWidth, uint viewportHeight);
+    void RecordScroll(uint viewportWidth, uint viewportHeight, string windowId);
 
     void OnBackground();
 

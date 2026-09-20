@@ -59,6 +59,7 @@ impl PublicHeatmapSdk {
             ios_sdk_info(),
             ios_platform_info(os_version, app_version),
             viewport,
+            None,
         )
     }
 
@@ -73,8 +74,12 @@ impl PublicHeatmapSdk {
             width: viewport_width,
             height: viewport_height,
         };
-        self.inner
-            .record_scroll(ios_sdk_info(), ios_platform_info(os_version, app_version), viewport)
+        self.inner.record_scroll(
+            ios_sdk_info(),
+            ios_platform_info(os_version, app_version),
+            viewport,
+            None,
+        )
     }
 
     pub fn adapter_click_session_ids_from_batch(&mut self) -> Result<Vec<String>, BatchError> {

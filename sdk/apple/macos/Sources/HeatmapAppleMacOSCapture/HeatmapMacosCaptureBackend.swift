@@ -3,8 +3,8 @@ import Foundation
 /// Adapter-only enqueue surface; not part of the public integrator API.
 public protocol HeatmapMacosCaptureBackend: AnyObject {
     func recordActivationClick(_ payload: MacosActivationClickPayload)
-    func recordScreenView(viewportWidth: UInt32, viewportHeight: UInt32)
-    func recordScroll(viewportWidth: UInt32, viewportHeight: UInt32)
+    func recordScreenView(viewportWidth: UInt32, viewportHeight: UInt32, windowId: String)
+    func recordScroll(viewportWidth: UInt32, viewportHeight: UInt32, windowId: String)
     func onBackground()
     func onForeground()
 }

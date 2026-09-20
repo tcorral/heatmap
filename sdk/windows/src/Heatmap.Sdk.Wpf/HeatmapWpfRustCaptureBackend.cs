@@ -61,9 +61,10 @@ public sealed class HeatmapWpfRustCaptureBackend : IWpfCaptureBackend
         }
     }
 
-    public void RecordScreenView(uint viewportWidth, uint viewportHeight)
+    public void RecordScreenView(uint viewportWidth, uint viewportHeight, string windowId)
     {
         HeatmapNative.EnsureLoaded();
+        var windowPtr = Marshal.StringToCoTaskMemUTF8(windowId);
         var osPtr = Marshal.StringToCoTaskMemUTF8(_osVersion);
         var appPtr = Marshal.StringToCoTaskMemUTF8(_appVersion);
         try
@@ -73,20 +74,23 @@ public sealed class HeatmapWpfRustCaptureBackend : IWpfCaptureBackend
                     _client.Handle,
                     viewportWidth,
                     viewportHeight,
+                    windowPtr,
                     osPtr,
                     appPtr),
                 "recordWindowsScreenView");
         }
         finally
         {
+            Marshal.FreeCoTaskMem(windowPtr);
             Marshal.FreeCoTaskMem(osPtr);
             Marshal.FreeCoTaskMem(appPtr);
         }
     }
 
-    public void RecordScroll(uint viewportWidth, uint viewportHeight)
+    public void RecordScroll(uint viewportWidth, uint viewportHeight, string windowId)
     {
         HeatmapNative.EnsureLoaded();
+        var windowPtr = Marshal.StringToCoTaskMemUTF8(windowId);
         var osPtr = Marshal.StringToCoTaskMemUTF8(_osVersion);
         var appPtr = Marshal.StringToCoTaskMemUTF8(_appVersion);
         try
@@ -96,12 +100,14 @@ public sealed class HeatmapWpfRustCaptureBackend : IWpfCaptureBackend
                     _client.Handle,
                     viewportWidth,
                     viewportHeight,
+                    windowPtr,
                     osPtr,
                     appPtr),
                 "recordWindowsScroll");
         }
         finally
         {
+            Marshal.FreeCoTaskMem(windowPtr);
             Marshal.FreeCoTaskMem(osPtr);
             Marshal.FreeCoTaskMem(appPtr);
         }

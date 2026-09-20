@@ -54,7 +54,7 @@ fn should_inherit_checkout_screen_and_layout_on_lifecycle_capture() {
     let mut sdk = HeatmapSdk::init(valid_config()).expect("init");
     sdk.screen("Checkout".into(), Some("layout-a".into()))
         .expect("screen");
-    sdk.record_scroll(web_sdk(), web_platform(), web_viewport())
+    sdk.record_scroll(web_sdk(), web_platform(), web_viewport(), None)
         .expect("scroll");
     let batch = sdk.build_batch().expect("batch");
     let scroll = &batch.events[1];
@@ -68,11 +68,11 @@ fn should_not_carry_checkout_after_confirmation_screen_change() {
     let mut sdk = HeatmapSdk::init(valid_config()).expect("init");
     sdk.screen("Checkout".into(), Some("checkout-layout".into()))
         .expect("checkout screen");
-    sdk.record_scroll(web_sdk(), web_platform(), web_viewport())
+    sdk.record_scroll(web_sdk(), web_platform(), web_viewport(), None)
         .expect("checkout scroll");
     sdk.screen("Confirmation".into(), None)
         .expect("confirmation screen");
-    sdk.record_scroll(web_sdk(), web_platform(), web_viewport())
+    sdk.record_scroll(web_sdk(), web_platform(), web_viewport(), None)
         .expect("confirmation scroll");
     let batch = sdk.build_batch().expect("batch");
     assert_eq!(batch.events.len(), 3);

@@ -30,6 +30,7 @@ internal static class HeatmapNativeAdapter
         IntPtr handle,
         uint viewportWidth,
         uint viewportHeight,
+        IntPtr windowId,
         IntPtr osVersion,
         IntPtr appVersion);
 
@@ -38,6 +39,7 @@ internal static class HeatmapNativeAdapter
         IntPtr handle,
         uint viewportWidth,
         uint viewportHeight,
+        IntPtr windowId,
         IntPtr osVersion,
         IntPtr appVersion);
 }

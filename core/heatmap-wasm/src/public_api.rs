@@ -101,6 +101,7 @@ impl PublicHeatmapSdk {
             web_sdk_info(),
             web_platform_info(self.inner.config().app_version.as_str()),
             viewport,
+            None,
         )
     }
 
@@ -111,6 +112,7 @@ impl PublicHeatmapSdk {
             web_sdk_info(),
             web_platform_info(self.inner.config().app_version.as_str()),
             viewport,
+            None,
         )
     }
 

@@ -85,7 +85,11 @@ public final class HeatmapMacosCapture {
         let width = UInt32(max(bounds.width, 0).rounded(.towardZero))
         let height = UInt32(max(bounds.height, 0).rounded(.towardZero))
         guard width > 0, height > 0 else { return }
-        backend.recordScreenView(viewportWidth: width, viewportHeight: height)
+        backend.recordScreenView(
+            viewportWidth: width,
+            viewportHeight: height,
+            windowId: MacosWindowIdentity.opaqueId(for: window)
+        )
     }
 
     private func attachScrollObservers(in root: NSView, window: NSWindow) {
@@ -105,7 +109,11 @@ public final class HeatmapMacosCapture {
         let width = UInt32(max(bounds.width, 0).rounded(.towardZero))
         let height = UInt32(max(bounds.height, 0).rounded(.towardZero))
         guard width > 0, height > 0 else { return }
-        backend.recordScroll(viewportWidth: width, viewportHeight: height)
+        backend.recordScroll(
+            viewportWidth: width,
+            viewportHeight: height,
+            windowId: MacosWindowIdentity.opaqueId(for: window)
+        )
     }
 
     @objc private func appDidResignActive() {

@@ -113,7 +113,7 @@ public sealed class HeatmapWpfCapture
             return;
         }
 
-        _backend.RecordScreenView(width, height);
+        _backend.RecordScreenView(width, height, WpfWindowIdentity.OpaqueId(window));
     }
 
     private void RecordScroll(Window window)
@@ -125,7 +125,7 @@ public sealed class HeatmapWpfCapture
             return;
         }
 
-        _backend.RecordScroll(width, height);
+        _backend.RecordScroll(width, height, WpfWindowIdentity.OpaqueId(window));
     }
 
     private void AttachScrollHandlers(DependencyObject node, Window window)

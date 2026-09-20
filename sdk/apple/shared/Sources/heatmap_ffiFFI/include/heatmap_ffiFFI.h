@@ -343,12 +343,12 @@ void uniffi_heatmap_ffi_fn_method_heatmapsdk_record_macos_activation_click(void*
 #endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_HEATMAP_FFI_FN_METHOD_HEATMAPSDK_RECORD_MACOS_SCREEN_VIEW
 #define UNIFFI_FFIDEF_UNIFFI_HEATMAP_FFI_FN_METHOD_HEATMAPSDK_RECORD_MACOS_SCREEN_VIEW
-void uniffi_heatmap_ffi_fn_method_heatmapsdk_record_macos_screen_view(void*_Nonnull ptr, uint32_t viewport_width, uint32_t viewport_height, RustBuffer os_version, RustBuffer app_version, RustCallStatus *_Nonnull out_status
+void uniffi_heatmap_ffi_fn_method_heatmapsdk_record_macos_screen_view(void*_Nonnull ptr, uint32_t viewport_width, uint32_t viewport_height, RustBuffer window_id, RustBuffer os_version, RustBuffer app_version, RustCallStatus *_Nonnull out_status
 );
 #endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_HEATMAP_FFI_FN_METHOD_HEATMAPSDK_RECORD_MACOS_SCROLL
 #define UNIFFI_FFIDEF_UNIFFI_HEATMAP_FFI_FN_METHOD_HEATMAPSDK_RECORD_MACOS_SCROLL
-void uniffi_heatmap_ffi_fn_method_heatmapsdk_record_macos_scroll(void*_Nonnull ptr, uint32_t viewport_width, uint32_t viewport_height, RustBuffer os_version, RustBuffer app_version, RustCallStatus *_Nonnull out_status
+void uniffi_heatmap_ffi_fn_method_heatmapsdk_record_macos_scroll(void*_Nonnull ptr, uint32_t viewport_width, uint32_t viewport_height, RustBuffer window_id, RustBuffer os_version, RustBuffer app_version, RustCallStatus *_Nonnull out_status
 );
 #endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_HEATMAP_FFI_FN_METHOD_HEATMAPSDK_SCREEN

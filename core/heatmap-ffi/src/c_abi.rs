@@ -197,9 +197,14 @@ pub extern "C" fn heatmap_sdk_adapter_record_windows_screen_view(
     handle: HeatmapSdkHandle,
     viewport_width: u32,
     viewport_height: u32,
+    window_id: *const c_char,
     os_version: *const c_char,
     app_version: *const c_char,
 ) -> i32 {
+    let window = match read_cstr(window_id) {
+        Ok(value) => value,
+        Err(code) => return code,
+    };
     let os = match read_cstr(os_version) {
         Ok(value) => value,
         Err(code) => return code,
@@ -209,7 +214,7 @@ pub extern "C" fn heatmap_sdk_adapter_record_windows_screen_view(
         Err(code) => return code,
     };
     with_sdk(handle, |sdk| {
-        match sdk.record_windows_screen_view(viewport_width, viewport_height, os, app) {
+        match sdk.record_windows_screen_view(viewport_width, viewport_height, window, os, app) {
             Ok(()) => HEATMAP_OK,
             Err(_) => HEATMAP_ERR_CAPTURE,
         }
@@ -221,9 +226,14 @@ pub extern "C" fn heatmap_sdk_adapter_record_windows_scroll(
     handle: HeatmapSdkHandle,
     viewport_width: u32,
     viewport_height: u32,
+    window_id: *const c_char,
     os_version: *const c_char,
     app_version: *const c_char,
 ) -> i32 {
+    let window = match read_cstr(window_id) {
+        Ok(value) => value,
+        Err(code) => return code,
+    };
     let os = match read_cstr(os_version) {
         Ok(value) => value,
         Err(code) => return code,
@@ -233,7 +243,7 @@ pub extern "C" fn heatmap_sdk_adapter_record_windows_scroll(
         Err(code) => return code,
     };
     with_sdk(handle, |sdk| {
-        match sdk.record_windows_scroll(viewport_width, viewport_height, os, app) {
+        match sdk.record_windows_scroll(viewport_width, viewport_height, window, os, app) {
             Ok(()) => HEATMAP_OK,
             Err(_) => HEATMAP_ERR_CAPTURE,
         }
@@ -250,7 +260,9 @@ fn nullable_cstr(ptr: *const c_char) -> Option<String> {
 pub fn init_handle_from_json(json: &str) -> Result<HeatmapSdkHandle, i32> {
     let mut handle = ptr::null_mut();
     let code = heatmap_sdk_init(
-        std::ffi::CString::new(json).map_err(|_| HEATMAP_ERR_UTF8)?.as_ptr(),
+        std::ffi::CString::new(json)
+            .map_err(|_| HEATMAP_ERR_UTF8)?
+            .as_ptr(),
         &mut handle,
     );
     if code == HEATMAP_OK {

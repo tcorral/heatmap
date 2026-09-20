@@ -195,12 +195,19 @@ impl HeatmapSdk {
         &self,
         viewport_width: u32,
         viewport_height: u32,
+        window_id: String,
         os_version: String,
         app_version: String,
     ) -> Result<(), CaptureError> {
         let mut guard = self.state.lock().expect("heatmap sdk lock");
         guard
-            .record_macos_screen_view(viewport_width, viewport_height, os_version, app_version)
+            .record_macos_screen_view(
+                viewport_width,
+                viewport_height,
+                window_id,
+                os_version,
+                app_version,
+            )
             .map_err(CaptureError::from)
     }
 
@@ -208,12 +215,19 @@ impl HeatmapSdk {
         &self,
         viewport_width: u32,
         viewport_height: u32,
+        window_id: String,
         os_version: String,
         app_version: String,
     ) -> Result<(), CaptureError> {
         let mut guard = self.state.lock().expect("heatmap sdk lock");
         guard
-            .record_macos_scroll(viewport_width, viewport_height, os_version, app_version)
+            .record_macos_scroll(
+                viewport_width,
+                viewport_height,
+                window_id,
+                os_version,
+                app_version,
+            )
             .map_err(CaptureError::from)
     }
 

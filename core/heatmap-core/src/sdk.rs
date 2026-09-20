@@ -5,29 +5,38 @@ use uuid::Uuid;
 
 use crate::batch::{BatchError, HeatmapBatch};
 use crate::capture::{
-    capture_is_excluded, candidate_to_event, CaptureCandidate, CaptureContext, CaptureError,
+    candidate_to_event, capture_is_excluded, CaptureCandidate, CaptureContext, CaptureError,
 };
 use crate::clock::{Clock, SystemClock};
 use crate::config::{validate_config, HeatmapConfig, InitError};
 use crate::diagnostics::HeatmapDiagnostics;
-use crate::event::{HeatmapEvent, InteractionEvent, InteractionType, ScreenInfo, SdkInfo, Viewport};
 use crate::event::PlatformInfo;
-use crate::identity_store::{
-    IdentityStore, InMemoryIdentityStore, STORE_KEY_ANONYMOUS_ID, STORE_KEY_LAST_EVENT_AT,
-    STORE_KEY_SAMPLE_IN, STORE_KEY_SESSION_ID, STORE_KEY_USER_ID,
+use crate::event::{
+    HeatmapEvent, InteractionEvent, InteractionType, ScreenInfo, SdkInfo, Viewport,
 };
 use crate::flush_policy::{
     flush_error_is_permanent, flush_error_is_transient, flush_event_limit_reached,
     flush_interval_elapsed, queue_flush_byte_limit_reached, INGEST_MAX_BYTES, INGEST_MAX_EVENTS,
+};
+use crate::identity_store::{
+    IdentityStore, InMemoryIdentityStore, STORE_KEY_ANONYMOUS_ID, STORE_KEY_LAST_EVENT_AT,
+    STORE_KEY_SAMPLE_IN, STORE_KEY_SESSION_ID, STORE_KEY_USER_ID,
 };
 use crate::persistent_queue::{
     event_json_bytes, load_persisted_queue, persist_queue, push_with_overflow, queue_json_bytes,
     QueueLimits,
 };
 use crate::rng::{session_sampled_in, RandomSource, SystemRng};
-use crate::transport::{BatchTransport, FlushError};
 #[cfg(not(target_arch = "wasm32"))]
 use crate::transport::HttpBatchTransport;
+use crate::transport::{BatchTransport, FlushError};
+
+struct LifecycleEnqueueInput {
+    sdk: SdkInfo,
+    platform: PlatformInfo,
+    viewport: Viewport,
+    window_id: Option<String>,
+}
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum IdentityError {
@@ -241,10 +250,13 @@ impl HeatmapSdk {
         viewport: Viewport,
     ) -> Result<(), CaptureError> {
         self.enqueue_lifecycle(
-            sdk,
-            platform,
+            LifecycleEnqueueInput {
+                sdk,
+                platform,
+                viewport,
+                window_id: None,
+            },
             InteractionEvent::session_start().map_err(CaptureError::InvalidEventField)?,
-            viewport,
         )
     }
 
@@ -253,12 +265,16 @@ impl HeatmapSdk {
         sdk: SdkInfo,
         platform: PlatformInfo,
         viewport: Viewport,
+        window_id: Option<String>,
     ) -> Result<(), CaptureError> {
         self.enqueue_lifecycle(
-            sdk,
-            platform,
+            LifecycleEnqueueInput {
+                sdk,
+                platform,
+                viewport,
+                window_id,
+            },
             InteractionEvent::screen_view().map_err(CaptureError::InvalidEventField)?,
-            viewport,
         )
     }
 
@@ -267,31 +283,33 @@ impl HeatmapSdk {
         sdk: SdkInfo,
         platform: PlatformInfo,
         viewport: Viewport,
+        window_id: Option<String>,
     ) -> Result<(), CaptureError> {
         self.enqueue_lifecycle(
-            sdk,
-            platform,
+            LifecycleEnqueueInput {
+                sdk,
+                platform,
+                viewport,
+                window_id,
+            },
             InteractionEvent::scroll().map_err(CaptureError::InvalidEventField)?,
-            viewport,
         )
     }
 
     fn enqueue_lifecycle(
         &mut self,
-        sdk: SdkInfo,
-        platform: PlatformInfo,
+        input: LifecycleEnqueueInput,
         interaction: InteractionEvent,
-        viewport: Viewport,
     ) -> Result<(), CaptureError> {
         let candidate = CaptureCandidate {
             timestamp: self.clock.now_ms(),
-            sdk,
-            platform,
+            sdk: input.sdk,
+            platform: input.platform,
             screen: None,
             interaction,
             position: None,
-            viewport: Some(viewport),
-            window_id: None,
+            viewport: Some(input.viewport),
+            window_id: input.window_id,
         };
         self.enqueue_candidate(candidate)
     }
@@ -355,11 +373,10 @@ impl HeatmapSdk {
         let batch = self
             .take_batch_for_upload()
             .map_err(|err| FlushError::Transport(err.to_string()))?;
-        match self.transport.send_batch(
-            &self.config.endpoint,
-            &self.config.project_key,
-            &batch,
-        ) {
+        match self
+            .transport
+            .send_batch(&self.config.endpoint, &self.config.project_key, &batch)
+        {
             Ok(()) => {
                 self.finish_successful_upload();
                 Ok(())
@@ -575,8 +592,7 @@ fn session_start_from(candidate: &CaptureCandidate) -> Result<CaptureCandidate, 
         sdk: candidate.sdk.clone(),
         platform: candidate.platform.clone(),
         screen: candidate.screen.clone(),
-        interaction: InteractionEvent::session_start()
-            .map_err(CaptureError::InvalidEventField)?,
+        interaction: InteractionEvent::session_start().map_err(CaptureError::InvalidEventField)?,
         position: None,
         viewport: candidate.viewport.clone(),
         window_id: candidate.window_id.clone(),
@@ -659,7 +675,10 @@ fn decide_session_sample_in(sample_rate: f64, rng: &dyn RandomSource) -> bool {
 }
 
 fn load_or_create_anonymous_id(store: &dyn IdentityStore) -> String {
-    if let Some(id) = store.read(STORE_KEY_ANONYMOUS_ID).filter(|id| !id.trim().is_empty()) {
+    if let Some(id) = store
+        .read(STORE_KEY_ANONYMOUS_ID)
+        .filter(|id| !id.trim().is_empty())
+    {
         return id;
     }
     let id = new_id("anon");

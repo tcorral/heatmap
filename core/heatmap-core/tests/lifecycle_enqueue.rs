@@ -54,12 +54,15 @@ fn should_enqueue_session_start_when_bootstrap_called_after_init() {
 fn should_enqueue_screen_view_when_screen_is_set_with_context() {
     let mut sdk = HeatmapSdk::init(valid_config()).expect("init");
     sdk.screen("Home".into(), None).expect("screen");
-    sdk.record_screen_view(web_sdk(), web_platform(), web_viewport())
+    sdk.record_screen_view(web_sdk(), web_platform(), web_viewport(), None)
         .expect("screen_view");
     let batch = sdk.build_batch().expect("batch");
     assert_eq!(batch.events.len(), 2);
     assert_eq!(
-        batch.events[1].screen.as_ref().map(|screen| screen.id.as_str()),
+        batch.events[1]
+            .screen
+            .as_ref()
+            .map(|screen| screen.id.as_str()),
         Some("Home")
     );
 }
@@ -69,7 +72,7 @@ fn should_enqueue_scroll_with_inherited_checkout_screen() {
     let mut sdk = HeatmapSdk::init(valid_config()).expect("init");
     sdk.screen("Checkout".into(), Some("2024-09".into()))
         .expect("screen");
-    sdk.record_scroll(web_sdk(), web_platform(), web_viewport())
+    sdk.record_scroll(web_sdk(), web_platform(), web_viewport(), None)
         .expect("scroll");
     let batch = sdk.build_batch().expect("batch");
     assert_eq!(
@@ -77,7 +80,36 @@ fn should_enqueue_scroll_with_inherited_checkout_screen() {
         InteractionType::Scroll
     );
     assert_eq!(
-        batch.events[1].screen.as_ref().map(|screen| screen.id.as_str()),
+        batch.events[1]
+            .screen
+            .as_ref()
+            .map(|screen| screen.id.as_str()),
         Some("Checkout")
     );
+}
+
+#[test]
+fn should_store_window_id_on_screen_view_when_provided() {
+    let mut sdk = HeatmapSdk::init(valid_config()).expect("init");
+    sdk.screen("Checkout".into(), None).expect("screen");
+    sdk.record_screen_view(
+        web_sdk(),
+        web_platform(),
+        web_viewport(),
+        Some("win_a".into()),
+    )
+    .expect("screen_view");
+    let batch = sdk.build_batch().expect("batch");
+    let screen_view = &batch.events[1];
+    assert_eq!(screen_view.window_id.as_deref(), Some("win_a"));
+}
+
+#[test]
+fn should_omit_window_id_on_scroll_when_none() {
+    let mut sdk = HeatmapSdk::init(valid_config()).expect("init");
+    sdk.screen("Checkout".into(), None).expect("screen");
+    sdk.record_scroll(web_sdk(), web_platform(), web_viewport(), None)
+        .expect("scroll");
+    let batch = sdk.build_batch().expect("batch");
+    assert!(batch.events[1].window_id.is_none());
 }
