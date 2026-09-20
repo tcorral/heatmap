@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "session_id": "sess_macos_journey_001",
+  "anonymous_id": "anon_macos_001",
+  "timestamp": 1726771205000,
+  "window_id": "win_checkout_primary",
+  "sdk": { "name": "heatmap-macos", "version": "0.1.0" },
+  "platform": {
+    "type": "macos",
+    "os_version": "macOS 14.6",
+    "app_version": "1.0.0"
+  },
+  "screen": { "id": "Checkout", "layout_version": "2024-09" },
+  "event": { "type": "click", "element_id": "checkout.pay" },
+  "position": { "x": 0.5, "y": 0.5 },
+  "viewport": { "width": 1440, "height": 900 }
+}

@@ -1,0 +1,51 @@
+<Page x:Class="HeatmapCheckout.Views.CheckoutPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:local="clr-namespace:HeatmapCheckout;assembly=HeatmapCheckout.Contract"
+      Title="Checkout">
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="16">
+            <TextBlock Text="Checkout" FontSize="32" Margin="0,0,0,24" />
+
+            <TextBlock Text="Order summary" FontWeight="Bold" />
+            <TextBlock Text="Heatmap Pro — annual subscription" />
+            <TextBlock Text="Review details before you pay." Margin="0,0,0,16" />
+
+            <StackPanel Margin="0,400,0,0">
+                <TextBlock Text="Delivery" FontWeight="Bold" />
+                <TextBlock Text="Digital delivery — no shipping address required." />
+                <TextBlock Text="Scroll to reach payment and coupon controls." Margin="0,0,0,24" />
+
+                <TextBlock Text="Coupon" FontWeight="Bold" />
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,24">
+                    <TextBox x:Name="CouponBox"
+                             Width="240"
+                             Margin="0,0,8,0"
+                             VerticalAlignment="Center" />
+                    <Button Content="Apply coupon"
+                            Click="OnApplyCoupon"
+                            AutomationProperties.AutomationId="{x:Static local:CheckoutIdentifiers.CouponApply}"
+                            Padding="12,6"
+                            VerticalAlignment="Center" />
+                </StackPanel>
+
+                <TextBlock Text="Account" FontWeight="Bold" />
+                <PasswordBox x:Name="AccountPasswordBox"
+                             Width="320"
+                             Margin="0,0,0,24" />
+
+                <TextBlock Text="Payment" FontWeight="Bold" />
+                <StackPanel Orientation="Horizontal">
+                    <Button Content="Pay"
+                            Click="OnPay"
+                            AutomationProperties.AutomationId="{x:Static local:CheckoutIdentifiers.PayButton}"
+                            Padding="12,6"
+                            Margin="0,0,8,0" />
+                    <Button Content="Cancel"
+                            Click="OnCancel"
+                            Padding="12,6" />
+                </StackPanel>
+            </StackPanel>
+        </StackPanel>
+    </ScrollViewer>
+</Page>

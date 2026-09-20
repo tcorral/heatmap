@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Heatmap.Sdk.Capture</RootNamespace>
+    <AssemblyName>Heatmap.Sdk.Capture</AssemblyName>
+    <IsPackable>true</IsPackable>
+    <PackageId>Heatmap.Sdk.Capture</PackageId>
+    <Version>0.1.0-pre1</Version>
+    <Authors>Heatmap</Authors>
+    <Description>Pre-release shared capture contracts for Heatmap Windows SDK (used by Heatmap.Sdk.Wpf).</Description>
+    <PackageTags>heatmap;analytics;windows;capture;pre-release</PackageTags>
+  </PropertyGroup>
+
+</Project>

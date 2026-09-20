@@ -1,0 +1,6 @@
+[bindings.swift]
+cdylib_name = "heatmap_ffi"
+
+[bindings.kotlin]
+cdylib_name = "heatmap_ffi"
+package_name = "com.heatmap.sdk"

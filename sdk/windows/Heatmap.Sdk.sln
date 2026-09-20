@@ -1,0 +1,56 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{3ECB65B8-B639-4F7D-9CFD-D9C88A4D6ED4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Heatmap.Sdk", "src\Heatmap.Sdk\Heatmap.Sdk.csproj", "{2D5B3CE1-D5BA-4093-8945-297B74419CDD}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{5B590260-B436-4A3A-9CD5-CB6C481708C8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Heatmap.Sdk.Tests", "tests\Heatmap.Sdk.Tests\Heatmap.Sdk.Tests.csproj", "{FA5FDA14-A9F3-4D9F-8DB1-46C3FC9B0268}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Heatmap.Sdk.ConsumerSmokeTest", "consumer-smoke-test\Heatmap.Sdk.ConsumerSmokeTest.csproj", "{61D1F15A-EA26-49FD-880D-D602977577A3}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Heatmap.Sdk.Capture", "src\Heatmap.Sdk.Capture\Heatmap.Sdk.Capture.csproj", "{A87306A7-29CF-4CE9-81AD-5FEAAD9299B8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Heatmap.Sdk.Wpf", "src\Heatmap.Sdk.Wpf\Heatmap.Sdk.Wpf.csproj", "{B4E8F2C1-7D3A-4F9E-9C2B-1A5D6E8F0B2C}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{2D5B3CE1-D5BA-4093-8945-297B74419CDD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2D5B3CE1-D5BA-4093-8945-297B74419CDD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2D5B3CE1-D5BA-4093-8945-297B74419CDD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2D5B3CE1-D5BA-4093-8945-297B74419CDD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FA5FDA14-A9F3-4D9F-8DB1-46C3FC9B0268}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FA5FDA14-A9F3-4D9F-8DB1-46C3FC9B0268}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FA5FDA14-A9F3-4D9F-8DB1-46C3FC9B0268}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FA5FDA14-A9F3-4D9F-8DB1-46C3FC9B0268}.Release|Any CPU.Build.0 = Release|Any CPU
+		{61D1F15A-EA26-49FD-880D-D602977577A3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{61D1F15A-EA26-49FD-880D-D602977577A3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{61D1F15A-EA26-49FD-880D-D602977577A3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{61D1F15A-EA26-49FD-880D-D602977577A3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A87306A7-29CF-4CE9-81AD-5FEAAD9299B8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A87306A7-29CF-4CE9-81AD-5FEAAD9299B8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A87306A7-29CF-4CE9-81AD-5FEAAD9299B8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A87306A7-29CF-4CE9-81AD-5FEAAD9299B8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B4E8F2C1-7D3A-4F9E-9C2B-1A5D6E8F0B2C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B4E8F2C1-7D3A-4F9E-9C2B-1A5D6E8F0B2C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B4E8F2C1-7D3A-4F9E-9C2B-1A5D6E8F0B2C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B4E8F2C1-7D3A-4F9E-9C2B-1A5D6E8F0B2C}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{2D5B3CE1-D5BA-4093-8945-297B74419CDD} = {3ECB65B8-B639-4F7D-9CFD-D9C88A4D6ED4}
+		{FA5FDA14-A9F3-4D9F-8DB1-46C3FC9B0268} = {5B590260-B436-4A3A-9CD5-CB6C481708C8}
+		{A87306A7-29CF-4CE9-81AD-5FEAAD9299B8} = {3ECB65B8-B639-4F7D-9CFD-D9C88A4D6ED4}
+		{B4E8F2C1-7D3A-4F9E-9C2B-1A5D6E8F0B2C} = {3ECB65B8-B639-4F7D-9CFD-D9C88A4D6ED4}
+	EndGlobalSection
+EndGlobal

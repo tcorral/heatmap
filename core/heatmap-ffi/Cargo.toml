@@ -1,0 +1,15 @@
+[package]
+name = "heatmap-ffi"
+version = "0.1.0"
+edition = "2021"
+description = "UniFFI and C ABI bindings for the Heatmap SDK"
+
+[lib]
+crate-type = ["lib", "cdylib", "staticlib"]
+name = "heatmap_ffi"
+
+[dependencies]
+heatmap-core = { path = "../heatmap-core" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+uniffi = { version = "=0.28.3" }

@@ -1,0 +1,16 @@
+<Window x:Class="HeatmapCheckout.E2E.E2eAuxiliaryWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:HeatmapCheckout;assembly=HeatmapCheckout.Contract"
+        Title="E2E auxiliary"
+        Width="420"
+        Height="320">
+    <StackPanel Margin="16">
+        <TextBlock Text="Auxiliary window" FontSize="24" Margin="0,0,0,16" />
+        <Button x:Name="SecondaryMarkButton"
+                Content="Secondary mark"
+                AutomationProperties.AutomationId="e2e.secondary.mark"
+                Padding="12,6"
+                HorizontalAlignment="Left" />
+    </StackPanel>
+</Window>

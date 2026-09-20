@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <UseWPF>true</UseWPF>
+    <RootNamespace>Heatmap.Sdk.Wpf</RootNamespace>
+    <AssemblyName>Heatmap.Sdk.Wpf</AssemblyName>
+    <IsPackable>true</IsPackable>
+    <PackageId>Heatmap.Sdk.Wpf</PackageId>
+    <Version>0.1.0-pre1</Version>
+    <Authors>Heatmap</Authors>
+    <Description>Pre-release WPF capture adapter for Heatmap SDK (clicks, scrolls, AutomationId). Depends on Heatmap.Sdk and Heatmap.Sdk.Capture.</Description>
+    <PackageTags>heatmap;analytics;windows;wpf;capture;pre-release</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Heatmap.Sdk\Heatmap.Sdk.csproj" />
+    <ProjectReference Include="..\Heatmap.Sdk.Capture\Heatmap.Sdk.Capture.csproj" />
+  </ItemGroup>
+
+</Project>

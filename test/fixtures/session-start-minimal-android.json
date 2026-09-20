@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "session_id": "sess_android_minimal_001",
+  "anonymous_id": "anon_android_001",
+  "timestamp": 1726771200100,
+  "sdk": { "name": "heatmap-android", "version": "0.1.0" },
+  "platform": {
+    "type": "android",
+    "os_version": "Android 14",
+    "app_version": "1.0.0"
+  },
+  "event": { "type": "session_start" }
+}

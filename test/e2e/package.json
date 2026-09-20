@@ -1,0 +1,17 @@
+{
+  "name": "@heatmap/e2e-web",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "playwright test",
+    "test:acceptance": "playwright test tests/five-platform-dashboard-acceptance.spec.ts",
+    "test:headed": "playwright test --headed",
+    "test:ios": "bash scripts/run-ios-e2e.sh",
+    "test:macos": "bash scripts/run-macos-e2e.sh",
+    "test:android": "bash scripts/run-android-e2e.sh",
+    "test:windows": "bash scripts/run-windows-e2e.sh"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.49.1"
+  }
+}

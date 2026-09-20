@@ -1,0 +1,605 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		MA000001 /* HeatmapCheckoutApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = MB000001 /* HeatmapCheckoutApp.swift */; };
+		MA000002 /* CheckoutIdentifiers.swift in Sources */ = {isa = PBXBuildFile; fileRef = MB000002 /* CheckoutIdentifiers.swift */; };
+		MA000003 /* HeatmapBootstrap.swift in Sources */ = {isa = PBXBuildFile; fileRef = MB000003 /* HeatmapBootstrap.swift */; };
+		MA000004 /* HeatmapConfigReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = MB000004 /* HeatmapConfigReader.swift */; };
+		MA000005 /* CaptureRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = MB000005 /* CaptureRootView.swift */; };
+		MA000006 /* HeatmapSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = MB000006 /* HeatmapSession.swift */; };
+		MA000007 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = MB000007 /* HomeView.swift */; };
+		MA000008 /* ProductView.swift in Sources */ = {isa = PBXBuildFile; fileRef = MB000008 /* ProductView.swift */; };
+		MA000009 /* CheckoutView.swift in Sources */ = {isa = PBXBuildFile; fileRef = MB000009 /* CheckoutView.swift */; };
+		MA00000A /* ConfirmationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = MB00000A /* ConfirmationView.swift */; };
+		MA00000B /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = MB00000B /* Assets.xcassets */; };
+		MA00000C /* HeatmapAppleShared in Frameworks */ = {isa = PBXBuildFile; productRef = MC000003 /* HeatmapAppleShared */; };
+		MA00000D /* HeatmapAppleMacOS in Frameworks */ = {isa = PBXBuildFile; productRef = MC000004 /* HeatmapAppleMacOS */; };
+		MA00000E /* CheckoutIdentifiers.swift in Sources */ = {isa = PBXBuildFile; fileRef = MB000002 /* CheckoutIdentifiers.swift */; };
+		MA00000F /* CheckoutPayIdentifierTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = MB00000C /* CheckoutPayIdentifierTests.swift */; };
+		MA000015 /* HeatmapConfigReaderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = MB000018 /* HeatmapConfigReaderTests.swift */; };
+		MA000016 /* HeatmapConfigReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = MB000004 /* HeatmapConfigReader.swift */; };
+		MA000017 /* HeatmapE2EViewModifiers.swift in Sources */ = {isa = PBXBuildFile; fileRef = MB00001F /* HeatmapE2EViewModifiers.swift */; };
+		MA000018 /* HeatmapE2EConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = MB00001A /* HeatmapE2EConfig.swift */; };
+		MA000019 /* HeatmapE2EEventClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = MB00001B /* HeatmapE2EEventClient.swift */; };
+		MA00001A /* CheckoutJourneySteps.swift in Sources */ = {isa = PBXBuildFile; fileRef = MB00001C /* CheckoutJourneySteps.swift */; };
+		MA00001B /* CheckoutJourneyUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = MB00001D /* CheckoutJourneyUITests.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		MD000001 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = ME000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = MF000001 /* HeatmapCheckout */;
+			remoteInfo = HeatmapCheckout;
+		};
+		MD000002 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = ME000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = MF000001 /* HeatmapCheckout */;
+			remoteInfo = HeatmapCheckout;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		MB000001 /* HeatmapCheckoutApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeatmapCheckoutApp.swift; sourceTree = "<group>"; };
+		MB000002 /* CheckoutIdentifiers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CheckoutIdentifiers.swift; sourceTree = "<group>"; };
+		MB000003 /* HeatmapBootstrap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeatmapBootstrap.swift; sourceTree = "<group>"; };
+		MB000004 /* HeatmapConfigReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeatmapConfigReader.swift; sourceTree = "<group>"; };
+		MB000005 /* CaptureRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureRootView.swift; sourceTree = "<group>"; };
+		MB000006 /* HeatmapSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeatmapSession.swift; sourceTree = "<group>"; };
+		MB000007 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
+		MB000008 /* ProductView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProductView.swift; sourceTree = "<group>"; };
+		MB000009 /* CheckoutView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CheckoutView.swift; sourceTree = "<group>"; };
+		MB00000A /* ConfirmationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfirmationView.swift; sourceTree = "<group>"; };
+		MB00000B /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		MB00000D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		MB00000E /* Heatmap.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Heatmap.xcconfig; sourceTree = "<group>"; };
+		MB00000C /* CheckoutPayIdentifierTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CheckoutPayIdentifierTests.swift; sourceTree = "<group>"; };
+		MB000010 /* HeatmapCheckout.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = HeatmapCheckout.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		MB000011 /* HeatmapCheckoutTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = HeatmapCheckoutTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		MB000018 /* HeatmapConfigReaderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeatmapConfigReaderTests.swift; sourceTree = "<group>"; };
+		MB000019 /* HeatmapE2E.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = HeatmapE2E.xcconfig; sourceTree = "<group>"; };
+		MB00001A /* HeatmapE2EConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeatmapE2EConfig.swift; sourceTree = "<group>"; };
+		MB00001B /* HeatmapE2EEventClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeatmapE2EEventClient.swift; sourceTree = "<group>"; };
+		MB00001C /* CheckoutJourneySteps.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CheckoutJourneySteps.swift; sourceTree = "<group>"; };
+		MB00001D /* CheckoutJourneyUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CheckoutJourneyUITests.swift; sourceTree = "<group>"; };
+		MB00001E /* HeatmapCheckoutUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = HeatmapCheckoutUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		MB00001F /* HeatmapE2EViewModifiers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeatmapE2EViewModifiers.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		MF000010 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				MA00000C /* HeatmapAppleShared in Frameworks */,
+				MA00000D /* HeatmapAppleMacOS in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		MF000020 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		MF000040 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		MG000001 = {
+			isa = PBXGroup;
+			children = (
+				MG000002 /* Config */,
+				MG000003 /* HeatmapCheckout */,
+				MG000008 /* HeatmapCheckoutTests */,
+				MG00000A /* HeatmapCheckoutUITests */,
+				MG000009 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		MG000002 /* Config */ = {
+			isa = PBXGroup;
+			children = (
+				MB00000E /* Heatmap.xcconfig */,
+				MB000019 /* HeatmapE2E.xcconfig */,
+			);
+			path = Config;
+			sourceTree = "<group>";
+		};
+		MG000003 /* HeatmapCheckout */ = {
+			isa = PBXGroup;
+			children = (
+				MB000001 /* HeatmapCheckoutApp.swift */,
+				MB000002 /* CheckoutIdentifiers.swift */,
+				MG000004 /* Heatmap */,
+				MG000005 /* Views */,
+				MB00000B /* Assets.xcassets */,
+				MB00000D /* Info.plist */,
+			);
+			path = HeatmapCheckout;
+			sourceTree = "<group>";
+		};
+		MG000004 /* Heatmap */ = {
+			isa = PBXGroup;
+			children = (
+				MB000003 /* HeatmapBootstrap.swift */,
+				MB000004 /* HeatmapConfigReader.swift */,
+				MB000005 /* CaptureRootView.swift */,
+				MB000006 /* HeatmapSession.swift */,
+				MB00001F /* HeatmapE2EViewModifiers.swift */,
+			);
+			path = Heatmap;
+			sourceTree = "<group>";
+		};
+		MG000005 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				MB000007 /* HomeView.swift */,
+				MB000008 /* ProductView.swift */,
+				MB000009 /* CheckoutView.swift */,
+				MB00000A /* ConfirmationView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		MG000008 /* HeatmapCheckoutTests */ = {
+			isa = PBXGroup;
+			children = (
+				MB00000C /* CheckoutPayIdentifierTests.swift */,
+				MB000018 /* HeatmapConfigReaderTests.swift */,
+			);
+			path = HeatmapCheckoutTests;
+			sourceTree = "<group>";
+		};
+		MG00000A /* HeatmapCheckoutUITests */ = {
+			isa = PBXGroup;
+			children = (
+				MB00001A /* HeatmapE2EConfig.swift */,
+				MB00001B /* HeatmapE2EEventClient.swift */,
+				MB00001C /* CheckoutJourneySteps.swift */,
+				MB00001D /* CheckoutJourneyUITests.swift */,
+			);
+			path = HeatmapCheckoutUITests;
+			sourceTree = "<group>";
+		};
+		MG000009 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				MB000010 /* HeatmapCheckout.app */,
+				MB000011 /* HeatmapCheckoutTests.xctest */,
+				MB00001E /* HeatmapCheckoutUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		MF000001 /* HeatmapCheckout */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = MH000001 /* Build configuration list for PBXNativeTarget "HeatmapCheckout" */;
+			buildPhases = (
+				MF000011 /* Sources */,
+				MF000010 /* Frameworks */,
+				MF000012 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = HeatmapCheckout;
+			packageProductDependencies = (
+				MC000003 /* HeatmapAppleShared */,
+				MC000004 /* HeatmapAppleMacOS */,
+			);
+			productName = HeatmapCheckout;
+			productReference = MB000010 /* HeatmapCheckout.app */;
+			productType = "com.apple.product-type.application";
+		};
+		MF000002 /* HeatmapCheckoutTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = MH000002 /* Build configuration list for PBXNativeTarget "HeatmapCheckoutTests" */;
+			buildPhases = (
+				MF000021 /* Sources */,
+				MF000020 /* Frameworks */,
+				MF000022 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				MF000030 /* PBXTargetDependency */,
+			);
+			name = HeatmapCheckoutTests;
+			productName = HeatmapCheckoutTests;
+			productReference = MB000011 /* HeatmapCheckoutTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		MF000003 /* HeatmapCheckoutUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = MH000003 /* Build configuration list for PBXNativeTarget "HeatmapCheckoutUITests" */;
+			buildPhases = (
+				MF000041 /* Sources */,
+				MF000040 /* Frameworks */,
+				MF000042 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				MF000032 /* PBXTargetDependency */,
+			);
+			name = HeatmapCheckoutUITests;
+			productName = HeatmapCheckoutUITests;
+			productReference = MB00001E /* HeatmapCheckoutUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		ME000001 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1640;
+				LastUpgradeCheck = 1640;
+				TargetAttributes = {
+					MF000001 = {
+						CreatedOnToolsVersion = 16.4;
+					};
+					MF000002 = {
+						CreatedOnToolsVersion = 16.4;
+						TestTargetID = MF000001;
+					};
+					MF000003 = {
+						CreatedOnToolsVersion = 16.4;
+						TestTargetID = MF000001;
+					};
+				};
+			};
+			buildConfigurationList = MH000010 /* Build configuration list for PBXProject "HeatmapCheckout" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = MG000001;
+			packageReferences = (
+				MC000001 /* XCLocalSwiftPackageReference "../../sdk/apple" */,
+			);
+			productRefGroup = MG000009 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				MF000001 /* HeatmapCheckout */,
+				MF000002 /* HeatmapCheckoutTests */,
+				MF000003 /* HeatmapCheckoutUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		MF000012 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				MA00000B /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		MF000022 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		MF000042 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		MF000011 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				MA000001 /* HeatmapCheckoutApp.swift in Sources */,
+				MA000002 /* CheckoutIdentifiers.swift in Sources */,
+				MA000003 /* HeatmapBootstrap.swift in Sources */,
+				MA000004 /* HeatmapConfigReader.swift in Sources */,
+				MA000005 /* CaptureRootView.swift in Sources */,
+				MA000006 /* HeatmapSession.swift in Sources */,
+				MA000007 /* HomeView.swift in Sources */,
+				MA000008 /* ProductView.swift in Sources */,
+				MA000009 /* CheckoutView.swift in Sources */,
+				MA00000A /* ConfirmationView.swift in Sources */,
+				MA000017 /* HeatmapE2EViewModifiers.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		MF000021 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				MA00000E /* CheckoutIdentifiers.swift in Sources */,
+				MA00000F /* CheckoutPayIdentifierTests.swift in Sources */,
+				MA000015 /* HeatmapConfigReaderTests.swift in Sources */,
+				MA000016 /* HeatmapConfigReader.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		MF000041 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				MA000018 /* HeatmapE2EConfig.swift in Sources */,
+				MA000019 /* HeatmapE2EEventClient.swift in Sources */,
+				MA00001A /* CheckoutJourneySteps.swift in Sources */,
+				MA00001B /* CheckoutJourneyUITests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		MF000030 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = MF000001 /* HeatmapCheckout */;
+			targetProxy = MD000001 /* PBXContainerItemProxy */;
+		};
+		MF000032 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = MF000001 /* HeatmapCheckout */;
+			targetProxy = MD000002 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		MI000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = MB00000E /* Heatmap.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = "";
+				CODE_SIGN_ENTITLEMENTS = "";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = HeatmapCheckout/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.heatmap.checkout.poc.macos;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		MI000002 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = MB00000E /* Heatmap.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = "";
+				CODE_SIGN_ENTITLEMENTS = "";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = HeatmapCheckout/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.heatmap.checkout.poc.macos;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		MI000003 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.heatmap.checkout.poc.macos.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/HeatmapCheckout.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/HeatmapCheckout";
+			};
+			name = Debug;
+		};
+		MI000004 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.heatmap.checkout.poc.macos.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/HeatmapCheckout.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/HeatmapCheckout";
+			};
+			name = Release;
+		};
+		MI000005 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.heatmap.checkout.poc.macos.uitests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_VERSION = 5.0;
+				TEST_TARGET_NAME = HeatmapCheckout;
+			};
+			name = Debug;
+		};
+		MI000006 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.heatmap.checkout.poc.macos.uitests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_VERSION = 5.0;
+				TEST_TARGET_NAME = HeatmapCheckout;
+			};
+			name = Release;
+		};
+		MI000010 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_TESTABILITY = YES;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		MI000011 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		MH000001 /* Build configuration list for PBXNativeTarget "HeatmapCheckout" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				MI000001 /* Debug */,
+				MI000002 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		MH000002 /* Build configuration list for PBXNativeTarget "HeatmapCheckoutTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				MI000003 /* Debug */,
+				MI000004 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		MH000003 /* Build configuration list for PBXNativeTarget "HeatmapCheckoutUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				MI000005 /* Debug */,
+				MI000006 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		MH000010 /* Build configuration list for PBXProject "HeatmapCheckout" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				MI000010 /* Debug */,
+				MI000011 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		MC000001 /* XCLocalSwiftPackageReference "../../sdk/apple" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ../../sdk/apple;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		MC000003 /* HeatmapAppleShared */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = MC000001 /* XCLocalSwiftPackageReference "../../sdk/apple" */;
+			productName = HeatmapAppleShared;
+		};
+		MC000004 /* HeatmapAppleMacOS */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = MC000001 /* XCLocalSwiftPackageReference "../../sdk/apple" */;
+			productName = HeatmapAppleMacOS;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = ME000001 /* Project object */;
+}

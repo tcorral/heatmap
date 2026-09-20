@@ -1,0 +1,2 @@
+HEATMAP_PROJECT_KEY = test-project-key
+HEATMAP_ENDPOINT = http:/$()/127.0.0.1:8080

@@ -1,0 +1,96 @@
+:root {
+  font-family: system-ui, sans-serif;
+  line-height: 1.5;
+  color: #1a1a1a;
+  background: #f6f6f8;
+}
+
+body {
+  margin: 0;
+}
+
+.app-shell {
+  max-width: 40rem;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 3rem;
+}
+
+.app-shell h1 {
+  margin-top: 0;
+}
+
+.nav-links {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.nav-links a {
+  color: #0b57d0;
+}
+
+.checkout-section {
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.checkout-section h2 {
+  margin-top: 0;
+  font-size: 1rem;
+}
+
+.checkout-spacer {
+  min-height: 55vh;
+}
+
+.checkout-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-top: 1rem;
+}
+
+button,
+a.button {
+  display: inline-block;
+  padding: 0.55rem 1rem;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  background: #fff;
+  cursor: pointer;
+  font: inherit;
+  text-decoration: none;
+  color: inherit;
+}
+
+button.primary {
+  background: #0b57d0;
+  border-color: #0b57d0;
+  color: #fff;
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.coupon-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.coupon-row label {
+  font-weight: 600;
+}
+
+.coupon-row input {
+  flex: 1;
+  min-width: 10rem;
+  padding: 0.45rem 0.5rem;
+  font: inherit;
+}

@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "session_id": "sess_android_journey_001",
+  "anonymous_id": "anon_android_002",
+  "timestamp": 1726771204500,
+  "sdk": { "name": "heatmap-android", "version": "0.1.0" },
+  "platform": {
+    "type": "android",
+    "os_version": "Android 14",
+    "app_version": "1.0.0"
+  },
+  "screen": { "id": "Checkout" },
+  "event": { "type": "click" },
+  "position": { "x": 0.12, "y": 0.88 },
+  "viewport": { "width": 412, "height": 915 }
+}

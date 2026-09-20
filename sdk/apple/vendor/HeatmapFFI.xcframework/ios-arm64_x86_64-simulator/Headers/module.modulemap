@@ -1,0 +1,4 @@
+module heatmap_ffiFFI {
+    header "heatmap_ffiFFI.h"
+    export *
+}
