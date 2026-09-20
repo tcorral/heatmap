@@ -198,7 +198,7 @@ Greenfield V1 POC: lock the nested event contract, prove a synthetic click throu
   - **Tests:** Shared journey sequence is stored; interaction after resize sits on the new window; interaction in a second window is attributable to that window; V1 overlay still does not split by window; introduce the macOS E2E runner
   - **Depends:** Step 29, Step 19
 
-- [ ] **Step 31: Add Android Kotlin API and AAR** — TDD: No
+- [x] **Step 31: Add Android Kotlin API and AAR** — TDD: No
   - **Description:** Package the Android SDK API over UniFFI as a pre-release AAR/Maven artifact.
   - **Files:** sdk/android/
   - **Tests:** A clean consumer project can depend on the artifact and call the public API; no public track/custom API; introduce Gradle test wiring

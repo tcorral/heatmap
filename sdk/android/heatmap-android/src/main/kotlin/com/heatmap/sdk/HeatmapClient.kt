@@ -1,0 +1,62 @@
+package com.heatmap.sdk
+
+/**
+ * App-facing Heatmap SDK client. Wraps UniFFI [HeatmapSdk] with a stable Kotlin API.
+ *
+ * Integrators call [init], [identify], [signOut], [screen], [setTrackingEnabled], and [flush] only.
+ * Activation capture (wire type [com.heatmap.sdk.internal.WireActivationType.CLICK]) is adapter-owned.
+ */
+class HeatmapClient private constructor(
+    private val sdk: HeatmapSdk,
+) : AutoCloseable {
+
+    /** Initialize from JSON matching the core `HeatmapConfig` shape. */
+    constructor(configJson: String) : this(HeatmapSdk.initFromJson(configJson))
+
+    /** Initialize with required fields and core defaults for optional settings. */
+    constructor(
+        projectKey: String,
+        endpoint: String,
+    ) : this(
+        HeatmapSdk.init(
+            InitConfig(
+                projectKey = projectKey,
+                endpoint = endpoint,
+                sessionTimeoutMs = 1_800_000,
+                sampleRate = 1.0,
+                excludeElements = emptyList(),
+                excludeScreens = emptyList(),
+                maskElements = emptyList(),
+            ),
+        ),
+    )
+
+    /** Share the same [HeatmapSdk] instance as a future capture adapter backend. */
+    internal companion object {
+        fun wrapping(sdk: HeatmapSdk): HeatmapClient = HeatmapClient(sdk)
+    }
+
+    fun identify(userId: String) {
+        sdk.identify(userId)
+    }
+
+    fun signOut() {
+        sdk.signOut()
+    }
+
+    fun screen(screenId: String, layoutVersion: String? = null) {
+        sdk.screen(screenId, layoutVersion)
+    }
+
+    fun setTrackingEnabled(enabled: Boolean) {
+        sdk.setTrackingEnabled(enabled)
+    }
+
+    fun flush() {
+        sdk.flush()
+    }
+
+    override fun close() {
+        sdk.close()
+    }
+}

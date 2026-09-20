@@ -6,10 +6,13 @@
 //! cargo install uniffi-bindgen --version 0.28.3 --locked
 //! uniffi-bindgen generate \
 //!   --config core/heatmap-ffi/uniffi.toml \
-//!   --crate core/heatmap-ffi \
+//!   --crate heatmap_ffi \
 //!   --language swift \
 //!   --out-dir /path/to/bindings
 //! ```
+//!
+//! Repo scripts: `sdk/apple/scripts/generate-uniffi.sh` (Swift),
+//! `sdk/android/scripts/generate-uniffi.sh` (Kotlin; run against Android `.so` for release).
 
 mod config;
 mod errors;
