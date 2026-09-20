@@ -17,7 +17,7 @@ use crate::event::{
 use crate::flush_policy::{
     estimated_batch_wire_bytes, flush_error_is_permanent, flush_error_is_transient,
     flush_event_limit_reached, flush_interval_elapsed, queue_flush_byte_limit_reached,
-    INGEST_MAX_BYTES, INGEST_MAX_EVENTS,
+    INGEST_MAX_BYTES, INGEST_MAX_EVENTS, PERMANENT_FAILURE_BACKOFF_MS,
 };
 use crate::identity_store::{
     IdentityStore, InMemoryIdentityStore, STORE_KEY_ANONYMOUS_ID, STORE_KEY_LAST_EVENT_AT,
@@ -543,6 +543,10 @@ impl HeatmapSdk {
             if self.queue.is_empty() {
                 self.queue_pending_since_ms = None;
             }
+            self.retry_not_before_ms = self
+                .clock
+                .now_ms()
+                .saturating_add(PERMANENT_FAILURE_BACKOFF_MS as i64);
             return Err(err);
         }
         self.retry_batch = Some(batch.clone());

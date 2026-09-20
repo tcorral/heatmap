@@ -343,6 +343,49 @@ fn should_drop_permanent_status_without_retry(status: u16) {
 }
 
 #[test]
+fn should_block_new_batches_for_a_cooldown_after_permanent_http_401() {
+    let clock = Arc::new(ManualClock::new(0));
+    let transport = RecordingTransport::new(TransportOutcome::Http(401, None));
+    let (mut sdk, transport) = sdk_with_clock(transport, Arc::clone(&clock));
+
+    sdk.enqueue_candidate(click_candidate(0, "checkout.pay"))
+        .expect("enqueue first");
+    assert!(sdk.flush().is_err());
+    assert_eq!(transport.send_count(), 1, "first click sends and drops");
+
+    sdk.enqueue_candidate(click_candidate(1, "checkout.apply-coupon"))
+        .expect("enqueue second");
+    assert!(
+        sdk.flush().is_ok(),
+        "blocked flush is a no-op, not another failure"
+    );
+    assert_eq!(
+        transport.send_count(),
+        1,
+        "new event during cooldown must not trigger another doomed upload"
+    );
+
+    clock.advance_ms(11_000);
+    sdk.enqueue_candidate(click_candidate(2, "checkout.pay"))
+        .expect("enqueue third");
+    assert!(
+        sdk.flush().is_ok(),
+        "still within cooldown after 11s, matching the E2E wait window"
+    );
+    assert_eq!(transport.send_count(), 1, "still blocked at 11s");
+
+    clock.advance_ms(50_000);
+    sdk.enqueue_candidate(click_candidate(3, "checkout.pay"))
+        .expect("enqueue fourth");
+    assert!(sdk.flush().is_err(), "cooldown expired, host can try again");
+    assert_eq!(
+        transport.send_count(),
+        2,
+        "cooldown expiry allows one more attempt"
+    );
+}
+
+#[test]
 fn should_reuse_batch_id_on_transport_failure() {
     let clock = Arc::new(ManualClock::new(0));
     let transport = RecordingTransport::new(TransportOutcome::Transport("down".into()));

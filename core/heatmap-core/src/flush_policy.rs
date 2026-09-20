@@ -8,11 +8,16 @@ pub const FLUSH_MAX_BYTES: usize = 65536;
 pub const FLUSH_INTERVAL_MS: u64 = 10_000;
 pub const INGEST_MAX_EVENTS: usize = 200;
 pub const INGEST_MAX_BYTES: usize = 256 * 1024;
+/// Cooldown applied after a permanent HTTP classification (400/401/403/413) so
+/// newly captured events do not immediately trigger another doomed upload.
+pub const PERMANENT_FAILURE_BACKOFF_MS: u64 = 60_000;
 
 const BYTE_PROBE_BATCH_ID: &str = "batch_probe_00000000000000000000000000000000";
 
 pub fn batch_wire_bytes(batch: &HeatmapBatch) -> usize {
-    serde_json::to_vec(batch).map(|bytes| bytes.len()).unwrap_or(usize::MAX)
+    serde_json::to_vec(batch)
+        .map(|bytes| bytes.len())
+        .unwrap_or(usize::MAX)
 }
 
 fn empty_batch_envelope_bytes() -> usize {
