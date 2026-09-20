@@ -75,11 +75,8 @@ fn click_position_bins(event: &Value) -> Option<(i64, i64)> {
 
 fn is_identified_click(event: &Value) -> bool {
     let event_type = event["event"]["type"].as_str();
-    let element_id = event["event"]
-        .get("element_id")
-        .and_then(|id| id.as_str());
-    event_type == Some("click")
-        && element_id.map(|id| !id.is_empty()).unwrap_or(false)
+    let element_id = event["event"].get("element_id").and_then(|id| id.as_str());
+    event_type == Some("click") && element_id.map(|id| !id.is_empty()).unwrap_or(false)
 }
 
 pub struct ElementsResponse {
@@ -88,6 +85,7 @@ pub struct ElementsResponse {
 }
 
 pub struct ElementRow {
+    pub platform: String,
     pub element_id: String,
     pub click_count: i64,
     pub unique_sessions: i64,
@@ -158,10 +156,12 @@ pub fn query_still(
     screen: &str,
     layout_version: &str,
 ) -> Result<Option<StillResponse>, rusqlite::Error> {
-    Ok(db::find_still(conn, platform, screen, layout_version)?.map(|row| StillResponse {
-        content_type: row.content_type,
-        image_base64: row.image_base64,
-    }))
+    Ok(
+        db::find_still(conn, platform, screen, layout_version)?.map(|row| StillResponse {
+            content_type: row.content_type,
+            image_base64: row.image_base64,
+        }),
+    )
 }
 
 pub fn query_screens(conn: &Connection) -> Result<ScreenListResponse, rusqlite::Error> {
@@ -198,6 +198,7 @@ pub fn query_elements(
     let elements = rows
         .into_iter()
         .map(|row| ElementRow {
+            platform: row.platform,
             element_id: row.element_id,
             click_count: row.click_count,
             unique_sessions: row.unique_sessions,

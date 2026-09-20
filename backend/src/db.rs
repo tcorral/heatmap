@@ -190,13 +190,14 @@ pub fn upsert_element_total(conn: &Connection, event: &Value) -> SqlResult<()> {
 }
 
 pub struct ElementTotalRow {
+    pub platform: String,
     pub element_id: String,
     pub click_count: i64,
     pub unique_sessions: i64,
 }
 
 pub struct ElementsFilter<'a> {
-    pub platform: &'a str,
+    pub platform: Option<&'a str>,
     pub screen: &'a str,
     pub layout_version: Option<&'a str>,
     pub app_version: &'a str,
@@ -220,19 +221,27 @@ fn query_element_totals_materialized(
 ) -> SqlResult<Vec<ElementTotalRow>> {
     let layout = filter.layout_version.unwrap_or("");
     let mut statement = conn.prepare(
-        "SELECT element_id, click_count FROM element_totals
-         WHERE platform_type = ?1 AND screen_id = ?2 AND layout_version = ?3 AND app_version = ?4",
+        "SELECT platform_type, element_id, SUM(click_count) FROM element_totals
+         WHERE (?1 IS NULL OR platform_type = ?1) AND screen_id = ?2 AND layout_version = ?3 AND app_version = ?4
+         GROUP BY platform_type, element_id",
     )?;
     let rows = statement.query_map(
         params![filter.platform, filter.screen, layout, filter.app_version],
-        |row| Ok((row.get::<_, String>(0)?, row.get::<_, i64>(1)?)),
+        |row| {
+            Ok((
+                row.get::<_, String>(0)?,
+                row.get::<_, String>(1)?,
+                row.get::<_, i64>(2)?,
+            ))
+        },
     )?;
 
     let mut results = Vec::new();
     for row in rows {
-        let (element_id, click_count) = row?;
-        let unique_sessions = count_unique_sessions(conn, filter, &element_id)?;
+        let (platform, element_id, click_count) = row?;
+        let unique_sessions = count_unique_sessions(conn, filter, &platform, &element_id)?;
         results.push(ElementTotalRow {
+            platform,
             element_id,
             click_count,
             unique_sessions,
@@ -247,13 +256,13 @@ fn query_element_totals_from_events(
 ) -> SqlResult<Vec<ElementTotalRow>> {
     let layout = filter.layout_version.unwrap_or("");
     let mut statement = conn.prepare(
-        "SELECT element_id, COUNT(*) AS click_count FROM raw_events
-         WHERE platform_type = ?1 AND screen_id = ?2 AND layout_version = ?3
+        "SELECT platform_type, element_id, COUNT(*) AS click_count FROM raw_events
+         WHERE (?1 IS NULL OR platform_type = ?1) AND screen_id = ?2 AND layout_version = ?3
            AND app_version = ?4 AND event_type = 'click' AND element_id IS NOT NULL
            AND element_id != ''
            AND (?5 IS NULL OR timestamp >= ?5)
            AND (?6 IS NULL OR timestamp <= ?6)
-         GROUP BY element_id",
+         GROUP BY platform_type, element_id",
     )?;
     let rows = statement.query_map(
         params![
@@ -264,14 +273,21 @@ fn query_element_totals_from_events(
             filter.from,
             filter.to
         ],
-        |row| Ok((row.get::<_, String>(0)?, row.get::<_, i64>(1)?)),
+        |row| {
+            Ok((
+                row.get::<_, String>(0)?,
+                row.get::<_, String>(1)?,
+                row.get::<_, i64>(2)?,
+            ))
+        },
     )?;
 
     let mut results = Vec::new();
     for row in rows {
-        let (element_id, click_count) = row?;
-        let unique_sessions = count_unique_sessions(conn, filter, &element_id)?;
+        let (platform, element_id, click_count) = row?;
+        let unique_sessions = count_unique_sessions(conn, filter, &platform, &element_id)?;
         results.push(ElementTotalRow {
+            platform,
             element_id,
             click_count,
             unique_sessions,
@@ -283,6 +299,7 @@ fn query_element_totals_from_events(
 fn count_unique_sessions(
     conn: &Connection,
     filter: &ElementsFilter<'_>,
+    platform: &str,
     element_id: &str,
 ) -> SqlResult<i64> {
     let layout = filter.layout_version.unwrap_or("");
@@ -293,7 +310,7 @@ fn count_unique_sessions(
            AND (?6 IS NULL OR timestamp >= ?6)
            AND (?7 IS NULL OR timestamp <= ?7)",
         params![
-            filter.platform,
+            platform,
             filter.screen,
             layout,
             filter.app_version,
@@ -492,7 +509,7 @@ pub fn count_slice_unique_sessions(
     let layout = filter.layout_version.unwrap_or("");
     conn.query_row(
         "SELECT COUNT(DISTINCT session_id) FROM raw_events
-         WHERE platform_type = ?1 AND screen_id = ?2 AND layout_version = ?3
+         WHERE (?1 IS NULL OR platform_type = ?1) AND screen_id = ?2 AND layout_version = ?3
            AND app_version = ?4
            AND (?5 IS NULL OR timestamp >= ?5)
            AND (?6 IS NULL OR timestamp <= ?6)",

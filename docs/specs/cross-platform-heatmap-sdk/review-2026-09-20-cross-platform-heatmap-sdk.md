@@ -106,7 +106,7 @@ _Each finding should carry enough context for arbitration without becoming a ful
 - Offline survival/process recovery — Implemented at `core/heatmap-core/src/sdk.rs:599` and `poc/android/app/src/androidTest/kotlin/com/heatmap/checkout/e2e/CheckoutJourneyInstrumentedTest.kt:67`.
 - Buffer drop-oldest — Implemented at `core/heatmap-core/src/persistent_queue.rs:64`.
 - Fail-closed delivery — Implemented at `core/heatmap-core/src/transport.rs:69` and `core/heatmap-core/src/sdk.rs:459`.
-- Cross-platform element comparison — **Missing** — API and dashboard expose one platform slice at a time at `backend/src/db.rs:250`, `dashboard/src/components/filterFields.tsx:8`.
+- Cross-platform element comparison — **API grouped by platform when omitted** — Dashboard still needs one result for five platforms at `dashboard/src/components/filterFields.tsx:8`.
 - Per-platform coordinate heatmap — Implemented at `backend/src/db.rs:360`.
 - Optional reference still — Implemented at `dashboard/src/components/HeatmapOverlayPanel.tsx:11`.
 - No scroll-map visualization — Implemented at `dashboard/test/dashboard.test.tsx:117`.

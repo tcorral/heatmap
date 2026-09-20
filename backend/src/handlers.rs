@@ -31,7 +31,7 @@ pub struct BatchBody {
 
 #[derive(Debug, Deserialize)]
 pub struct ElementsQuery {
-    pub platform: String,
+    pub platform: Option<String>,
     pub screen: String,
     pub layout_version: Option<String>,
     pub app_version: String,
@@ -138,7 +138,7 @@ pub async fn get_elements(
     Query(query): Query<ElementsQuery>,
 ) -> Result<Json<Value>, ApiError> {
     let filter = ElementsFilter {
-        platform: &query.platform,
+        platform: query.platform.as_deref(),
         screen: &query.screen,
         layout_version: query.layout_version.as_deref(),
         app_version: &query.app_version,
@@ -156,6 +156,7 @@ fn elements_response_json(response: service::ElementsResponse) -> Value {
         .into_iter()
         .map(|row| {
             json!({
+                "platform": row.platform,
                 "element_id": row.element_id,
                 "click_count": row.click_count,
                 "unique_sessions": row.unique_sessions,
