@@ -58,6 +58,7 @@ fn should_not_expose_adapter_only_apis_on_integrator_surface() {
     let ios_adapter = read_src("ios_adapter.rs");
     let macos_adapter = read_src("macos_adapter.rs");
     let android_adapter = read_src("android_adapter.rs");
+    let windows_adapter = read_src("windows_adapter.rs");
     assert!(
         ios_adapter.contains("record_activation_click"),
         "ios adapter should own activation enqueue"
@@ -69,6 +70,10 @@ fn should_not_expose_adapter_only_apis_on_integrator_surface() {
     assert!(
         android_adapter.contains("record_android_activation_click"),
         "android adapter should own view activation enqueue"
+    );
+    assert!(
+        windows_adapter.contains("record_windows_activation_click"),
+        "windows adapter should own activation enqueue with window_id"
     );
     for forbidden in [
         forbidden_export_names::TRACK,

@@ -1,0 +1,125 @@
+using System.Runtime.InteropServices;
+using Heatmap.Sdk.Capture;
+using Heatmap.Sdk.Internal;
+
+namespace Heatmap.Sdk.Wpf;
+
+/// <summary>Forwards adapter payloads to the C ABI (not exposed on <see cref="HeatmapClient"/>).</summary>
+public sealed class HeatmapWpfRustCaptureBackend : IWpfCaptureBackend
+{
+    private readonly HeatmapClient _client;
+    private readonly string _osVersion;
+    private readonly string _appVersion;
+
+    public HeatmapWpfRustCaptureBackend(HeatmapClient client, string osVersion, string appVersion)
+    {
+        _client = client;
+        _osVersion = osVersion;
+        _appVersion = appVersion;
+    }
+
+    public HeatmapWpfRustCaptureBackend(HeatmapClient client)
+        : this(client, Environment.OSVersion.VersionString, "0.0.0")
+    {
+    }
+
+    public void RecordActivationClick(WpfActivationClickPayload payload)
+    {
+        HeatmapNative.EnsureLoaded();
+        var elementPtr = payload.ElementId is null
+            ? IntPtr.Zero
+            : Marshal.StringToCoTaskMemUTF8(payload.ElementId);
+        var windowPtr = Marshal.StringToCoTaskMemUTF8(payload.WindowId);
+        var osPtr = Marshal.StringToCoTaskMemUTF8(_osVersion);
+        var appPtr = Marshal.StringToCoTaskMemUTF8(_appVersion);
+        try
+        {
+            HeatmapNative.Check(
+                HeatmapNativeAdapter.heatmap_sdk_adapter_record_windows_activation_click(
+                    _client.Handle,
+                    payload.Position.X,
+                    payload.Position.Y,
+                    elementPtr,
+                    payload.ViewportWidth,
+                    payload.ViewportHeight,
+                    payload.TimestampMs,
+                    windowPtr,
+                    osPtr,
+                    appPtr),
+                "recordWindowsActivationClick");
+        }
+        finally
+        {
+            if (elementPtr != IntPtr.Zero)
+            {
+                Marshal.FreeCoTaskMem(elementPtr);
+            }
+
+            Marshal.FreeCoTaskMem(windowPtr);
+            Marshal.FreeCoTaskMem(osPtr);
+            Marshal.FreeCoTaskMem(appPtr);
+        }
+    }
+
+    public void RecordScreenView(uint viewportWidth, uint viewportHeight)
+    {
+        HeatmapNative.EnsureLoaded();
+        var osPtr = Marshal.StringToCoTaskMemUTF8(_osVersion);
+        var appPtr = Marshal.StringToCoTaskMemUTF8(_appVersion);
+        try
+        {
+            HeatmapNative.Check(
+                HeatmapNativeAdapter.heatmap_sdk_adapter_record_windows_screen_view(
+                    _client.Handle,
+                    viewportWidth,
+                    viewportHeight,
+                    osPtr,
+                    appPtr),
+                "recordWindowsScreenView");
+        }
+        finally
+        {
+            Marshal.FreeCoTaskMem(osPtr);
+            Marshal.FreeCoTaskMem(appPtr);
+        }
+    }
+
+    public void RecordScroll(uint viewportWidth, uint viewportHeight)
+    {
+        HeatmapNative.EnsureLoaded();
+        var osPtr = Marshal.StringToCoTaskMemUTF8(_osVersion);
+        var appPtr = Marshal.StringToCoTaskMemUTF8(_appVersion);
+        try
+        {
+            HeatmapNative.Check(
+                HeatmapNativeAdapter.heatmap_sdk_adapter_record_windows_scroll(
+                    _client.Handle,
+                    viewportWidth,
+                    viewportHeight,
+                    osPtr,
+                    appPtr),
+                "recordWindowsScroll");
+        }
+        finally
+        {
+            Marshal.FreeCoTaskMem(osPtr);
+            Marshal.FreeCoTaskMem(appPtr);
+        }
+    }
+
+    public void OnBackground()
+    {
+        HeatmapNative.EnsureLoaded();
+        HeatmapNative.Check(
+            HeatmapNativeAdapter.heatmap_sdk_adapter_on_background(_client.Handle),
+            "onBackground");
+    }
+
+    public void OnForeground()
+    {
+        HeatmapNative.EnsureLoaded();
+        HeatmapNative.Check(
+            HeatmapNativeAdapter.heatmap_sdk_adapter_on_foreground(_client.Handle),
+            "onForeground");
+    }
+}

@@ -19,6 +19,7 @@ mod errors;
 mod android_adapter;
 mod ios_adapter;
 mod macos_adapter;
+mod windows_adapter;
 pub mod public_api;
 mod uniffi_api;
 

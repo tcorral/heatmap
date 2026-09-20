@@ -12,6 +12,7 @@ pub const HEATMAP_ERR_INIT: i32 = 3;
 pub const HEATMAP_ERR_IDENTITY: i32 = 4;
 pub const HEATMAP_ERR_SCREEN: i32 = 5;
 pub const HEATMAP_ERR_FLUSH: i32 = 6;
+pub const HEATMAP_ERR_CAPTURE: i32 = 7;
 
 struct SdkBox(PublicHeatmapSdk);
 
@@ -120,6 +121,114 @@ pub extern "C" fn heatmap_sdk_flush(handle: HeatmapSdkHandle) -> i32 {
     with_sdk(handle, |sdk| match sdk.flush() {
         Ok(()) => HEATMAP_OK,
         Err(_) => HEATMAP_ERR_FLUSH,
+    })
+}
+
+#[no_mangle]
+pub extern "C" fn heatmap_sdk_adapter_on_background(handle: HeatmapSdkHandle) -> i32 {
+    with_sdk(handle, |sdk| {
+        sdk.on_background();
+        HEATMAP_OK
+    })
+}
+
+#[no_mangle]
+pub extern "C" fn heatmap_sdk_adapter_on_foreground(handle: HeatmapSdkHandle) -> i32 {
+    with_sdk(handle, |sdk| {
+        sdk.on_foreground();
+        HEATMAP_OK
+    })
+}
+
+#[no_mangle]
+pub extern "C" fn heatmap_sdk_adapter_record_windows_activation_click(
+    handle: HeatmapSdkHandle,
+    x: f64,
+    y: f64,
+    element_id: *const c_char,
+    viewport_width: u32,
+    viewport_height: u32,
+    timestamp_ms: i64,
+    window_id: *const c_char,
+    os_version: *const c_char,
+    app_version: *const c_char,
+) -> i32 {
+    let element = nullable_cstr(element_id);
+    let window = match read_cstr(window_id) {
+        Ok(value) => value,
+        Err(code) => return code,
+    };
+    let os = match read_cstr(os_version) {
+        Ok(value) => value,
+        Err(code) => return code,
+    };
+    let app = match read_cstr(app_version) {
+        Ok(value) => value,
+        Err(code) => return code,
+    };
+    with_sdk(handle, |sdk| {
+        match sdk.record_windows_activation_click(
+            x,
+            y,
+            element,
+            viewport_width,
+            viewport_height,
+            timestamp_ms,
+            window,
+            os,
+            app,
+        ) {
+            Ok(()) => HEATMAP_OK,
+            Err(_) => HEATMAP_ERR_CAPTURE,
+        }
+    })
+}
+
+#[no_mangle]
+pub extern "C" fn heatmap_sdk_adapter_record_windows_screen_view(
+    handle: HeatmapSdkHandle,
+    viewport_width: u32,
+    viewport_height: u32,
+    os_version: *const c_char,
+    app_version: *const c_char,
+) -> i32 {
+    let os = match read_cstr(os_version) {
+        Ok(value) => value,
+        Err(code) => return code,
+    };
+    let app = match read_cstr(app_version) {
+        Ok(value) => value,
+        Err(code) => return code,
+    };
+    with_sdk(handle, |sdk| {
+        match sdk.record_windows_screen_view(viewport_width, viewport_height, os, app) {
+            Ok(()) => HEATMAP_OK,
+            Err(_) => HEATMAP_ERR_CAPTURE,
+        }
+    })
+}
+
+#[no_mangle]
+pub extern "C" fn heatmap_sdk_adapter_record_windows_scroll(
+    handle: HeatmapSdkHandle,
+    viewport_width: u32,
+    viewport_height: u32,
+    os_version: *const c_char,
+    app_version: *const c_char,
+) -> i32 {
+    let os = match read_cstr(os_version) {
+        Ok(value) => value,
+        Err(code) => return code,
+    };
+    let app = match read_cstr(app_version) {
+        Ok(value) => value,
+        Err(code) => return code,
+    };
+    with_sdk(handle, |sdk| {
+        match sdk.record_windows_scroll(viewport_width, viewport_height, os, app) {
+            Ok(()) => HEATMAP_OK,
+            Err(_) => HEATMAP_ERR_CAPTURE,
+        }
     })
 }
 

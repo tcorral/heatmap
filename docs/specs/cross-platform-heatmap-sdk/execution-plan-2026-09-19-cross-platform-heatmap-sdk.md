@@ -228,13 +228,13 @@ Greenfield V1 POC: lock the nested event contract, prove a synthetic click throu
   - **Tests:** Both Pay activations are captured as Pay; offline then restore uploads once; process death with pending events uploads later without crashing relaunch; host stays up when ingest is down; introduce the Android E2E runner
   - **Depends:** Step 34, Step 16, Step 19
 
-- [ ] **Step 36: Add Windows C# API and NuGet package** — TDD: No
+- [x] **Step 36: Add Windows C# API and NuGet package** — TDD: No
   - **Description:** Add the C# P/Invoke surface over the C ABI and a pre-release NuGet package.
   - **Files:** sdk/windows/
   - **Tests:** A clean consumer project can install the package and call the public API; no public track/custom API; introduce `dotnet test`
   - **Depends:** Step 23
 
-- [ ] **Step 37: Capture WPF activations** — TDD: Yes
+- [x] **Step 37: Capture WPF activations** — TDD: Yes
   - **Description:** Add WPF capture for clicks, scrolls, AutomationId identity, DPI/scale, multi-window attribution, and password-box dropping.
   - **Files:** sdk/windows/
   - **Tests:** Pay with AutomationProperties.AutomationId=checkout.pay is attributed as Pay; unmarked non-secret control paints coordinates only; password boxes are dropped; events carry opaque window_id; coordinates are relative to that window and stay 0–1 after DPI/scale or resize; adapter does not read text or window titles
