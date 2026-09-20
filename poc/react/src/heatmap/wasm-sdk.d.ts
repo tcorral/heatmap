@@ -6,6 +6,8 @@ declare module "../wasm/pkg/heatmap_wasm.js" {
     screen(screenId: string, layoutVersion?: string | null): void;
     flush(): void;
     drainBatchJson(): string | undefined;
+    beginFlushBatchJson(): string | undefined;
+    completeFlush(accepted: boolean): void;
     recordScroll(): void;
     recordActivationClick(
       x: number,

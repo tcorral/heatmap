@@ -1,0 +1,77 @@
+use heatmap_core::INGEST_MAX_EVENTS;
+use heatmap_wasm::PublicHeatmapSdk;
+
+fn test_sdk() -> PublicHeatmapSdk {
+    let config = r#"{
+        "project_key": "pk_test",
+        "endpoint": "https://ingest.example.com"
+    }"#;
+    PublicHeatmapSdk::init_from_json(config).expect("init")
+}
+
+fn record_click(sdk: &mut PublicHeatmapSdk, timestamp_ms: i64) {
+    sdk.record_activation_click(
+        0.5,
+        0.5,
+        Some("checkout.pay".into()),
+        1280,
+        720,
+        timestamp_ms,
+    )
+    .expect("record");
+}
+
+#[test]
+fn should_take_bounded_batch_on_begin_and_restore_on_failed_complete() {
+    let mut sdk = test_sdk();
+    let mut ts = 1_726_771_205_000_i64;
+    while sdk.queued_event_count_for_testing() < INGEST_MAX_EVENTS + 5 {
+        record_click(&mut sdk, ts);
+        ts += 1;
+    }
+    let total_before = sdk.queued_event_count_for_testing();
+    assert!(total_before > INGEST_MAX_EVENTS);
+
+    let json = sdk
+        .begin_flush_batch_json()
+        .expect("serialized batch for upload");
+    assert!(!json.is_empty());
+    let remaining = sdk.queued_event_count_for_testing();
+    assert!(remaining > 0, "overflow events stay queued during upload");
+    assert!(remaining < total_before);
+
+    sdk.complete_flush(false);
+    assert!(
+        sdk.queued_event_count_for_testing() > 0,
+        "failed upload restores taken events"
+    );
+}
+
+#[test]
+fn should_drop_uploaded_events_after_successful_complete() {
+    let mut sdk = test_sdk();
+    record_click(&mut sdk, 1_726_771_205_000);
+    let before = sdk.queued_event_count_for_testing();
+    assert!(before > 0);
+
+    let json = sdk.begin_flush_batch_json().expect("batch");
+    assert!(!json.is_empty());
+    assert!(sdk.queued_event_count_for_testing() < before);
+
+    sdk.complete_flush(true);
+    assert_eq!(
+        sdk.queued_event_count_for_testing(),
+        0,
+        "accepted upload removes events from queue"
+    );
+    assert!(sdk.begin_flush_batch_json().is_none());
+}
+
+#[test]
+fn should_no_op_complete_flush_when_no_pending_batch() {
+    let mut sdk = test_sdk();
+    record_click(&mut sdk, 1_726_771_205_000);
+    sdk.complete_flush(true);
+    sdk.complete_flush(false);
+    assert!(sdk.queued_event_count_for_testing() > 0);
+}

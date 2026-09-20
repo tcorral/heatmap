@@ -2,9 +2,9 @@
 use std::sync::Arc;
 
 use heatmap_core::{
-    CaptureCandidate, CaptureError, FlushError, HeatmapConfig, HeatmapSdk as CoreHeatmapSdk,
-    IdentityError, InitError, InteractionEvent, PlatformInfo, Position, QueueLimits,
-    ScreenContextError, SdkInfo, Viewport,
+    CaptureCandidate, CaptureError, FlushError, HeatmapBatch, HeatmapConfig,
+    HeatmapSdk as CoreHeatmapSdk, IdentityError, InitError, InteractionEvent, PlatformInfo,
+    Position, QueueLimits, ScreenContextError, SdkInfo, Viewport,
 };
 
 use crate::config::InitConfigJson;
@@ -18,6 +18,7 @@ use crate::web_context::{web_platform_info, web_sdk_info};
 
 pub struct PublicHeatmapSdk {
     inner: CoreHeatmapSdk,
+    pending_upload: Option<HeatmapBatch>,
 }
 
 impl PublicHeatmapSdk {
@@ -35,7 +36,10 @@ impl PublicHeatmapSdk {
         )?;
         #[cfg(not(target_arch = "wasm32"))]
         let inner = CoreHeatmapSdk::init_with_transport(config, StubBatchTransport::new())?;
-        Ok(Self { inner })
+        Ok(Self {
+            inner,
+            pending_upload: None,
+        })
     }
 
     pub fn identify(&mut self, user_id: String) -> Result<(), IdentityError> {
@@ -69,6 +73,39 @@ impl PublicHeatmapSdk {
     pub fn drain_batch_json(&mut self) -> Option<String> {
         let batch = self.inner.build_batch().ok()?;
         serde_json::to_string(&batch).ok()
+    }
+
+    pub fn begin_flush_batch_json(&mut self) -> Option<String> {
+        if self.pending_upload.is_some() {
+            return None;
+        }
+        let batch = self.inner.take_batch_for_upload().ok()?;
+        let json = match serde_json::to_string(&batch) {
+            Ok(json) => json,
+            Err(_) => {
+                let _ = self.inner.handle_upload_failure(
+                    batch,
+                    FlushError::Transport("batch serialization failed".into()),
+                );
+                return None;
+            }
+        };
+        self.pending_upload = Some(batch);
+        Some(json)
+    }
+
+    pub fn complete_flush(&mut self, accepted: bool) {
+        let Some(batch) = self.pending_upload.take() else {
+            return;
+        };
+        if accepted {
+            self.inner.finish_successful_upload();
+            return;
+        }
+        let _ = self.inner.handle_upload_failure(
+            batch,
+            FlushError::Transport("batch upload not accepted".into()),
+        );
     }
 
     #[doc(hidden)]

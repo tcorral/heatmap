@@ -385,7 +385,8 @@ impl HeatmapSdk {
         }
     }
 
-    fn take_batch_for_upload(&mut self) -> Result<HeatmapBatch, BatchError> {
+    #[doc(hidden)]
+    pub fn take_batch_for_upload(&mut self) -> Result<HeatmapBatch, BatchError> {
         if self.queue.is_empty() {
             return Err(BatchError::EmptyQueue);
         }
@@ -424,7 +425,8 @@ impl HeatmapSdk {
         events
     }
 
-    fn finish_successful_upload(&mut self) {
+    #[doc(hidden)]
+    pub fn finish_successful_upload(&mut self) {
         self.retry_batch_id = None;
         self.retry_not_before_ms = 0;
         if self.queue.is_empty() {
@@ -432,7 +434,8 @@ impl HeatmapSdk {
         }
     }
 
-    fn handle_upload_failure(
+    #[doc(hidden)]
+    pub fn handle_upload_failure(
         &mut self,
         batch: HeatmapBatch,
         err: FlushError,

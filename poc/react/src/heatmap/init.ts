@@ -61,21 +61,31 @@ export async function flushHeatmapBatch(): Promise<void> {
   if (!wasmSdk || !activeConfig) {
     return;
   }
-  const batchJson = wasmSdk.drainBatchJson();
+  const batchJson = wasmSdk.beginFlushBatchJson();
   if (!batchJson) {
     return;
   }
   const endpoint = activeConfig.endpoint.replace(/\/$/, "");
-  const response = await fetch(`${endpoint}/v1/batches`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Project-Key": activeConfig.projectKey,
-    },
-    body: batchJson,
-  });
-  if (!response.ok) {
-    throw new Error(`batch upload failed with status ${response.status}`);
+  let uploadAccepted = false;
+  try {
+    const response = await fetch(`${endpoint}/v1/batches`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Project-Key": activeConfig.projectKey,
+      },
+      body: batchJson,
+    });
+    uploadAccepted = response.ok;
+    wasmSdk.completeFlush(uploadAccepted);
+    if (!response.ok) {
+      throw new Error(`batch upload failed with status ${response.status}`);
+    }
+  } catch (err) {
+    if (!uploadAccepted) {
+      wasmSdk.completeFlush(false);
+    }
+    throw err;
   }
 }
 

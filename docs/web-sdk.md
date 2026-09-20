@@ -133,13 +133,16 @@ sdk.signOut();
 
 ## Flush
 
-Upload the in-memory batch (your app transport):
+Same-origin uploads can call `sdk.flush()` (WASM transport). Cross-origin POC uploads use async `fetch`; take the batch only when upload starts and confirm after the server accepts it so failed uploads restore the queue:
 
 ```typescript
-sdk.flush();
-const batchJson = sdk.drainBatchJson();
-if (batchJson) {
-  await fetch(`${endpoint}/v1/batches`, {
+const batchJson = sdk.beginFlushBatchJson();
+if (!batchJson) {
+  return;
+}
+let uploadAccepted = false;
+try {
+  const response = await fetch(`${endpoint}/v1/batches`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -147,8 +150,20 @@ if (batchJson) {
     },
     body: batchJson,
   });
+  uploadAccepted = response.ok;
+  sdk.completeFlush(uploadAccepted);
+  if (!response.ok) {
+    throw new Error(`batch upload failed with status ${response.status}`);
+  }
+} catch (err) {
+  if (!uploadAccepted) {
+    sdk.completeFlush(false);
+  }
+  throw err;
 }
 ```
+
+`drainBatchJson()` remains for tests that inspect batch JSON without HTTP; do not drain then fetch in production.
 
 ## Privacy
 

@@ -65,6 +65,16 @@ impl HeatmapSdkJs {
         self.sdk.drain_batch_json()
     }
 
+    #[wasm_bindgen(js_name = beginFlushBatchJson)]
+    pub fn begin_flush_batch_json(&mut self) -> Option<String> {
+        self.sdk.begin_flush_batch_json()
+    }
+
+    #[wasm_bindgen(js_name = completeFlush)]
+    pub fn complete_flush(&mut self, accepted: bool) {
+        self.sdk.complete_flush(accepted);
+    }
+
     #[wasm_bindgen(js_name = recordActivationClick)]
     pub fn record_activation_click(
         &mut self,
@@ -89,8 +99,7 @@ impl HeatmapSdkJs {
 
     #[wasm_bindgen(js_name = setQueueLimitsForTesting)]
     pub fn set_queue_limits_for_testing(&mut self, max_events: usize, max_bytes: usize) {
-        self.sdk
-            .set_queue_limits_for_testing(max_events, max_bytes);
+        self.sdk.set_queue_limits_for_testing(max_events, max_bytes);
     }
 
     #[wasm_bindgen(js_name = queuedEventCountForTesting)]
