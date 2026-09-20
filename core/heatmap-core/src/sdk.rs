@@ -338,6 +338,13 @@ impl HeatmapSdk {
         self.try_flush()
     }
 
+    pub fn poll_flush(&mut self) -> Result<(), FlushError> {
+        if !self.should_auto_flush(self.clock.now_ms()) {
+            return Ok(());
+        }
+        self.try_flush()
+    }
+
     fn try_flush(&mut self) -> Result<(), FlushError> {
         if self.clock.now_ms() < self.retry_not_before_ms {
             return Ok(());

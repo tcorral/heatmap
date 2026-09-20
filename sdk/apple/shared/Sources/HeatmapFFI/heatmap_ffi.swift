@@ -570,6 +570,8 @@ public protocol HeatmapSdkProtocol : AnyObject {
      */
     func onForeground() 
     
+    func pollFlush() throws 
+    
     /**
      * iOS adapter-only click enqueue; not exposed on `HeatmapClient`.
      */
@@ -714,6 +716,12 @@ open func onBackground() {try! rustCall() {
      */
 open func onForeground() {try! rustCall() {
     uniffi_heatmap_ffi_fn_method_heatmapsdk_on_foreground(self.uniffiClonePointer(),$0
+    )
+}
+}
+    
+open func pollFlush()throws  {try rustCallWithError(FfiConverterTypeFlushError.lift) {
+    uniffi_heatmap_ffi_fn_method_heatmapsdk_poll_flush(self.uniffiClonePointer(),$0
     )
 }
 }
@@ -1402,6 +1410,9 @@ private var initializationResult: InitializationResult = {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_heatmap_ffi_checksum_method_heatmapsdk_on_foreground() != 23763) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_heatmap_ffi_checksum_method_heatmapsdk_poll_flush() != 18814) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_heatmap_ffi_checksum_method_heatmapsdk_record_activation_click() != 29890) {

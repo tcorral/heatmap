@@ -750,6 +750,8 @@ internal interface UniffiForeignFutureCompleteVoid : com.sun.jna.Callback {
 
 
 
+
+
 // A JNA Library to expose the extern-C FFI definitions.
 // This is an implementation detail which will be called internally by the public API.
 
@@ -788,6 +790,8 @@ internal interface UniffiLib : Library {
     fun uniffi_heatmap_ffi_fn_method_heatmapsdk_on_background(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
     fun uniffi_heatmap_ffi_fn_method_heatmapsdk_on_foreground(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
+    ): Unit
+    fun uniffi_heatmap_ffi_fn_method_heatmapsdk_poll_flush(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
     fun uniffi_heatmap_ffi_fn_method_heatmapsdk_record_activation_click(`ptr`: Pointer,`x`: Double,`y`: Double,`elementId`: RustBuffer.ByValue,`viewportWidth`: Int,`viewportHeight`: Int,`timestampMs`: Long,`osVersion`: RustBuffer.ByValue,`appVersion`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
@@ -933,6 +937,8 @@ internal interface UniffiLib : Library {
     ): Short
     fun uniffi_heatmap_ffi_checksum_method_heatmapsdk_on_foreground(
     ): Short
+    fun uniffi_heatmap_ffi_checksum_method_heatmapsdk_poll_flush(
+    ): Short
     fun uniffi_heatmap_ffi_checksum_method_heatmapsdk_record_activation_click(
     ): Short
     fun uniffi_heatmap_ffi_checksum_method_heatmapsdk_record_android_activation_click(
@@ -990,6 +996,9 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_heatmap_ffi_checksum_method_heatmapsdk_on_foreground() != 23763.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_heatmap_ffi_checksum_method_heatmapsdk_poll_flush() != 18814.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_heatmap_ffi_checksum_method_heatmapsdk_record_activation_click() != 29890.toShort()) {
@@ -1458,6 +1467,8 @@ public interface HeatmapSdkInterface {
      */
     fun `onForeground`()
     
+    fun `pollFlush`()
+    
     /**
      * iOS adapter-only click enqueue; not exposed on `HeatmapClient`.
      */
@@ -1649,6 +1660,18 @@ open class HeatmapSdk: Disposable, AutoCloseable, HeatmapSdkInterface {
     callWithPointer {
     uniffiRustCall() { _status ->
     UniffiLib.INSTANCE.uniffi_heatmap_ffi_fn_method_heatmapsdk_on_foreground(
+        it, _status)
+}
+    }
+    
+    
+
+    
+    @Throws(FlushException::class)override fun `pollFlush`()
+        = 
+    callWithPointer {
+    uniffiRustCallWithError(FlushException) { _status ->
+    UniffiLib.INSTANCE.uniffi_heatmap_ffi_fn_method_heatmapsdk_poll_flush(
         it, _status)
 }
     }

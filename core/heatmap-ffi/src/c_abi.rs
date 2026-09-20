@@ -125,6 +125,14 @@ pub extern "C" fn heatmap_sdk_flush(handle: HeatmapSdkHandle) -> i32 {
 }
 
 #[no_mangle]
+pub extern "C" fn heatmap_sdk_poll_flush(handle: HeatmapSdkHandle) -> i32 {
+    with_sdk(handle, |sdk| match sdk.poll_flush() {
+        Ok(()) => HEATMAP_OK,
+        Err(_) => HEATMAP_ERR_FLUSH,
+    })
+}
+
+#[no_mangle]
 pub extern "C" fn heatmap_sdk_adapter_on_background(handle: HeatmapSdkHandle) -> i32 {
     with_sdk(handle, |sdk| {
         sdk.on_background();

@@ -62,6 +62,10 @@ impl PublicHeatmapSdk {
         self.inner.flush()
     }
 
+    pub fn poll_flush(&mut self) -> Result<(), FlushError> {
+        self.inner.poll_flush()
+    }
+
     pub fn drain_batch_json(&mut self) -> Option<String> {
         let batch = self.inner.build_batch().ok()?;
         serde_json::to_string(&batch).ok()

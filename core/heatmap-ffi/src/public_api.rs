@@ -54,6 +54,10 @@ impl PublicHeatmapSdk {
     pub fn flush(&mut self) -> Result<(), FlushError> {
         self.inner.flush()
     }
+
+    pub fn poll_flush(&mut self) -> Result<(), FlushError> {
+        self.inner.poll_flush()
+    }
 }
 
 pub fn default_native_storage_directory() -> PathBuf {
@@ -95,6 +99,7 @@ pub mod export_names {
     pub const SCREEN: &str = "screen";
     pub const SET_TRACKING_ENABLED: &str = "set_tracking_enabled";
     pub const FLUSH: &str = "flush";
+    pub const POLL_FLUSH: &str = "poll_flush";
 }
 
 pub mod c_export_names {
@@ -105,6 +110,7 @@ pub mod c_export_names {
     pub const SCREEN: &str = "heatmap_sdk_screen";
     pub const SET_TRACKING_ENABLED: &str = "heatmap_sdk_set_tracking_enabled";
     pub const FLUSH: &str = "heatmap_sdk_flush";
+    pub const POLL_FLUSH: &str = "heatmap_sdk_poll_flush";
 }
 
 pub mod forbidden_export_names {

@@ -43,6 +43,9 @@ internal static class HeatmapNative
     [DllImport(LibraryName, CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
     internal static extern int heatmap_sdk_flush(IntPtr handle);
 
+    [DllImport(LibraryName, CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+    internal static extern int heatmap_sdk_poll_flush(IntPtr handle);
+
     internal static void Check(int code, string operation)
     {
         if (code != HeatmapFfiCodes.Ok)

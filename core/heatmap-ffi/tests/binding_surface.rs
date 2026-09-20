@@ -18,6 +18,7 @@ fn should_expose_public_methods_on_uniffi_layer() {
         export_names::SCREEN,
         export_names::SET_TRACKING_ENABLED,
         export_names::FLUSH,
+        export_names::POLL_FLUSH,
     ] {
         assert!(
             source.contains(&format!("fn {name}")),
@@ -41,6 +42,7 @@ fn should_expose_stable_c_abi_symbols() {
         c_export_names::SCREEN,
         c_export_names::SET_TRACKING_ENABLED,
         c_export_names::FLUSH,
+        c_export_names::POLL_FLUSH,
     ] {
         assert!(
             source.contains(&format!("fn {symbol}")),

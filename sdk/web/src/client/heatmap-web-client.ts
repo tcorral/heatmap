@@ -7,7 +7,10 @@ import { createTrackingGate, type TrackingGate } from "../capture/tracking-gate.
 
 export type HeatmapWebWasm = {
   setTrackingEnabled(enabled: boolean): void;
+  pollFlush?: () => void;
 };
+
+const FLUSH_INTERVAL_MS = 10_000;
 
 export type HeatmapWebClientOptions = {
   wasm?: HeatmapWebWasm;
@@ -27,6 +30,7 @@ export function createHeatmapWebClient(
 ): HeatmapWebClient {
   const gate = options.gate ?? createTrackingGate(true);
   let stopListeners: (() => void) | null = null;
+  let flushTimer: ReturnType<typeof setInterval> | null = null;
 
   return {
     setTrackingEnabled(enabled: boolean) {
@@ -43,9 +47,22 @@ export function createHeatmapWebClient(
         { recordScroll: options.recordScroll },
         { gate },
       );
+      if (options.wasm?.pollFlush && typeof window !== "undefined") {
+        flushTimer = window.setInterval(() => {
+          try {
+            options.wasm?.pollFlush?.();
+          } catch {
+            // Fail closed: interval flush must not throw into the host page.
+          }
+        }, FLUSH_INTERVAL_MS);
+      }
       stopListeners = () => {
         stopClicks();
         stopScroll();
+        if (flushTimer !== null) {
+          window.clearInterval(flushTimer);
+          flushTimer = null;
+        }
       };
     },
     stopDomCapture() {

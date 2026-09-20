@@ -118,6 +118,16 @@ async function loadWasmSdk(config: HeatmapClientConfig): Promise<void> {
       endpoint: config.endpoint.trim(),
     }),
   );
+  if (typeof window !== "undefined") {
+    window.setInterval(() => {
+      try {
+        const sdk = wasmSdk as { pollFlush?: () => void } | null;
+        sdk?.pollFlush?.();
+      } catch {
+        // Fail closed: timed flush must not throw into the host page.
+      }
+    }, 10_000);
+  }
   exposeE2EHelpers();
 }
 

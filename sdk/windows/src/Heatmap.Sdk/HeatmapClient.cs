@@ -1,6 +1,7 @@
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Text.Json;
+using System.Threading;
 using Heatmap.Sdk.Internal;
 
 namespace Heatmap.Sdk;
@@ -14,6 +15,7 @@ public sealed class HeatmapClient : IDisposable
 {
     private IntPtr _handle;
     private bool _disposed;
+    private readonly Timer _flushTimer;
 
     /// <summary>Initialize from JSON matching the core <c>HeatmapConfig</c> shape.</summary>
     public HeatmapClient(string configJson)
@@ -30,6 +32,7 @@ public sealed class HeatmapClient : IDisposable
         {
             Marshal.FreeCoTaskMem(configPtr);
         }
+        _flushTimer = StartFlushTimer();
     }
 
     /// <summary>Initialize with required fields and core defaults for optional settings.</summary>
@@ -47,6 +50,7 @@ public sealed class HeatmapClient : IDisposable
         }
 
         _handle = handle;
+        _flushTimer = StartFlushTimer();
     }
 
     /// <summary>Opaque C ABI handle for adapter-only use.</summary>
@@ -118,6 +122,7 @@ public sealed class HeatmapClient : IDisposable
             return;
         }
 
+        _flushTimer.Dispose();
         if (_handle != IntPtr.Zero)
         {
             HeatmapNative.heatmap_sdk_free(_handle);
@@ -125,6 +130,33 @@ public sealed class HeatmapClient : IDisposable
         }
 
         _disposed = true;
+    }
+
+    private Timer StartFlushTimer()
+    {
+        return new Timer(
+            _ =>
+            {
+                try
+                {
+                    PollFlush();
+                }
+                catch (Exception)
+                {
+                }
+            },
+            null,
+            10_000,
+            10_000);
+    }
+
+    private void PollFlush()
+    {
+        if (_disposed || _handle == IntPtr.Zero)
+        {
+            return;
+        }
+        HeatmapNative.Check(HeatmapNative.heatmap_sdk_poll_flush(_handle), "pollFlush");
     }
 
     private void ThrowIfDisposed()

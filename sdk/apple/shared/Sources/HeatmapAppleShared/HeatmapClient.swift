@@ -4,10 +4,12 @@ import HeatmapFFI
 /// App-facing Heatmap SDK client. Wraps UniFFI `HeatmapSdk` with a stable Swift API.
 public final class HeatmapClient: @unchecked Sendable {
     private let sdk: HeatmapSdk
+    private var flushTimer: Timer?
 
     /// Initialize from JSON matching the core `HeatmapConfig` shape.
     public init(configJson: String) throws {
         sdk = try HeatmapSdk.initFromJson(configJson: configJson)
+        startFlushTimer()
     }
 
     /// Initialize with required fields and core defaults for optional settings.
@@ -24,6 +26,7 @@ public final class HeatmapClient: @unchecked Sendable {
             appVersion: "1.0.0"
         )
         sdk = try HeatmapSdk.`init`(config: config)
+        startFlushTimer()
     }
 
     /// Persistent identity and queue directory for this install.
@@ -38,6 +41,18 @@ public final class HeatmapClient: @unchecked Sendable {
     /// Use the same `HeatmapSdk` instance as `HeatmapIosRustCaptureBackend`.
     public init(sdk: HeatmapSdk) {
         self.sdk = sdk
+        startFlushTimer()
+    }
+
+    deinit {
+        flushTimer?.invalidate()
+    }
+
+    private func startFlushTimer() {
+        flushTimer?.invalidate()
+        flushTimer = Timer.scheduledTimer(withTimeInterval: 10, repeats: true) { [weak self] _ in
+            try? self?.sdk.pollFlush()
+        }
     }
 
     public func identify(userId: String) throws {

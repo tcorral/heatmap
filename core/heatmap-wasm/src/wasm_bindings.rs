@@ -55,6 +55,11 @@ impl HeatmapSdkJs {
         self.sdk.flush().map_err(flush_error)
     }
 
+    #[wasm_bindgen(js_name = pollFlush)]
+    pub fn poll_flush(&mut self) -> Result<(), JsValue> {
+        self.sdk.poll_flush().map_err(flush_error)
+    }
+
     #[wasm_bindgen(js_name = drainBatchJson)]
     pub fn drain_batch_json(&mut self) -> Option<String> {
         self.sdk.drain_batch_json()

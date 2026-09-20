@@ -171,6 +171,20 @@ fn should_auto_flush_after_interval_elapses_with_new_batch_id() {
 }
 
 #[test]
+fn should_auto_flush_after_interval_without_another_event() {
+    let clock = Arc::new(ManualClock::new(0));
+    let transport = RecordingTransport::new(TransportOutcome::Ok);
+    let (mut sdk, transport) = sdk_with_clock(transport, Arc::clone(&clock));
+    sdk.enqueue_candidate(click_candidate(0, "checkout.pay"))
+        .expect("enqueue");
+    assert_eq!(transport.send_count(), 0);
+    clock.advance_ms(FLUSH_INTERVAL_MS);
+    sdk.poll_flush().expect("poll");
+    assert_eq!(transport.send_count(), 1);
+    assert!(transport.sent_batch_ids()[0].starts_with("batch_"));
+}
+
+#[test]
 fn should_flush_on_background_with_new_batch_id() {
     let clock = Arc::new(ManualClock::new(0));
     let transport = RecordingTransport::new(TransportOutcome::Ok);

@@ -92,6 +92,11 @@ impl HeatmapSdk {
         guard.flush().map_err(FlushError::from)
     }
 
+    pub fn poll_flush(&self) -> Result<(), FlushError> {
+        let mut guard = self.state.lock().expect("heatmap sdk lock");
+        guard.poll_flush().map_err(FlushError::from)
+    }
+
     /// Adapter-only lifecycle hook (iOS, Android).
     pub fn on_background(&self) {
         let mut guard = self.state.lock().expect("heatmap sdk lock");
