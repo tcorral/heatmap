@@ -130,12 +130,9 @@ async function loadWasmSdk(config: HeatmapClientConfig): Promise<void> {
   );
   if (typeof window !== "undefined") {
     window.setInterval(() => {
-      try {
-        const sdk = wasmSdk as { pollFlush?: () => void } | null;
-        sdk?.pollFlush?.();
-      } catch {
-        // Fail closed: timed flush must not throw into the host page.
-      }
+      void flushHeatmapBatch().catch((error: unknown) => {
+        console.error("[heatmap] timed flush failed", error);
+      });
     }, 10_000);
   }
   exposeE2EHelpers();
@@ -164,6 +161,9 @@ function createRecorder(_config: HeatmapClientConfig): WasmActivationRecorder | 
           viewportHeight,
           timestampMs,
         );
+        void flushHeatmapBatch().catch((error: unknown) => {
+          console.error("[heatmap] flush after click failed", error);
+        });
       } catch (error: unknown) {
         console.error("[heatmap] click capture failed", error);
       }

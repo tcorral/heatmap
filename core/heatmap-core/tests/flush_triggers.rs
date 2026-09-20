@@ -3,7 +3,7 @@ use std::sync::{Arc, Mutex};
 use heatmap_core::{
     batch_ingest_url, CaptureCandidate, FlushError, HeatmapBatch, HeatmapConfig, HeatmapSdk,
     InteractionEvent, ManualClock, PlatformInfo, PlatformType, Position, ScreenInfo, SdkInfo,
-    FLUSH_INTERVAL_MS, FLUSH_MAX_BYTES, FLUSH_MAX_EVENTS, INGEST_MAX_EVENTS, Viewport,
+    Viewport, FLUSH_INTERVAL_MS, FLUSH_MAX_BYTES, FLUSH_MAX_EVENTS, INGEST_MAX_EVENTS,
 };
 
 fn valid_config() -> HeatmapConfig {
@@ -103,10 +103,9 @@ impl heatmap_core::BatchTransport for RecordingTransport {
         match self.outcome.lock().expect("lock").clone() {
             TransportOutcome::Ok => Ok(()),
             TransportOutcome::Transport(message) => Err(FlushError::Transport(message)),
-            TransportOutcome::Http(code, retry_after_secs) => Err(FlushError::http_status(
-                code,
-                retry_after_secs,
-            )),
+            TransportOutcome::Http(code, retry_after_secs) => {
+                Err(FlushError::http_status(code, retry_after_secs))
+            }
         }
     }
 }
@@ -127,7 +126,6 @@ fn sdk_with_clock(
     .expect("init");
     (sdk, transport)
 }
-
 
 #[test]
 fn should_auto_flush_when_event_count_reaches_limit_with_new_batch_id() {
@@ -303,6 +301,61 @@ fn should_reuse_batch_id_on_transport_failure() {
     sdk.flush().expect("retry");
     let ids = transport.sent_batch_ids();
     assert_eq!(ids[0], ids[1]);
+}
+
+#[test]
+fn should_not_auto_flush_when_defer_network_flush_is_enabled() {
+    let clock = Arc::new(ManualClock::new(0));
+    let transport = RecordingTransport::new(TransportOutcome::Ok);
+    let (mut sdk, transport) = sdk_with_clock(transport, Arc::clone(&clock));
+    sdk.set_defer_network_flush(true);
+    let mut ts = 1_000_i64;
+    while sdk.queued_event_count_for_testing() < FLUSH_MAX_EVENTS {
+        sdk.enqueue_candidate(click_candidate(ts, "checkout.pay"))
+            .expect("enqueue");
+        ts += 1;
+    }
+    assert_eq!(transport.send_count(), 0);
+    assert!(sdk.queued_event_count_for_testing() >= FLUSH_MAX_EVENTS);
+}
+
+#[test]
+fn should_not_poll_flush_when_defer_network_flush_is_enabled() {
+    let clock = Arc::new(ManualClock::new(0));
+    let transport = RecordingTransport::new(TransportOutcome::Ok);
+    let (mut sdk, transport) = sdk_with_clock(transport, Arc::clone(&clock));
+    sdk.set_defer_network_flush(true);
+    sdk.enqueue_candidate(click_candidate(0, "checkout.pay"))
+        .expect("enqueue");
+    clock.advance_ms(FLUSH_INTERVAL_MS);
+    sdk.poll_flush().expect("poll");
+    assert_eq!(transport.send_count(), 0);
+    assert!(sdk.queued_event_count_for_testing() > 0);
+}
+
+#[test]
+fn should_not_background_flush_when_defer_network_flush_is_enabled() {
+    let clock = Arc::new(ManualClock::new(0));
+    let transport = RecordingTransport::new(TransportOutcome::Ok);
+    let (mut sdk, transport) = sdk_with_clock(transport, Arc::clone(&clock));
+    sdk.set_defer_network_flush(true);
+    sdk.enqueue_candidate(click_candidate(0, "checkout.pay"))
+        .expect("enqueue");
+    sdk.on_background();
+    assert_eq!(transport.send_count(), 0);
+    assert!(sdk.queued_event_count_for_testing() > 0);
+}
+
+#[test]
+fn should_still_explicit_flush_when_defer_network_flush_is_enabled() {
+    let clock = Arc::new(ManualClock::new(0));
+    let transport = RecordingTransport::new(TransportOutcome::Ok);
+    let (mut sdk, transport) = sdk_with_clock(transport, Arc::clone(&clock));
+    sdk.set_defer_network_flush(true);
+    sdk.enqueue_candidate(click_candidate(0, "checkout.pay"))
+        .expect("enqueue");
+    sdk.flush().expect("flush");
+    assert_eq!(transport.send_count(), 1);
 }
 
 #[test]

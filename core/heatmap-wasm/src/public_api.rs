@@ -29,17 +29,26 @@ impl PublicHeatmapSdk {
 
     pub fn init(config: HeatmapConfig) -> Result<Self, InitError> {
         #[cfg(target_arch = "wasm32")]
-        let inner = CoreHeatmapSdk::init_with_transport_and_store(
-            config,
-            FetchBatchTransport::new(),
-            Arc::new(crate::local_storage_identity::LocalStorageIdentityStore::new()),
-        )?;
+        {
+            let mut inner = CoreHeatmapSdk::init_with_transport_and_store(
+                config,
+                FetchBatchTransport::new(),
+                Arc::new(crate::local_storage_identity::LocalStorageIdentityStore::new()),
+            )?;
+            inner.set_defer_network_flush(true);
+            return Ok(Self {
+                inner,
+                pending_upload: None,
+            });
+        }
         #[cfg(not(target_arch = "wasm32"))]
-        let inner = CoreHeatmapSdk::init_with_transport(config, StubBatchTransport::new())?;
-        Ok(Self {
-            inner,
-            pending_upload: None,
-        })
+        {
+            let inner = CoreHeatmapSdk::init_with_transport(config, StubBatchTransport::new())?;
+            Ok(Self {
+                inner,
+                pending_upload: None,
+            })
+        }
     }
 
     pub fn identify(&mut self, user_id: String) -> Result<(), IdentityError> {

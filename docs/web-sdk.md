@@ -99,7 +99,7 @@ Turn off capture in the adapter and in core:
 import { createHeatmapWebClient } from "@heatmap/sdk-web";
 
 const client = createHeatmapWebClient({
-  wasm: sdk,
+  wasm: { ...sdk, flushBatch: () => flushHeatmapBatch() },
   recordClick: (click) => {
     sdk.recordActivationClick(
       click.position.x,
@@ -133,7 +133,9 @@ sdk.signOut();
 
 ## Flush
 
-Same-origin uploads can call `sdk.flush()` (WASM transport). Cross-origin POC uploads use async `fetch`; take the batch only when upload starts and confirm after the server accepts it so failed uploads restore the queue:
+WASM init sets `defer_network_flush`, so enqueue, `pollFlush`, and background hooks do **not** upload on the main thread. Host code must upload on a timer and after capture using `beginFlushBatchJson` / `completeFlush` (or a helper like the React POC’s `flushHeatmapBatch`). Pass that helper as `flushBatch` to `createHeatmapWebClient` so the 10s interval stays async. Sync XHR via `sdk.flush()` remains for same-origin-only edge cases; it is not the recommended path.
+
+Cross-origin and typical POC uploads use async `fetch`; take the batch only when upload starts and confirm after the server accepts it so failed uploads restore the queue:
 
 ```typescript
 const batchJson = sdk.beginFlushBatchJson();

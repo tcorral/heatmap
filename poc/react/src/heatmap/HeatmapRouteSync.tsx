@@ -14,18 +14,16 @@ export function HeatmapRouteSync() {
     const path = location.pathname;
     if (path === "/") {
       sdk.screen("Home", null);
-      return;
-    }
-    if (path === "/checkout") {
+    } else if (path === "/checkout") {
       sdk.screen("Checkout", "2024-09");
+    } else if (path === "/confirmation") {
+      sdk.screen("Confirmation", null);
+    } else {
       return;
     }
-    if (path === "/confirmation") {
-      sdk.screen("Confirmation", null);
-      void flushHeatmapBatch().catch((error: unknown) => {
-        console.error("[heatmap] flush failed", error);
-      });
-    }
+    void flushHeatmapBatch().catch((error: unknown) => {
+      console.error("[heatmap] flush failed", error);
+    });
   }, [location.pathname]);
 
   return null;

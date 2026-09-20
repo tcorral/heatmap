@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { getHeatmapSdk } from "../heatmap/init";
+import { flushHeatmapBatch, getHeatmapSdk } from "../heatmap/init";
 
 export function CheckoutPage() {
   const navigate = useNavigate();
@@ -19,6 +19,9 @@ export function CheckoutPage() {
       }
       recorded = true;
       sdk.recordScroll();
+      void flushHeatmapBatch().catch((error: unknown) => {
+        console.error("[heatmap] flush after scroll failed", error);
+      });
     };
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);

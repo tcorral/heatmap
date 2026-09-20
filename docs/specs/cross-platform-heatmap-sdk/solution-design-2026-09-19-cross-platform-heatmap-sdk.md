@@ -385,3 +385,9 @@ No product toolchain exists on disk today. Commands below are not runnable until
 - **What changed:** Init accepts `http://127.0.0.1` and `http://localhost` ingest bases (optional port/path) in addition to `https://`. Remote `http://` endpoints stay rejected.
 - **Why:** The React POC / Playwright E2E posts batches to a local axum process. Terminating TLS on every developer machine was not practical for that path.
 - **Supersedes:** “TLS required for ingest” and “endpoint must be HTTPS” as a universal init rule. Remote production ingest remains HTTPS-only. Adapters still POST `{base}/v1/batches`.
+
+### Note 2
+
+- **What changed:** WASM init sets `defer_network_flush`. Enqueue, `poll_flush`, and background no longer call `BatchTransport` (sync XHR). Hosts upload with `beginFlushBatchJson` / `completeFlush` over async `fetch`, on a 10s timer and after capture.
+- **Why:** Cross-origin XHR is blocked; sync XHR on the UI thread violates the performance NFR. Shared `BatchTransport` stays synchronous for native.
+- **Supersedes:** Browser auto-flush and `pollFlush` delivering batches through `FetchBatchTransport` on the main thread.

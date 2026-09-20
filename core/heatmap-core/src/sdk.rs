@@ -88,6 +88,7 @@ pub struct HeatmapSdk {
     queue_pending_since_ms: Option<i64>,
     retry_batch_id: Option<String>,
     retry_not_before_ms: i64,
+    defer_network_flush: bool,
 }
 
 impl HeatmapSdk {
@@ -174,7 +175,12 @@ impl HeatmapSdk {
             queue_pending_since_ms: None,
             retry_batch_id: None,
             retry_not_before_ms: 0,
+            defer_network_flush: false,
         })
+    }
+
+    pub fn set_defer_network_flush(&mut self, defer: bool) {
+        self.defer_network_flush = defer;
     }
 
     pub fn diagnostics(&self) -> HeatmapDiagnostics {
@@ -206,7 +212,9 @@ impl HeatmapSdk {
 
     pub fn on_background(&mut self) {
         self.persist_session_state();
-        let _ = self.try_flush();
+        if !self.defer_network_flush {
+            let _ = self.try_flush();
+        }
         self.sync_persisted_queue();
     }
 
@@ -357,6 +365,9 @@ impl HeatmapSdk {
     }
 
     pub fn poll_flush(&mut self) -> Result<(), FlushError> {
+        if self.defer_network_flush {
+            return Ok(());
+        }
         if !self.should_auto_flush(self.clock.now_ms()) {
             return Ok(());
         }
@@ -462,7 +473,7 @@ impl HeatmapSdk {
     }
 
     fn maybe_auto_flush(&mut self, now: i64) {
-        if !self.should_auto_flush(now) {
+        if self.defer_network_flush || !self.should_auto_flush(now) {
             return;
         }
         let _ = self.try_flush();

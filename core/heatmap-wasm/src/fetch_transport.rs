@@ -3,8 +3,10 @@ use wasm_bindgen::JsCast;
 use web_sys::{XmlHttpRequest, XmlHttpRequestResponseType};
 
 /// Browser batch upload uses synchronous XHR so the shared Rust `BatchTransport` trait
-/// can stay synchronous. This blocks the main thread for the HTTP round-trip; integrators
-/// should call `flush` after meaningful interaction bursts, not on every event.
+/// can stay synchronous. WASM init sets `defer_network_flush`, so auto-flush and
+/// `poll_flush` do not hit this transport; sync XHR runs only when something calls
+/// explicit `flush()`. Recommended uploads use async JS `fetch` with
+/// `beginFlushBatchJson` / `completeFlush`.
 pub struct FetchBatchTransport;
 
 impl FetchBatchTransport {
@@ -27,8 +29,8 @@ impl BatchTransport for FetchBatchTransport {
         batch: &HeatmapBatch,
     ) -> Result<(), FlushError> {
         let url = batch_ingest_url(endpoint);
-        let body = serde_json::to_string(batch)
-            .map_err(|err| FlushError::Transport(err.to_string()))?;
+        let body =
+            serde_json::to_string(batch).map_err(|err| FlushError::Transport(err.to_string()))?;
         let xhr = XmlHttpRequest::new().map_err(transport_err)?;
         xhr.open_with_async("POST", &url, false)
             .map_err(transport_err)?;
