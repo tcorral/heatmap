@@ -38,7 +38,7 @@ _Each finding should carry enough context for arbitration without becoming a ful
   - **Why it matters:** Subsequent queue, identity, and session writes silently retain stale data.
   - **Suggested action:** Implement platform-safe atomic replacement, propagate/report failures, and test repeated writes on Windows.
 
-- [ ] **Finding** — `core/heatmap-core/src/sdk.rs:433` — Batch byte limit excludes JSON envelope overhead
+- [x] **Finding** — `core/heatmap-core/src/sdk.rs:433` — Batch byte limit excludes JSON envelope overhead
   - **Issue:** Batch construction counts event bytes only, omitting batch fields, array delimiters, and commas.
   - **Why it matters:** Near-limit batches exceed backend’s 262,144-byte cap, receive permanent 413, and are dropped.
   - **Suggested action:** Bound using complete serialized batch size and add exact-boundary tests.
@@ -70,7 +70,7 @@ _Each finding should carry enough context for arbitration without becoming a ful
   - **Why it matters:** Implementation Note 3 requires prior-session `session_end` on next capture after inactivity.
   - **Suggested action:** Retain expired prior session metadata until next capture performs closure and rotation.
 
-- [ ] **Finding** — `core/heatmap-core/src/sdk.rs:425` — Batch construction does not enforce serialized 256 KiB ceiling
+- [x] **Finding** — `core/heatmap-core/src/sdk.rs:425` — Batch construction does not enforce serialized 256 KiB ceiling
   - **Issue:** Limit uses summed event sizes, excludes envelope overhead, and always accepts first event even when it alone exceeds limit.
   - **Why it matters:** SDK can create oversized batches that backend rejects with 413 and permanently drops.
   - **Suggested action:** Bound complete serialized batch and explicitly handle individually oversized events.

@@ -15,8 +15,9 @@ use crate::event::{
     HeatmapEvent, InteractionEvent, InteractionType, ScreenInfo, SdkInfo, Viewport,
 };
 use crate::flush_policy::{
-    flush_error_is_permanent, flush_error_is_transient, flush_event_limit_reached,
-    flush_interval_elapsed, queue_flush_byte_limit_reached, INGEST_MAX_BYTES, INGEST_MAX_EVENTS,
+    estimated_batch_wire_bytes, flush_error_is_permanent, flush_error_is_transient,
+    flush_event_limit_reached, flush_interval_elapsed, queue_flush_byte_limit_reached,
+    INGEST_MAX_BYTES, INGEST_MAX_EVENTS,
 };
 use crate::identity_store::{
     IdentityStore, InMemoryIdentityStore, STORE_KEY_ANONYMOUS_ID, STORE_KEY_LAST_EVENT_AT,
@@ -398,9 +399,10 @@ impl HeatmapSdk {
         if self.queue.is_empty() && self.retry_batch.is_none() {
             return Ok(());
         }
-        let batch = self
-            .take_batch_for_upload()
-            .map_err(|err| FlushError::Transport(err.to_string()))?;
+        let batch = match self.take_batch_for_upload() {
+            Ok(batch) => batch,
+            Err(BatchError::EmptyQueue) => return Ok(()),
+        };
         match self
             .transport
             .send_batch(&self.config.endpoint, &self.config.project_key, &batch)
@@ -424,6 +426,9 @@ impl HeatmapSdk {
             return Err(BatchError::EmptyQueue);
         }
         let events = self.take_queued_events_for_ingest();
+        if events.is_empty() {
+            return Err(BatchError::EmptyQueue);
+        }
         let batch = HeatmapBatch {
             batch_id: new_id("batch"),
             events,
@@ -446,7 +451,11 @@ impl HeatmapSdk {
                 break;
             }
             let event_bytes = event_json_bytes(front);
-            if !events.is_empty() && bytes.saturating_add(event_bytes) > INGEST_MAX_BYTES {
+            if exceeds_ingest_byte_ceiling(bytes, events.len(), event_bytes) {
+                if events.is_empty() {
+                    self.drop_oversized_front_event();
+                    continue;
+                }
                 break;
             }
             let Some(event) = self.queue.pop_front() else {
@@ -457,6 +466,16 @@ impl HeatmapSdk {
             events.push(event);
         }
         events
+    }
+
+    fn drop_oversized_front_event(&mut self) {
+        let Some(event) = self.queue.pop_front() else {
+            return;
+        };
+        self.queue_events_bytes = self
+            .queue_events_bytes
+            .saturating_sub(event_json_bytes(&event));
+        self.diagnostics.record_permanent_drop(1);
     }
 
     #[doc(hidden)]
@@ -657,6 +676,17 @@ impl HeatmapSdk {
     fn sync_persisted_queue(&self) {
         persist_queue(self.identity_store.as_ref(), &self.queue);
     }
+}
+
+fn exceeds_ingest_byte_ceiling(
+    events_bytes: usize,
+    event_count: usize,
+    next_event_bytes: usize,
+) -> bool {
+    estimated_batch_wire_bytes(
+        events_bytes.saturating_add(next_event_bytes),
+        event_count.saturating_add(1),
+    ) > INGEST_MAX_BYTES
 }
 
 fn new_id(prefix: &str) -> String {

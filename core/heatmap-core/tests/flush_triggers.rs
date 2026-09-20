@@ -3,7 +3,8 @@ use std::sync::{Arc, Mutex};
 use heatmap_core::{
     batch_ingest_url, CaptureCandidate, FlushError, HeatmapBatch, HeatmapConfig, HeatmapSdk,
     InteractionEvent, ManualClock, PlatformInfo, PlatformType, Position, ScreenInfo, SdkInfo,
-    Viewport, FLUSH_INTERVAL_MS, FLUSH_MAX_BYTES, FLUSH_MAX_EVENTS, INGEST_MAX_EVENTS,
+    Viewport, FLUSH_INTERVAL_MS, FLUSH_MAX_BYTES, FLUSH_MAX_EVENTS, INGEST_MAX_BYTES,
+    INGEST_MAX_EVENTS,
 };
 
 fn valid_config() -> HeatmapConfig {
@@ -94,6 +95,19 @@ impl RecordingTransport {
             .get(index)
             .map(|batch| batch.events.iter().map(|event| event.timestamp).collect())
             .unwrap_or_default()
+    }
+
+    fn last_batch_wire_bytes(&self) -> usize {
+        self.batches
+            .lock()
+            .expect("lock")
+            .last()
+            .map(|batch| {
+                serde_json::to_vec(batch)
+                    .map(|bytes| bytes.len())
+                    .unwrap_or(0)
+            })
+            .unwrap_or(0)
     }
 }
 
@@ -417,4 +431,38 @@ fn should_upload_at_most_ingest_event_ceiling_per_batch() {
     sdk.flush().expect("flush");
     assert_eq!(transport.last_batch_event_count(), INGEST_MAX_EVENTS);
     assert!(sdk.queued_event_count_for_testing() > 0);
+}
+
+#[test]
+fn should_keep_serialized_batch_within_ingest_byte_ceiling() {
+    let clock = Arc::new(ManualClock::new(0));
+    let transport = RecordingTransport::new(TransportOutcome::Ok);
+    let (mut sdk, transport) = sdk_with_clock(transport, Arc::clone(&clock));
+    sdk.set_defer_network_flush(true);
+    let pad = 1_500;
+    let mut ts = 1_000_i64;
+    while sdk.queued_event_count_for_testing() < INGEST_MAX_EVENTS {
+        sdk.enqueue_candidate(click_candidate(ts, &format!("pay.{}", "x".repeat(pad))))
+            .expect("enqueue");
+        ts += 1;
+    }
+    sdk.flush().expect("flush");
+    assert!(transport.last_batch_event_count() > 0);
+    assert!(transport.last_batch_wire_bytes() <= INGEST_MAX_BYTES);
+    assert!(sdk.queued_event_count_for_testing() > 0);
+}
+
+#[test]
+fn should_drop_individually_oversized_event_instead_of_uploading_it() {
+    let clock = Arc::new(ManualClock::new(0));
+    let transport = RecordingTransport::new(TransportOutcome::Ok);
+    let (mut sdk, transport) = sdk_with_clock(transport, Arc::clone(&clock));
+    sdk.set_defer_network_flush(true);
+    sdk.enqueue_candidate(click_candidate(1_000, &"x".repeat(INGEST_MAX_BYTES)))
+        .expect("enqueue");
+    sdk.flush().expect("first flush session_start");
+    sdk.flush().expect("second flush drops oversized click");
+    assert!(transport.last_batch_wire_bytes() <= INGEST_MAX_BYTES);
+    assert!(sdk.diagnostics().permanent_drop >= 1);
+    assert_eq!(sdk.queued_event_count_for_testing(), 0);
 }
