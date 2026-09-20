@@ -19,7 +19,8 @@ public final class HeatmapClient: @unchecked Sendable {
             sampleRate: 1.0,
             excludeElements: [],
             excludeScreens: [],
-            maskElements: []
+            maskElements: [],
+            storageDirectory: nil
         )
         sdk = try HeatmapSdk.`init`(config: config)
     }

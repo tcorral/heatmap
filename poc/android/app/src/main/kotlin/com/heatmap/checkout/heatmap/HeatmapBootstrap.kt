@@ -1,10 +1,12 @@
 package com.heatmap.checkout.heatmap
 
+import android.content.Context
 import com.heatmap.checkout.BuildConfig
 import com.heatmap.sdk.HeatmapClient
 import com.heatmap.sdk.HeatmapSdk
 import com.heatmap.sdk.InitConfig
 import com.heatmap.sdk.view.HeatmapAndroidRustCaptureBackend
+import java.io.File
 
 data class HeatmapRuntime(
     val client: HeatmapClient,
@@ -12,7 +14,11 @@ data class HeatmapRuntime(
 )
 
 object HeatmapBootstrap {
-    fun makeRuntime(config: HeatmapClientConfig): HeatmapRuntime {
+    fun makeRuntime(
+        context: Context,
+        config: HeatmapClientConfig,
+    ): HeatmapRuntime {
+        val storageDir = File(context.filesDir, "heatmap").absolutePath
         val initConfig =
             InitConfig(
                 projectKey = config.projectKey,
@@ -22,6 +28,7 @@ object HeatmapBootstrap {
                 excludeElements = emptyList(),
                 excludeScreens = emptyList(),
                 maskElements = emptyList(),
+                storageDirectory = storageDir,
             )
         val sdk = HeatmapSdk.init(initConfig)
         val client = HeatmapClient.fromSdk(sdk)

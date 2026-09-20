@@ -16,7 +16,7 @@ class HeatmapCheckoutApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         val config = HeatmapConfigReader.load(this)
-        heatmapRuntime = HeatmapBootstrap.makeRuntime(config)
+        heatmapRuntime = HeatmapBootstrap.makeRuntime(this, config)
         heatmapSession = HeatmapSession(client = heatmapRuntime.client)
     }
 }

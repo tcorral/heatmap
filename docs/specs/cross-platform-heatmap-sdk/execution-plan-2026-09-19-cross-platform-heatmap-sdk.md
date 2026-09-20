@@ -222,7 +222,7 @@ Greenfield V1 POC: lock the nested event contract, prove a synthetic click throu
   - **Tests:** View screen and Compose screen each have Pay with the same business identity; journey matches the shared sequence; docs cover install, init, screen, annotate, disable, identify, and sign-out
   - **Depends:** Step 32, Step 33
 
-- [ ] **Step 35: Prove Android checkout and offline queue** — TDD: Yes
+- [x] **Step 35: Prove Android checkout and offline queue** — TDD: Yes
   - **Description:** Add Android E2E for View and Compose Pay, offline persist, and fail-closed delivery.
   - **Files:** test/e2e/
   - **Tests:** Both Pay activations are captured as Pay; offline then restore uploads once; process death with pending events uploads later without crashing relaunch; host stays up when ingest is down; introduce the Android E2E runner

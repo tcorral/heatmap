@@ -306,6 +306,11 @@ void uniffi_heatmap_ffi_fn_method_heatmapsdk_on_foreground(void*_Nonnull ptr, Ru
 void uniffi_heatmap_ffi_fn_method_heatmapsdk_record_activation_click(void*_Nonnull ptr, double x, double y, RustBuffer element_id, uint32_t viewport_width, uint32_t viewport_height, int64_t timestamp_ms, RustBuffer os_version, RustBuffer app_version, RustCallStatus *_Nonnull out_status
 );
 #endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_HEATMAP_FFI_FN_METHOD_HEATMAPSDK_RECORD_ANDROID_ACTIVATION_CLICK
+#define UNIFFI_FFIDEF_UNIFFI_HEATMAP_FFI_FN_METHOD_HEATMAPSDK_RECORD_ANDROID_ACTIVATION_CLICK
+void uniffi_heatmap_ffi_fn_method_heatmapsdk_record_android_activation_click(void*_Nonnull ptr, double x, double y, RustBuffer element_id, uint32_t viewport_width, uint32_t viewport_height, int64_t timestamp_ms, RustBuffer os_version, RustBuffer app_version, RustCallStatus *_Nonnull out_status
+);
+#endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_HEATMAP_FFI_FN_METHOD_HEATMAPSDK_RECORD_IOS_SCREEN_VIEW
 #define UNIFFI_FFIDEF_UNIFFI_HEATMAP_FFI_FN_METHOD_HEATMAPSDK_RECORD_IOS_SCREEN_VIEW
 void uniffi_heatmap_ffi_fn_method_heatmapsdk_record_ios_screen_view(void*_Nonnull ptr, uint32_t viewport_width, uint32_t viewport_height, RustBuffer os_version, RustBuffer app_version, RustCallStatus *_Nonnull out_status
@@ -665,6 +670,12 @@ uint16_t uniffi_heatmap_ffi_checksum_method_heatmapsdk_on_foreground(void
 #ifndef UNIFFI_FFIDEF_UNIFFI_HEATMAP_FFI_CHECKSUM_METHOD_HEATMAPSDK_RECORD_ACTIVATION_CLICK
 #define UNIFFI_FFIDEF_UNIFFI_HEATMAP_FFI_CHECKSUM_METHOD_HEATMAPSDK_RECORD_ACTIVATION_CLICK
 uint16_t uniffi_heatmap_ffi_checksum_method_heatmapsdk_record_activation_click(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_HEATMAP_FFI_CHECKSUM_METHOD_HEATMAPSDK_RECORD_ANDROID_ACTIVATION_CLICK
+#define UNIFFI_FFIDEF_UNIFFI_HEATMAP_FFI_CHECKSUM_METHOD_HEATMAPSDK_RECORD_ANDROID_ACTIVATION_CLICK
+uint16_t uniffi_heatmap_ffi_checksum_method_heatmapsdk_record_android_activation_click(void
     
 );
 #endif

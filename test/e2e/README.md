@@ -27,3 +27,11 @@ See [`macos/README.md`](./macos/README.md).
 ```bash
 npm run test:macos
 ```
+
+## Android (instrumentation)
+
+See [`android/README.md`](./android/README.md).
+
+```bash
+npm run test:android
+```

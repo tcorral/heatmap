@@ -58,6 +58,7 @@ class AndroidSessionIntegrationTest {
                     excludeElements = emptyList(),
                     excludeScreens = emptyList(),
                     maskElements = emptyList(),
+                    storageDirectory = null,
                 ),
             )
         } catch (e: UnsatisfiedLinkError) {

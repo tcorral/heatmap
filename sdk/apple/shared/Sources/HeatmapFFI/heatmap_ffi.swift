@@ -561,12 +561,12 @@ public protocol HeatmapSdkProtocol : AnyObject {
     func identify(userId: String) throws 
     
     /**
-     * iOS adapter-only lifecycle hook.
+     * Adapter-only lifecycle hook (iOS, Android).
      */
     func onBackground() 
     
     /**
-     * iOS adapter-only lifecycle hook.
+     * Adapter-only lifecycle hook (iOS, Android).
      */
     func onForeground() 
     
@@ -574,6 +574,11 @@ public protocol HeatmapSdkProtocol : AnyObject {
      * iOS adapter-only click enqueue; not exposed on `HeatmapClient`.
      */
     func recordActivationClick(x: Double, y: Double, elementId: String?, viewportWidth: UInt32, viewportHeight: UInt32, timestampMs: Int64, osVersion: String, appVersion: String) throws 
+    
+    /**
+     * Android View adapter-only click enqueue; not exposed on `HeatmapClient`.
+     */
+    func recordAndroidActivationClick(x: Double, y: Double, elementId: String?, viewportWidth: UInt32, viewportHeight: UInt32, timestampMs: Int64, osVersion: String, appVersion: String) throws 
     
     func recordIosScreenView(viewportWidth: UInt32, viewportHeight: UInt32, osVersion: String, appVersion: String) throws 
     
@@ -696,7 +701,7 @@ open func identify(userId: String)throws  {try rustCallWithError(FfiConverterTyp
 }
     
     /**
-     * iOS adapter-only lifecycle hook.
+     * Adapter-only lifecycle hook (iOS, Android).
      */
 open func onBackground() {try! rustCall() {
     uniffi_heatmap_ffi_fn_method_heatmapsdk_on_background(self.uniffiClonePointer(),$0
@@ -705,7 +710,7 @@ open func onBackground() {try! rustCall() {
 }
     
     /**
-     * iOS adapter-only lifecycle hook.
+     * Adapter-only lifecycle hook (iOS, Android).
      */
 open func onForeground() {try! rustCall() {
     uniffi_heatmap_ffi_fn_method_heatmapsdk_on_foreground(self.uniffiClonePointer(),$0
@@ -718,6 +723,23 @@ open func onForeground() {try! rustCall() {
      */
 open func recordActivationClick(x: Double, y: Double, elementId: String?, viewportWidth: UInt32, viewportHeight: UInt32, timestampMs: Int64, osVersion: String, appVersion: String)throws  {try rustCallWithError(FfiConverterTypeCaptureError.lift) {
     uniffi_heatmap_ffi_fn_method_heatmapsdk_record_activation_click(self.uniffiClonePointer(),
+        FfiConverterDouble.lower(x),
+        FfiConverterDouble.lower(y),
+        FfiConverterOptionString.lower(elementId),
+        FfiConverterUInt32.lower(viewportWidth),
+        FfiConverterUInt32.lower(viewportHeight),
+        FfiConverterInt64.lower(timestampMs),
+        FfiConverterString.lower(osVersion),
+        FfiConverterString.lower(appVersion),$0
+    )
+}
+}
+    
+    /**
+     * Android View adapter-only click enqueue; not exposed on `HeatmapClient`.
+     */
+open func recordAndroidActivationClick(x: Double, y: Double, elementId: String?, viewportWidth: UInt32, viewportHeight: UInt32, timestampMs: Int64, osVersion: String, appVersion: String)throws  {try rustCallWithError(FfiConverterTypeCaptureError.lift) {
+    uniffi_heatmap_ffi_fn_method_heatmapsdk_record_android_activation_click(self.uniffiClonePointer(),
         FfiConverterDouble.lower(x),
         FfiConverterDouble.lower(y),
         FfiConverterOptionString.lower(elementId),
@@ -872,10 +894,11 @@ public struct InitConfig {
     public var excludeElements: [String]
     public var excludeScreens: [String]
     public var maskElements: [String]
+    public var storageDirectory: String?
 
     // Default memberwise initializers are never public by default, so we
     // declare one manually.
-    public init(projectKey: String, endpoint: String, sessionTimeoutMs: UInt64, sampleRate: Double, excludeElements: [String], excludeScreens: [String], maskElements: [String]) {
+    public init(projectKey: String, endpoint: String, sessionTimeoutMs: UInt64, sampleRate: Double, excludeElements: [String], excludeScreens: [String], maskElements: [String], storageDirectory: String?) {
         self.projectKey = projectKey
         self.endpoint = endpoint
         self.sessionTimeoutMs = sessionTimeoutMs
@@ -883,6 +906,7 @@ public struct InitConfig {
         self.excludeElements = excludeElements
         self.excludeScreens = excludeScreens
         self.maskElements = maskElements
+        self.storageDirectory = storageDirectory
     }
 }
 
@@ -911,6 +935,9 @@ extension InitConfig: Equatable, Hashable {
         if lhs.maskElements != rhs.maskElements {
             return false
         }
+        if lhs.storageDirectory != rhs.storageDirectory {
+            return false
+        }
         return true
     }
 
@@ -922,6 +949,7 @@ extension InitConfig: Equatable, Hashable {
         hasher.combine(excludeElements)
         hasher.combine(excludeScreens)
         hasher.combine(maskElements)
+        hasher.combine(storageDirectory)
     }
 }
 
@@ -939,7 +967,8 @@ public struct FfiConverterTypeInitConfig: FfiConverterRustBuffer {
                 sampleRate: FfiConverterDouble.read(from: &buf), 
                 excludeElements: FfiConverterSequenceString.read(from: &buf), 
                 excludeScreens: FfiConverterSequenceString.read(from: &buf), 
-                maskElements: FfiConverterSequenceString.read(from: &buf)
+                maskElements: FfiConverterSequenceString.read(from: &buf), 
+                storageDirectory: FfiConverterOptionString.read(from: &buf)
         )
     }
 
@@ -951,6 +980,7 @@ public struct FfiConverterTypeInitConfig: FfiConverterRustBuffer {
         FfiConverterSequenceString.write(value.excludeElements, into: &buf)
         FfiConverterSequenceString.write(value.excludeScreens, into: &buf)
         FfiConverterSequenceString.write(value.maskElements, into: &buf)
+        FfiConverterOptionString.write(value.storageDirectory, into: &buf)
     }
 }
 
@@ -1360,13 +1390,16 @@ private var initializationResult: InitializationResult = {
     if (uniffi_heatmap_ffi_checksum_method_heatmapsdk_identify() != 23245) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_heatmap_ffi_checksum_method_heatmapsdk_on_background() != 33127) {
+    if (uniffi_heatmap_ffi_checksum_method_heatmapsdk_on_background() != 49276) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_heatmap_ffi_checksum_method_heatmapsdk_on_foreground() != 11265) {
+    if (uniffi_heatmap_ffi_checksum_method_heatmapsdk_on_foreground() != 23763) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_heatmap_ffi_checksum_method_heatmapsdk_record_activation_click() != 29890) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_heatmap_ffi_checksum_method_heatmapsdk_record_android_activation_click() != 38507) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_heatmap_ffi_checksum_method_heatmapsdk_record_ios_screen_view() != 8553) {

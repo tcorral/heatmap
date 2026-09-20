@@ -27,6 +27,7 @@ class HeatmapClient private constructor(
                 excludeElements = emptyList(),
                 excludeScreens = emptyList(),
                 maskElements = emptyList(),
+                storageDirectory = null,
             ),
         ),
     )

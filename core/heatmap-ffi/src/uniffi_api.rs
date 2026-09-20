@@ -12,6 +12,7 @@ pub struct InitConfig {
     pub exclude_elements: Vec<String>,
     pub exclude_screens: Vec<String>,
     pub mask_elements: Vec<String>,
+    pub storage_directory: Option<String>,
 }
 
 impl From<InitConfig> for heatmap_core::HeatmapConfig {
@@ -45,8 +46,10 @@ impl HeatmapSdk {
 
     #[uniffi::constructor(name = "init")]
     pub fn init_with_config(config: InitConfig) -> Result<Self, InitError> {
+        let storage = config.storage_directory.clone();
         let core_config: heatmap_core::HeatmapConfig = config.into();
-        let inner = PublicHeatmapSdk::init(core_config).map_err(InitError::from)?;
+        let inner =
+            PublicHeatmapSdk::init_with_storage(core_config, storage).map_err(InitError::from)?;
         Ok(Self {
             state: Mutex::new(inner),
         })

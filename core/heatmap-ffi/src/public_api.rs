@@ -1,6 +1,9 @@
+use std::path::PathBuf;
+use std::sync::Arc;
+
 use heatmap_core::{
-    FlushError, HeatmapConfig, HeatmapSdk as CoreHeatmapSdk, IdentityError, InitError,
-    ScreenContextError,
+    FileIdentityStore, FlushError, HeatmapConfig, HeatmapSdk as CoreHeatmapSdk, HttpBatchTransport,
+    IdentityError, IdentityStore, InMemoryIdentityStore, InitError, ScreenContextError,
 };
 
 use crate::config::InitConfigJson;
@@ -12,11 +15,19 @@ pub struct PublicHeatmapSdk {
 impl PublicHeatmapSdk {
     pub fn init_from_json(raw: &str) -> Result<Self, InitError> {
         let parsed = InitConfigJson::parse(raw)?;
-        Self::init(parsed.into_core_config())
+        let storage = parsed.storage_directory.clone();
+        Self::init_with_storage(parsed.into_core_config(), storage)
     }
 
     pub fn init(config: HeatmapConfig) -> Result<Self, InitError> {
-        let inner = CoreHeatmapSdk::init(config)?;
+        Self::init_with_storage(config, None)
+    }
+
+    pub fn init_with_storage(
+        config: HeatmapConfig,
+        storage_directory: Option<String>,
+    ) -> Result<Self, InitError> {
+        let inner = core_init_with_storage(config, storage_directory)?;
         Ok(Self { inner })
     }
 
@@ -43,6 +54,20 @@ impl PublicHeatmapSdk {
     pub fn flush(&mut self) -> Result<(), FlushError> {
         self.inner.flush()
     }
+}
+
+fn core_init_with_storage(
+    config: HeatmapConfig,
+    storage_directory: Option<String>,
+) -> Result<CoreHeatmapSdk, InitError> {
+    let store: Arc<dyn IdentityStore> = match storage_directory {
+        Some(dir) if !dir.trim().is_empty() => Arc::new(
+            FileIdentityStore::new(PathBuf::from(dir.trim()))
+                .map_err(|_| InitError::InvalidConfig)?,
+        ),
+        _ => Arc::new(InMemoryIdentityStore::new()),
+    };
+    CoreHeatmapSdk::init_with_transport_and_store(config, HttpBatchTransport::new(), store)
 }
 
 pub mod export_names {

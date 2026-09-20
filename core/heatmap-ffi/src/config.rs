@@ -15,6 +15,8 @@ pub struct InitConfigJson {
     pub exclude_screens: Vec<String>,
     #[serde(default)]
     pub mask_elements: Vec<String>,
+    #[serde(default)]
+    pub storage_directory: Option<String>,
 }
 
 fn default_session_timeout_ms() -> u64 {

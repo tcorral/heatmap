@@ -24,8 +24,9 @@ pub use event::{
     SCHEMA_VERSION,
 };
 pub use identity_store::{
-    IdentityStore, InMemoryIdentityStore, STORE_KEY_ANONYMOUS_ID, STORE_KEY_LAST_EVENT_AT,
-    STORE_KEY_QUEUE, STORE_KEY_SAMPLE_IN, STORE_KEY_SESSION_ID, STORE_KEY_USER_ID,
+    FileIdentityStore, IdentityStore, InMemoryIdentityStore, STORE_KEY_ANONYMOUS_ID,
+    STORE_KEY_LAST_EVENT_AT, STORE_KEY_QUEUE, STORE_KEY_SAMPLE_IN, STORE_KEY_SESSION_ID,
+    STORE_KEY_USER_ID,
 };
 pub use flush_policy::{FLUSH_INTERVAL_MS, FLUSH_MAX_BYTES, FLUSH_MAX_EVENTS};
 pub use persistent_queue::{QueueLimits, QUEUE_MAX_BYTES, QUEUE_MAX_EVENTS};

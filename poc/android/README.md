@@ -84,6 +84,5 @@ Integrator reference: [`docs/android-sdk.md`](../../docs/android-sdk.md).
 
 ## Gaps
 
-- Android E2E (Step 35) is not part of this POC folder yet.
-- `jniLibs/` must be populated by `build-rust-android.sh` before on-device init succeeds.
+- `jniLibs/` must be populated by `build-rust-android.sh` (or the Android E2E runner) before on-device init succeeds.
 - Compose scroll events are not forwarded separately (same as current Android adapter scope); scroll the checkout column manually to reach Pay.

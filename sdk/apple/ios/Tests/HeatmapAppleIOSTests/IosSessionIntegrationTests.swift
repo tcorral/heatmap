@@ -14,7 +14,8 @@ final class IosSessionIntegrationTests: XCTestCase {
             sampleRate: 1.0,
             excludeElements: [],
             excludeScreens: [],
-            maskElements: []
+            maskElements: [],
+            storageDirectory: nil
         )
         let sdk = try HeatmapSdk.`init`(config: config)
         let backend = HeatmapIosRustCaptureBackend(

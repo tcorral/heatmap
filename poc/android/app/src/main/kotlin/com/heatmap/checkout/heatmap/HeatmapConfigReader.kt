@@ -3,6 +3,7 @@ package com.heatmap.checkout.heatmap
 import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
+import com.heatmap.checkout.BuildConfig
 
 object HeatmapConfigReader {
     fun load(context: Context): HeatmapClientConfig {
@@ -23,6 +24,12 @@ object HeatmapConfigReader {
 
         val envProjectKey = System.getenv("HEATMAP_PROJECT_KEY")?.trim()?.takeIf { it.isNotEmpty() }
         val envEndpoint = System.getenv("HEATMAP_ENDPOINT")?.trim()?.takeIf { it.isNotEmpty() }
+        val debugEndpointOverride =
+            if (BuildConfig.DEBUG) {
+                HeatmapE2EOverrides.readEndpointOverride(context)
+            } else {
+                null
+            }
 
         val projectKey =
             envProjectKey
@@ -30,6 +37,7 @@ object HeatmapConfigReader {
                 ?: HeatmapClientConfig.DEFAULT_PROJECT_KEY
         val endpoint =
             envEndpoint
+                ?: debugEndpointOverride
                 ?: bundledEndpoint
                 ?: HeatmapClientConfig.DEFAULT_ENDPOINT_EMULATOR
 
