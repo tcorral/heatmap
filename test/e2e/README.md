@@ -35,3 +35,13 @@ See [`android/README.md`](./android/README.md).
 ```bash
 npm run test:android
 ```
+
+## Windows (FlaUI)
+
+See [`windows/README.md`](./windows/README.md).
+
+```bash
+npm run test:windows
+```
+
+(from this directory; executes on Windows only)
