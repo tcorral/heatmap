@@ -204,7 +204,7 @@ Greenfield V1 POC: lock the nested event contract, prove a synthetic click throu
   - **Tests:** A clean consumer project can depend on the artifact and call the public API; no public track/custom API; introduce Gradle test wiring
   - **Depends:** Step 23
 
-- [ ] **Step 32: Capture Android View activations** — TDD: Yes
+- [x] **Step 32: Capture Android View activations** — TDD: Yes
   - **Description:** Add the View adapter with dedicated heatmap identity, window-normalized positions, lifecycle, and View secret-field dropping.
   - **Files:** sdk/android/
   - **Tests:** Pay with the dedicated View heatmap identity is attributed as Pay; resource name and content description are not used as identity; unmarked non-secret View paints coordinates only; password input types and autofill hints are dropped; background/resume before timeout keeps the session; adapter does not read text

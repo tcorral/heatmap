@@ -16,6 +16,7 @@
 
 mod config;
 mod errors;
+mod android_adapter;
 mod ios_adapter;
 mod macos_adapter;
 pub mod public_api;

@@ -83,13 +83,13 @@ impl HeatmapSdk {
         guard.flush().map_err(FlushError::from)
     }
 
-    /// iOS adapter-only lifecycle hook.
+    /// Adapter-only lifecycle hook (iOS, Android).
     pub fn on_background(&self) {
         let mut guard = self.state.lock().expect("heatmap sdk lock");
         guard.on_background();
     }
 
-    /// iOS adapter-only lifecycle hook.
+    /// Adapter-only lifecycle hook (iOS, Android).
     pub fn on_foreground(&self) {
         let mut guard = self.state.lock().expect("heatmap sdk lock");
         guard.on_foreground();
@@ -200,6 +200,33 @@ impl HeatmapSdk {
         let mut guard = self.state.lock().expect("heatmap sdk lock");
         guard
             .record_macos_scroll(viewport_width, viewport_height, os_version, app_version)
+            .map_err(CaptureError::from)
+    }
+
+    /// Android View adapter-only click enqueue; not exposed on `HeatmapClient`.
+    pub fn record_android_activation_click(
+        &self,
+        x: f64,
+        y: f64,
+        element_id: Option<String>,
+        viewport_width: u32,
+        viewport_height: u32,
+        timestamp_ms: i64,
+        os_version: String,
+        app_version: String,
+    ) -> Result<(), CaptureError> {
+        let mut guard = self.state.lock().expect("heatmap sdk lock");
+        guard
+            .record_android_activation_click(
+                x,
+                y,
+                element_id,
+                viewport_width,
+                viewport_height,
+                timestamp_ms,
+                os_version,
+                app_version,
+            )
             .map_err(CaptureError::from)
     }
 

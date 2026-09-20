@@ -43,5 +43,6 @@ android {
 
 dependencies {
     implementation("net.java.dev.jna:jna:5.14.0@aar")
+    implementation("androidx.lifecycle:lifecycle-process:2.8.7")
     testImplementation("junit:junit:4.13.2")
 }
