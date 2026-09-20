@@ -210,7 +210,7 @@ Greenfield V1 POC: lock the nested event contract, prove a synthetic click throu
   - **Tests:** Pay with the dedicated View heatmap identity is attributed as Pay; resource name and content description are not used as identity; unmarked non-secret View paints coordinates only; password input types and autofill hints are dropped; background/resume before timeout keeps the session; adapter does not read text
   - **Depends:** Step 31
 
-- [ ] **Step 33: Capture Android Compose activations** — TDD: Yes
+- [x] **Step 33: Capture Android Compose activations** — TDD: Yes
   - **Description:** Add the Compose adapter that reads a dedicated heatmap identity with test-tag fallback and does not rely on View hit-testing.
   - **Files:** sdk/android/
   - **Tests:** Pay with dedicated Compose identity is attributed as Pay; testTag is used when dedicated identity is absent; unmarked non-secret composable may contribute coordinates and has no element total; password visual transformation / password semantics are dropped; adapter does not read text
