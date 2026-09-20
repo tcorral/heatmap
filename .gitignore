@@ -8,7 +8,11 @@ heatmap-backend.db
 test/heatmap-ios-e2e.db
 test/test/
 target/
+debug
 .DS_Store
 .env
 .env.*
 !.env.example
+**/*.rs.bk
+*.pdb
+**/mutants.out*/
