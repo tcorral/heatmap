@@ -1,8 +1,12 @@
+use std::io::{Read, Write};
+use std::net::TcpListener;
 use std::sync::{Arc, Mutex};
+use std::thread;
 
 use heatmap_core::{
-    batch_ingest_url, CaptureCandidate, FlushError, HeatmapBatch, HeatmapConfig, HeatmapSdk,
-    InteractionEvent, PlatformInfo, PlatformType, Position, ScreenInfo, SdkInfo, Viewport,
+    batch_ingest_url, BatchTransport, CaptureCandidate, FlushError, HeatmapBatch, HeatmapConfig,
+    HeatmapSdk, HttpBatchTransport, InteractionEvent, PlatformInfo, PlatformType, Position,
+    ScreenInfo, SdkInfo, Viewport,
 };
 
 fn valid_config() -> HeatmapConfig {
@@ -103,4 +107,48 @@ fn should_clear_queue_after_successful_flush() {
         .expect("enqueue");
     sdk.flush().expect("flush");
     assert!(sdk.build_batch().is_err());
+}
+
+fn serve_one_http_response(status: &str, extra_headers: &str) -> String {
+    let listener = TcpListener::bind("127.0.0.1:0").expect("bind");
+    let addr = listener.local_addr().expect("addr");
+    let status = status.to_string();
+    let extra_headers = extra_headers.to_string();
+    thread::spawn(move || {
+        let (mut stream, _) = listener.accept().expect("accept");
+        let mut buf = [0u8; 2048];
+        let _ = stream.read(&mut buf);
+        let body = "{}";
+        let response = format!(
+            "HTTP/1.1 {status}\r\nContent-Type: application/json\r\nContent-Length: {}\r\n{extra_headers}Connection: close\r\n\r\n{body}",
+            body.len()
+        );
+        let _ = stream.write_all(response.as_bytes());
+    });
+    format!("http://{addr}")
+}
+
+fn empty_batch() -> HeatmapBatch {
+    HeatmapBatch {
+        batch_id: "0199batch000000000000000000000001".into(),
+        events: vec![],
+    }
+}
+
+#[test]
+fn should_classify_http_401_as_http_status_not_transport() {
+    let endpoint = serve_one_http_response("401 Unauthorized", "");
+    let err = HttpBatchTransport::new()
+        .send_batch(&endpoint, "pk_invalid", &empty_batch())
+        .expect_err("401");
+    assert_eq!(err, FlushError::http_status(401, None));
+}
+
+#[test]
+fn should_preserve_retry_after_when_http_429() {
+    let endpoint = serve_one_http_response("429 Too Many Requests", "Retry-After: 7\r\n");
+    let err = HttpBatchTransport::new()
+        .send_batch(&endpoint, "pk_test", &empty_batch())
+        .expect_err("429");
+    assert_eq!(err, FlushError::http_status(429, Some(7)));
 }

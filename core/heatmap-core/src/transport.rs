@@ -76,7 +76,7 @@ impl BatchTransport for HttpBatchTransport {
         let response = ureq::post(&url)
             .set("X-Project-Key", project_key)
             .send_json(batch)
-            .map_err(|err| FlushError::Transport(err.to_string()))?;
+            .map_err(map_ureq_error)?;
         let status = response.status();
         if (200..300).contains(&status) {
             Ok(())
@@ -84,6 +84,16 @@ impl BatchTransport for HttpBatchTransport {
             let retry_after_secs = parse_retry_after_header(&response);
             Err(FlushError::http_status(status, retry_after_secs))
         }
+    }
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+fn map_ureq_error(err: ureq::Error) -> FlushError {
+    match err {
+        ureq::Error::Status(code, response) => {
+            FlushError::http_status(code, parse_retry_after_header(&response))
+        }
+        ureq::Error::Transport(transport) => FlushError::Transport(transport.to_string()),
     }
 }
 
