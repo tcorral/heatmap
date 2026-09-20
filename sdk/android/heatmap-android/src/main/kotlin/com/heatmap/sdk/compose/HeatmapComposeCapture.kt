@@ -8,6 +8,7 @@ import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ProcessLifecycleOwner
 import com.heatmap.sdk.capture.compose.ComposeActivationPayloadBuilder
+import com.heatmap.sdk.capture.compose.ComposeScrollObserver
 import com.heatmap.sdk.capture.compose.ComposeSemanticsHitTest
 import com.heatmap.sdk.capture.view.HeatmapViewCaptureBackend
 
@@ -60,13 +61,26 @@ class HeatmapComposeCapture private constructor(
     }
 
     private fun onComposeTouch(
-        view: View,
+        _view: View,
         event: MotionEvent,
     ): Boolean {
+        val compose = composeView ?: return false
+        ComposeScrollObserver.onPointerAction(
+            actionMasked = event.actionMasked,
+            viewportWidth = compose.rootView.width.toUInt(),
+            viewportHeight = compose.rootView.height.toUInt(),
+            backend = backend,
+        )
         if (event.actionMasked != MotionEvent.ACTION_UP) {
             return false
         }
-        val compose = composeView ?: return false
+        return recordComposeClick(event, compose)
+    }
+
+    private fun recordComposeClick(
+        event: MotionEvent,
+        compose: AbstractComposeView,
+    ): Boolean {
         val androidCompose = compose as? AndroidComposeView ?: return false
         val root = compose.rootView
         val windowWidth = root.width.toFloat()

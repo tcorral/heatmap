@@ -19,14 +19,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import com.heatmap.checkout.CheckoutIdentifiers
 import com.heatmap.checkout.heatmap.HeatmapSession
 import com.heatmap.sdk.compose.heatmapId
-import kotlinx.coroutines.flow.drop
 
 @Composable
 fun ComposeCheckoutScreen(
@@ -40,14 +38,6 @@ fun ComposeCheckoutScreen(
 
     LaunchedEffect(Unit) {
         heatmap.trackScreen("Checkout", layoutVersion = "2024-09")
-    }
-
-    LaunchedEffect(scrollState) {
-        snapshotFlow { scrollState.value }
-            .drop(1)
-            .collect {
-                heatmap.recordViewportScroll()
-            }
     }
 
     Column(

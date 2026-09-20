@@ -85,7 +85,7 @@ _Each finding should carry enough context for arbitration without becoming a ful
   - **Why it matters:** Design explicitly requires manual dashboard upload and comparative platform counts.
   - **Suggested action:** Add minimal still-upload and platform-breakdown surfaces, or document approved scope reduction.
 
-- [ ] **Finding** — `sdk/android/heatmap-android/src/main/kotlin/com/heatmap/sdk/compose/HeatmapComposeCapture.kt:45` — Compose adapter does not capture scrolling
+- [x] **Finding** — `sdk/android/heatmap-android/src/main/kotlin/com/heatmap/sdk/compose/HeatmapComposeCapture.kt:45` — Compose adapter does not capture scrolling
   - **Issue:** Compose adapter installs touch and lifecycle handling only. POC manually observes scroll state at `poc/android/app/src/main/kotlin/com/heatmap/checkout/ui/screens/ComposeCheckoutScreen.kt:44`.
   - **Why it matters:** Capture responsibility leaks into host application, contrary to adapter-owned Compose capture design.
   - **Suggested action:** Observe Compose scroll semantics/state within adapter integration.
