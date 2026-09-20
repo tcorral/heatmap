@@ -17,6 +17,7 @@ export type ElementTotalRow = {
 export type ElementsResponse = {
   elements: ElementTotalRow[];
   unique_sessions: number;
+  comparison_elements?: ElementTotalRow[];
 };
 
 export type HeatmapBin = {

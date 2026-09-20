@@ -3,8 +3,11 @@ import type { ElementsFilter } from "./types";
 export function appendFilterParams(
   params: URLSearchParams,
   filters: ElementsFilter,
+  options: { omitPlatform?: boolean } = {},
 ): void {
-  params.set("platform", filters.platform);
+  if (!options.omitPlatform) {
+    params.set("platform", filters.platform);
+  }
   params.set("screen", filters.screen);
   params.set("app_version", filters.appVersion);
   if (filters.layoutVersion.trim()) {

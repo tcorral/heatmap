@@ -25,7 +25,25 @@ async function fetchElements(
   filters: ElementsFilter,
   fetchFn: typeof fetch,
 ): Promise<ElementsResponse> {
-  const response = await fetchFn(buildElementsUrl(baseUrl, filters));
+  const [filtered, comparison] = await Promise.all([
+    readElementsResponse(fetchFn, buildElementsUrl(baseUrl, filters)),
+    readElementsResponse(
+      fetchFn,
+      buildElementsUrl(baseUrl, filters, { omitPlatform: true }),
+    ),
+  ]);
+  return {
+    unique_sessions: filtered.unique_sessions,
+    elements: filtered.elements,
+    comparison_elements: comparison.elements,
+  };
+}
+
+async function readElementsResponse(
+  fetchFn: typeof fetch,
+  url: string,
+): Promise<ElementsResponse> {
+  const response = await fetchFn(url);
   if (!response.ok) {
     throw new Error(`Query failed (${response.status})`);
   }

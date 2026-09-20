@@ -1,22 +1,17 @@
 import type { ElementsFilter } from "./types";
+import { appendFilterParams } from "./buildQueryParams";
+
+export type ElementsUrlOptions = {
+  omitPlatform?: boolean;
+};
 
 export function buildElementsUrl(
   baseUrl: string,
   filters: ElementsFilter,
+  options: ElementsUrlOptions = {},
 ): string {
-  const params = new URLSearchParams({
-    screen: filters.screen,
-    app_version: filters.appVersion,
-  });
-  if (filters.layoutVersion.trim()) {
-    params.set("layout_version", filters.layoutVersion.trim());
-  }
-  if (filters.fromMs !== undefined) {
-    params.set("from", String(filters.fromMs));
-  }
-  if (filters.toMs !== undefined) {
-    params.set("to", String(filters.toMs));
-  }
+  const params = new URLSearchParams();
+  appendFilterParams(params, filters, options);
   const root = baseUrl.replace(/\/$/, "");
   return `${root}/v1/elements?${params.toString()}`;
 }

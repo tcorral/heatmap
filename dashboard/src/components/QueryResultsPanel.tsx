@@ -32,7 +32,7 @@ export function QueryResultsPanel({ queryState }: QueryResultsPanelProps) {
       <p role="status" aria-label="Unique sessions">
         Unique sessions: {data.unique_sessions}
       </p>
-      <PlatformPayCountsTable rows={data.elements} />
+      <PlatformPayCountsTable rows={data.comparison_elements ?? data.elements} />
       <ElementTotalsTable rows={data.elements} />
       <TopElementsList rows={data.elements} />
     </>

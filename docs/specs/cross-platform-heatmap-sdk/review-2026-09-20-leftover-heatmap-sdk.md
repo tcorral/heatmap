@@ -30,7 +30,7 @@ Verdict: Changes requested.
   - **Why it matters:** Network latency still freezes caller despite work executing on another thread, violating non-blocking UI requirement. Capture also synchronously persists queue data.
   - **Suggested action:** Make scheduling asynchronous, expose async completion where required, and move persistence behind bounded background queue.
 
-- [ ] **Finding** — `dashboard/src/api/buildElementsUrl.ts:6` — Platform filter is ignored
+- [x] **Finding** — `dashboard/src/api/buildElementsUrl.ts:6` — Platform filter is ignored
   - **Issue:** URL builder no longer sends `filters.platform`, although dashboard still presents platform selector.
   - **Why it matters:** Element totals, unique sessions, and top elements cannot be restricted by selected platform.
   - **Suggested action:** Keep filtered elements request platform-specific and issue separate unfiltered request for five-platform Pay comparison.
@@ -109,7 +109,7 @@ Verdict: Changes required. Five actionable product gaps remain at HEAD `46e70b6`
 - Apple/Android package definitions exist, but clean-consumer distribution remains incomplete.
 - Native HTTP executes on worker threads, but capture can still block behind network-held SDK locks.
 
-- [ ] **Major** — `dashboard/src/api/buildElementsUrl.ts:7` — AC: Dashboard filters — Platform filter is ignored for totals
+- [x] **Major** — `dashboard/src/api/buildElementsUrl.ts:7` — AC: Dashboard filters — Platform filter is ignored for totals
   - **Issue:** Elements request no longer includes `filters.platform`; selected platform still affects heatmap/still queries. Totals, unique sessions, and top elements therefore remain cross-platform.
   - **Why it matters:** Analyst selecting iOS can see an iOS overlay alongside all-platform totals, violating selected-slice behavior.
   - **Suggested action:** Fetch comparison data separately. Preserve platform on normal totals query while using an unfiltered request for five-platform Pay comparison.
