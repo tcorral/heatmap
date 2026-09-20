@@ -1,11 +1,6 @@
 // swift-tools-version: 5.9
 import PackageDescription
 
-/// Pre-release native libraries shipped in the package. A clean consumer does not
-/// build Rust or search the repository cargo output tree.
-private let heatmapFfiMacLibrarySearchPath = Context.packageDirectory + "/vendor/macos"
-private let heatmapFfiIosSimLibrarySearchPath = Context.packageDirectory + "/vendor/ios-sim"
-
 let package = Package(
     name: "HeatmapApple",
     platforms: [
@@ -39,25 +34,14 @@ let package = Package(
         ),
     ],
     targets: [
-        .target(
+        .binaryTarget(
             name: "heatmap_ffiFFI",
-            path: "shared/Sources/heatmap_ffiFFI",
-            publicHeadersPath: "include"
+            path: "vendor/HeatmapFFI.xcframework"
         ),
         .target(
             name: "HeatmapFFI",
             dependencies: ["heatmap_ffiFFI"],
-            path: "shared/Sources/HeatmapFFI",
-            linkerSettings: [
-                .linkedLibrary("heatmap_ffi"),
-                .unsafeFlags([
-                    "-L", heatmapFfiMacLibrarySearchPath,
-                    "-Xlinker", "-rpath", "-Xlinker", heatmapFfiMacLibrarySearchPath,
-                ], .when(platforms: [.macOS])),
-                .unsafeFlags([
-                    "-L", heatmapFfiIosSimLibrarySearchPath,
-                ], .when(platforms: [.iOS])),
-            ]
+            path: "shared/Sources/HeatmapFFI"
         ),
         .target(
             name: "HeatmapAppleShared",

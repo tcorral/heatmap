@@ -17,9 +17,9 @@ Pre-release UIKit capture adapter over the UniFFI Rust core. It records taps and
 - `HeatmapAppleShared` — `HeatmapClient`
 - `HeatmapAppleIOS` — `HeatmapIosCapture`, `HeatmapIosRustCaptureBackend`
 
-The package ships `libheatmap_ffi` under `sdk/apple/vendor/` (`macos/` for macOS, `ios-sim/` for iOS Simulator). A clean consumer does not build Rust or point at `target/debug`.
+The package ships `HeatmapFFI.xcframework` (iOS device, iOS Simulator, and macOS). A clean consumer does not build Rust or point at `target/debug`.
 
-Regenerate Swift bindings after Rust API changes: `./sdk/apple/scripts/generate-uniffi.sh`. Rebuild vendor dylibs as in `sdk/apple/vendor/README.md`.
+Regenerate Swift bindings after Rust API changes: `./sdk/apple/scripts/generate-uniffi.sh`. Rebuild the XCFramework with `./sdk/apple/scripts/build-xcframework.sh`.
 
 ## Init
 

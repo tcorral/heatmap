@@ -12,8 +12,10 @@ final class HeatmapPackageInstallTests: XCTestCase {
             encoding: .utf8
         )
         XCTAssertFalse(packageSwift.contains("target/debug"))
-        XCTAssertFalse(packageSwift.contains("aarch64-apple-ios-sim"))
-        XCTAssertTrue(packageSwift.contains("vendor/macos"))
-        XCTAssertTrue(packageSwift.contains("vendor/ios-sim"))
+        XCTAssertFalse(packageSwift.contains("unsafeFlags"))
+        XCTAssertFalse(packageSwift.contains("vendor/macos"))
+        XCTAssertFalse(packageSwift.contains("vendor/ios-sim"))
+        XCTAssertTrue(packageSwift.contains("binaryTarget"))
+        XCTAssertTrue(packageSwift.contains("HeatmapFFI.xcframework"))
     }
 }

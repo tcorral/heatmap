@@ -1,22 +1,17 @@
-# Pre-release Heatmap FFI binaries
+# Pre-release Heatmap FFI XCFramework
 
-These dylibs are the pre-release native core for SwiftPM consumers.
+`HeatmapFFI.xcframework` is the pre-release native core for SwiftPM consumers.
 
-- `macos/libheatmap_ffi.dylib` — macOS host
-- `ios-sim/libheatmap_ffi.dylib` — iOS Simulator (Apple Silicon)
+Slices:
 
-Rebuild and replace after Rust FFI changes:
+- `ios-arm64` — iOS device
+- `ios-arm64_x86_64-simulator` — iOS Simulator
+- `macos-arm64_x86_64` — macOS (Apple Silicon and Intel)
+
+A clean consumer adds `sdk/apple` as a Swift package. They do not build Rust or set linker search paths.
+
+Rebuild after Rust FFI changes:
 
 ```bash
-# Repo root
-cargo build -p heatmap-ffi
-cargo build -p heatmap-ffi --target aarch64-apple-ios-sim
-cp target/debug/libheatmap_ffi.dylib sdk/apple/vendor/macos/
-cp target/aarch64-apple-ios-sim/debug/libheatmap_ffi.dylib sdk/apple/vendor/ios-sim/
-install_name_tool -id @rpath/libheatmap_ffi.dylib sdk/apple/vendor/macos/libheatmap_ffi.dylib
-install_name_tool -id @rpath/libheatmap_ffi.dylib sdk/apple/vendor/ios-sim/libheatmap_ffi.dylib
-codesign -s - --force sdk/apple/vendor/macos/libheatmap_ffi.dylib
-codesign -s - --force sdk/apple/vendor/ios-sim/libheatmap_ffi.dylib
+./sdk/apple/scripts/build-xcframework.sh
 ```
-
-A clean consumer adds `sdk/apple` as a Swift package and does not build Rust or set `target/debug` search paths.
