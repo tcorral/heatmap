@@ -2,7 +2,6 @@ use heatmap_core::{PlatformInfo, PlatformType, SdkInfo, Viewport};
 
 pub const WEB_SDK_NAME: &str = "heatmap-web";
 pub const WEB_SDK_VERSION: &str = "0.1.0";
-pub const WEB_APP_VERSION: &str = "1.0.0";
 
 pub fn web_sdk_info() -> SdkInfo {
     SdkInfo {
@@ -11,11 +10,11 @@ pub fn web_sdk_info() -> SdkInfo {
     }
 }
 
-pub fn web_platform_info() -> PlatformInfo {
+pub fn web_platform_info(app_version: &str) -> PlatformInfo {
     PlatformInfo {
         platform_type: PlatformType::Web,
         os_version: web_os_version(),
-        app_version: WEB_APP_VERSION.into(),
+        app_version: app_version.to_string(),
     }
 }
 

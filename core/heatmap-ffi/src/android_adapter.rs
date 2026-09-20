@@ -68,6 +68,7 @@ mod tests {
             exclude_elements: vec![],
             exclude_screens: vec![],
             mask_elements: vec![],
+        app_version: heatmap_core::HeatmapConfig::DEFAULT_APP_VERSION.into(),
         };
         let mut sdk = PublicHeatmapSdk::init(config).expect("init");
         sdk.record_android_activation_click(

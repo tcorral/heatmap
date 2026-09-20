@@ -34,9 +34,16 @@ const sdk = HeatmapSdkJs.init(
   JSON.stringify({
     project_key: "your-project-key",
     endpoint: "https://heatmap.example.com",
+    app_version: "2.4.0",
   }),
 );
 ```
+
+`app_version` is optional and defaults to `1.0.0`. It is sent on every event for dashboard filtering by release.
+
+## Flush and upload
+
+The WASM transport uploads batches with a **synchronous** HTTP call during `flush` (including auto-flush and background flush). That keeps the Rust core API uniform but can block the main thread for the round-trip. Prefer relying on auto-flush thresholds; call `flush()` explicitly when the app backgrounds or before teardown.
 
 Optional: persist identity keys via `@heatmap/sdk-web` localStorage helpers (`readIdentityValue` / `writeIdentityValue`) if you mirror core identity in the browser.
 

@@ -13,6 +13,7 @@ pub struct InitConfig {
     pub exclude_screens: Vec<String>,
     pub mask_elements: Vec<String>,
     pub storage_directory: Option<String>,
+    pub app_version: String,
 }
 
 impl From<InitConfig> for heatmap_core::HeatmapConfig {
@@ -25,6 +26,11 @@ impl From<InitConfig> for heatmap_core::HeatmapConfig {
             exclude_elements: value.exclude_elements,
             exclude_screens: value.exclude_screens,
             mask_elements: value.mask_elements,
+            app_version: if value.app_version.trim().is_empty() {
+                heatmap_core::HeatmapConfig::DEFAULT_APP_VERSION.to_string()
+            } else {
+                value.app_version
+            },
         }
     }
 }

@@ -17,6 +17,12 @@ pub struct InitConfigJson {
     pub mask_elements: Vec<String>,
     #[serde(default)]
     pub storage_directory: Option<String>,
+    #[serde(default = "default_app_version")]
+    pub app_version: String,
+}
+
+fn default_app_version() -> String {
+    HeatmapConfig::DEFAULT_APP_VERSION.to_string()
 }
 
 fn default_session_timeout_ms() -> u64 {
@@ -41,6 +47,7 @@ impl InitConfigJson {
             exclude_elements: self.exclude_elements,
             exclude_screens: self.exclude_screens,
             mask_elements: self.mask_elements,
+            app_version: self.app_version,
         }
     }
 }

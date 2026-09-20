@@ -84,21 +84,33 @@ impl PublicHeatmapSdk {
     pub fn bootstrap_web_session(&mut self) -> Result<(), CaptureError> {
         let viewport = crate::web_context::viewport_from_window();
         self.inner
-            .bootstrap_web_session(web_sdk_info(), web_platform_info(), viewport)
+            .bootstrap_web_session(
+                web_sdk_info(),
+                web_platform_info(self.inner.config().app_version.as_str()),
+                viewport,
+            )
     }
 
     #[cfg(target_arch = "wasm32")]
     pub fn record_screen_view(&mut self) -> Result<(), CaptureError> {
         let viewport = crate::web_context::viewport_from_window();
         self.inner
-            .record_screen_view(web_sdk_info(), web_platform_info(), viewport)
+            .record_screen_view(
+                web_sdk_info(),
+                web_platform_info(self.inner.config().app_version.as_str()),
+                viewport,
+            )
     }
 
     #[cfg(target_arch = "wasm32")]
     pub fn record_scroll(&mut self) -> Result<(), CaptureError> {
         let viewport = crate::web_context::viewport_from_window();
         self.inner
-            .record_scroll(web_sdk_info(), web_platform_info(), viewport)
+            .record_scroll(
+                web_sdk_info(),
+                web_platform_info(self.inner.config().app_version.as_str()),
+                viewport,
+            )
     }
 
     /// Adapter-only web click enqueue; not part of the public integrator API.
@@ -148,7 +160,7 @@ fn web_capture_sdk() -> SdkInfo {
 fn web_capture_platform() -> PlatformInfo {
     #[cfg(target_arch = "wasm32")]
     {
-        web_platform_info()
+        web_platform_info("0.0.0")
     }
     #[cfg(not(target_arch = "wasm32"))]
     {

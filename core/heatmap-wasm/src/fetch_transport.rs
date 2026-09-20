@@ -2,6 +2,9 @@ use heatmap_core::{batch_ingest_url, BatchTransport, FlushError, HeatmapBatch};
 use wasm_bindgen::JsCast;
 use web_sys::{XmlHttpRequest, XmlHttpRequestResponseType};
 
+/// Browser batch upload uses synchronous XHR so the shared Rust `BatchTransport` trait
+/// can stay synchronous. This blocks the main thread for the HTTP round-trip; integrators
+/// should call `flush` after meaningful interaction bursts, not on every event.
 pub struct FetchBatchTransport;
 
 impl FetchBatchTransport {
@@ -39,9 +42,17 @@ impl BatchTransport for FetchBatchTransport {
         if (200..300).contains(&status) {
             Ok(())
         } else {
-            Err(FlushError::http_status(status as u16, None))
+            let retry_after_secs = parse_retry_after_header(&xhr);
+            Err(FlushError::http_status(status as u16, retry_after_secs))
         }
     }
+}
+
+fn parse_retry_after_header(xhr: &XmlHttpRequest) -> Option<u64> {
+    xhr.get_response_header("Retry-After")
+        .ok()
+        .flatten()
+        .and_then(|value| value.parse::<u64>().ok())
 }
 
 fn transport_err(err: wasm_bindgen::JsValue) -> FlushError {
