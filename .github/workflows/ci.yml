@@ -1,0 +1,245 @@
+# Cross-platform Heatmap SDK — format, unit, contract, privacy, and E2E (Step 43).
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+  NODE_VERSION: "22"
+
+jobs:
+  rust:
+    name: Rust (fmt + workspace tests)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: cargo fmt --check
+        run: cargo fmt --all -- --check
+
+      - name: cargo test (core, backend, wasm, integration, ffi)
+        run: |
+          cargo test -p heatmap-core -p heatmap-backend -p heatmap-wasm \
+            -p heatmap-integration -p heatmap-ffi
+
+  web-sdk:
+    name: Web SDK (npm ci / build / test)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: sdk/web/package-lock.json
+
+      - name: npm ci, build, test
+        working-directory: sdk/web
+        run: |
+          npm ci
+          npm run build
+          npm test
+
+  dashboard:
+    name: Dashboard (vitest)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: dashboard/package-lock.json
+
+      - name: npm test
+        working-directory: dashboard
+        run: |
+          npm ci
+          npm test
+
+  contract-and-privacy:
+    name: Contract + privacy fixtures
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: test/package-lock.json
+
+      - name: Contract tests
+        run: ./scripts/run-contract-tests.sh
+
+      - name: Cross-platform privacy fixture scan
+        working-directory: test
+        run: |
+          npm ci
+          node --test privacy/cross-platform-secrets.test.mjs
+
+  apple-swift:
+    name: Apple SDK (swift test)
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Build heatmap-ffi for macOS host
+        run: cargo build -p heatmap-ffi
+
+      - name: swift test
+        working-directory: sdk/apple
+        run: swift test
+
+  android-unit:
+    name: Android SDK (Gradle unit tests)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: android-actions/setup-android@v3
+
+      - name: :heatmap-android:testDebugUnitTest
+        working-directory: sdk/android
+        run: ./gradlew :heatmap-android:testDebugUnitTest --no-daemon
+
+  windows-sdk-macos:
+    name: Windows SDK tests (dotnet + host dylib)
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Build host libheatmap_ffi.dylib
+        run: sdk/windows/scripts/build-rust-windows.sh --host-dylib
+
+      - name: dotnet test Heatmap.Sdk.Tests
+        working-directory: sdk/windows
+        env:
+          HEATMAP_FFI_LIBRARY_PATH: ${{ github.workspace }}/target/release/libheatmap_ffi.dylib
+        run: dotnet test tests/Heatmap.Sdk.Tests/Heatmap.Sdk.Tests.csproj -c Release
+
+  e2e-playwright:
+    name: Web E2E (Playwright)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          cache-targets: "wasm32-unknown-unknown"
+
+      - name: wasm32 target + wasm-bindgen-cli
+        run: |
+          rustup target add wasm32-unknown-unknown
+          cargo install wasm-bindgen-cli --version 0.2.95 --locked --force
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install POC + dashboard + e2e dependencies
+        run: |
+          npm ci --prefix poc/react
+          npm ci --prefix dashboard
+          npm ci --prefix test/e2e
+
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('test/e2e/package-lock.json') }}
+
+      - name: Install Playwright Chromium
+        working-directory: test/e2e
+        run: npx playwright install chromium --with-deps
+
+      - name: npm test (Playwright web journeys)
+        working-directory: test/e2e
+        run: npm test
+
+      - name: npm run test:acceptance (five-platform dashboard)
+        working-directory: test/e2e
+        run: npm run test:acceptance
+
+      - name: Privacy gate (script)
+        run: ./scripts/run-privacy-gate.sh
+
+  e2e-apple:
+    name: iOS + macOS E2E (Xcode UI tests)
+    runs-on: macos-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: iOS simulator E2E
+        run: bash test/e2e/scripts/run-ios-e2e.sh
+
+      - name: macOS AppKit E2E
+        run: bash test/e2e/scripts/run-macos-e2e.sh
+
+  e2e-android-connected-skip:
+    name: Android connected E2E (skipped here)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Connected tests require emulator workflow
+        run: |
+          echo "Default CI does not run :app:connectedDebugAndroidTest (needs adb + emulator/NDK)."
+          echo "Use workflow e2e-android-emulator.yml (workflow_dispatch) for connected Android E2E."
+
+  e2e-windows:
+    name: Windows E2E (FlaUI + WPF)
+    runs-on: windows-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Run Windows E2E
+        shell: bash
+        run: bash test/e2e/scripts/run-windows-e2e.sh

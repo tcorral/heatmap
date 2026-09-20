@@ -258,19 +258,19 @@ Greenfield V1 POC: lock the nested event contract, prove a synthetic click throu
   - **Tests:** Web click and iOS/Android/macOS/Windows activations of Pay agree on click type, screen, element_id checkout.pay, and 0–1 position meaning; platform remains a filter dimension; introduce the contract runner
   - **Depends:** Step 22, Step 27, Step 30, Step 35, Step 39
 
-- [ ] **Step 41: Accept the five-app dashboard journey** — TDD: Yes
+- [x] **Step 41: Accept the five-app dashboard journey** — TDD: Yes
   - **Description:** Run the shared checkout journey on all five sample apps and show cross-platform Pay totals plus per-platform coordinate heatmaps in one dashboard.
   - **Files:** test/e2e/; dashboard/; poc/stills/
   - **Tests:** All five apps complete install → init → journey → upload; Checkout → Pay shows counts for web, iOS, Android, macOS, and Windows; each platform overlay can be viewed separately for the same screen and layout; this is the cross-platform acceptance test
   - **Depends:** Step 20, Step 40
 
-- [ ] **Step 42: Gate privacy on every surface** — TDD: Yes
+- [x] **Step 42: Gate privacy on every surface** — TDD: Yes
   - **Description:** Add the mandatory privacy CI check that secret fixtures never leak through any SDK, queue, log, or ingest path.
   - **Files:** test/; CI workflow files as needed for this gate
   - **Tests:** Password and payment secret fixtures never appear in payloads, logs, queued data, or diagnostics on web, iOS, Android, macOS, and Windows; app-excluded controls also stay out
   - **Depends:** Step 22, Step 27, Step 30, Step 35, Step 39
 
-- [ ] **Step 43: Add CI for format, unit, contract, builds, and E2E** — TDD: No
+- [x] **Step 43: Add CI for format, unit, contract, builds, and E2E** — TDD: No
   - **Description:** Add CI workflows that run formatting, unit tests, contract tests, package builds, per-platform E2E, and the cross-platform acceptance test.
   - **Files:** .github/workflows/
   - **Tests:** Pipeline covers cargo test for core and backend, sdk/web tests, XCTest, Gradle test, dotnet test, contract runner, privacy gate, and E2E runners introduced in earlier steps
