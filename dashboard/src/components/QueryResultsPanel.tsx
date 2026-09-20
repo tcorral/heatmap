@@ -1,5 +1,6 @@
 import type { ElementsQueryState } from "../api/types";
 import { ElementTotalsTable } from "./ElementTotalsTable";
+import { PlatformPayCountsTable } from "./PlatformPayCountsTable";
 import { TopElementsList } from "./TopElementsList";
 
 type QueryResultsPanelProps = {
@@ -31,6 +32,7 @@ export function QueryResultsPanel({ queryState }: QueryResultsPanelProps) {
       <p role="status" aria-label="Unique sessions">
         Unique sessions: {data.unique_sessions}
       </p>
+      <PlatformPayCountsTable rows={data.elements} />
       <ElementTotalsTable rows={data.elements} />
       <TopElementsList rows={data.elements} />
     </>

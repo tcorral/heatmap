@@ -39,6 +39,29 @@ function createClient(
 }
 
 describe("heatmap dashboard element totals", () => {
+  it("should list checkout pay counts for all five platforms in one result", async () => {
+    const client = createClient({
+      unique_sessions: 5,
+      elements: [
+        { platform: "web", element_id: "checkout.pay", click_count: 1, unique_sessions: 1 },
+        { platform: "ios", element_id: "checkout.pay", click_count: 2, unique_sessions: 1 },
+        { platform: "android", element_id: "checkout.pay", click_count: 3, unique_sessions: 1 },
+        { platform: "macos", element_id: "checkout.pay", click_count: 4, unique_sessions: 1 },
+        { platform: "windows", element_id: "checkout.pay", click_count: 5, unique_sessions: 1 },
+      ],
+    });
+    render(<DashboardApp client={client} autoLoad />);
+
+    const comparison = await screen.findByRole("table", {
+      name: /checkout pay by platform/i,
+    });
+    expect(within(comparison).getByRole("row", { name: /web/i })).toHaveTextContent("1");
+    expect(within(comparison).getByRole("row", { name: /iOS/ })).toHaveTextContent("2");
+    expect(within(comparison).getByRole("row", { name: /Android/ })).toHaveTextContent("3");
+    expect(within(comparison).getByRole("row", { name: /macOS/ })).toHaveTextContent("4");
+    expect(within(comparison).getByRole("row", { name: /Windows/ })).toHaveTextContent("5");
+    expect(screen.queryByRole("button", { name: /upload still/i })).not.toBeInTheDocument();
+  });
   it("should show totals, unique sessions, and top elements when the slice has clicks", async () => {
     const client = createClient(sliceWithClicks);
     render(<DashboardApp client={client} autoLoad />);

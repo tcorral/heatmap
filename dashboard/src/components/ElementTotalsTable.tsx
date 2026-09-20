@@ -22,7 +22,7 @@ export function ElementTotalsTable({ rows }: ElementTotalsTableProps) {
           </tr>
         ) : (
           rows.map((row) => (
-            <tr key={row.element_id}>
+            <tr key={`${row.platform ?? ""}:${row.element_id}`}>
               <td>{formatElementLabel(row.element_id)}</td>
               <td aria-label={String(row.click_count)}>{row.click_count}</td>
               <td>{row.unique_sessions}</td>

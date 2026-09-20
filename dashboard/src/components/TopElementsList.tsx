@@ -18,7 +18,7 @@ export function TopElementsList({ rows, limit = 5 }: TopElementsListProps) {
           <li>No clicks recorded.</li>
         ) : (
           topRows.map((row) => (
-            <li key={row.element_id}>
+            <li key={`${row.platform ?? ""}:${row.element_id}`}>
               {row.element_id} ({row.click_count} clicks)
             </li>
           ))

@@ -8,6 +8,7 @@ export type ElementsFilter = {
 };
 
 export type ElementTotalRow = {
+  platform?: string;
   element_id: string;
   click_count: number;
   unique_sessions: number;

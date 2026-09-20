@@ -5,7 +5,6 @@ export function buildElementsUrl(
   filters: ElementsFilter,
 ): string {
   const params = new URLSearchParams({
-    platform: filters.platform,
     screen: filters.screen,
     app_version: filters.appVersion,
   });

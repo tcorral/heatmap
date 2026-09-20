@@ -80,7 +80,7 @@ _Each finding should carry enough context for arbitration without becoming a ful
   - **Why it matters:** Conflicts with design decision that unknown fields are ignored for forward compatibility.
   - **Suggested action:** Ignore unknown nested fields or arbitrate and update conflicting design/schema constraints.
 
-- [ ] **Finding** — `dashboard/src/DashboardApp.tsx:29` — Specified dashboard surfaces are absent
+- [x] **Finding** — `dashboard/src/DashboardApp.tsx:29` — Specified dashboard surfaces are absent
   - **Issue:** Dashboard exposes filters, totals, and overlay only; no manual still-upload UI or platform-breakdown output exists.
   - **Why it matters:** Design explicitly requires manual dashboard upload and comparative platform counts.
   - **Suggested action:** Add minimal still-upload and platform-breakdown surfaces, or document approved scope reduction.
@@ -106,7 +106,7 @@ _Each finding should carry enough context for arbitration without becoming a ful
 - Offline survival/process recovery — Implemented at `core/heatmap-core/src/sdk.rs:599` and `poc/android/app/src/androidTest/kotlin/com/heatmap/checkout/e2e/CheckoutJourneyInstrumentedTest.kt:67`.
 - Buffer drop-oldest — Implemented at `core/heatmap-core/src/persistent_queue.rs:64`.
 - Fail-closed delivery — Implemented at `core/heatmap-core/src/transport.rs:69` and `core/heatmap-core/src/sdk.rs:459`.
-- Cross-platform element comparison — **API grouped by platform when omitted** — Dashboard still needs one result for five platforms at `dashboard/src/components/filterFields.tsx:8`.
+- Cross-platform element comparison — Implemented at `dashboard/src/components/PlatformPayCountsTable.tsx` and `backend/src/db.rs`.
 - Per-platform coordinate heatmap — Implemented at `backend/src/db.rs:360`.
 - Optional reference still — Implemented at `dashboard/src/components/HeatmapOverlayPanel.tsx:11`.
 - No scroll-map visualization — Implemented at `dashboard/test/dashboard.test.tsx:117`.
@@ -119,7 +119,7 @@ _Each finding should carry enough context for arbitration without becoming a ful
 - Performance NFR — **Missing for native Apple capture/upload paths** at `sdk/apple/shared/Sources/HeatmapAppleShared/HeatmapClient.swift:51`, `sdk/apple/ios/Sources/HeatmapAppleIOS/HeatmapIosRustCaptureBackend.swift:23`.
 - Security NFR — Implemented at `core/heatmap-core/src/config.rs:42`, `backend/src/handlers.rs:68`.
 
-- [ ] **Major** — `dashboard/src/components/filterFields.tsx:8` — AC: Cross-platform element comparison — Dashboard lacks five-platform element breakdown
+- [x] **Major** — `dashboard/src/components/filterFields.tsx:8` — AC: Cross-platform element comparison — Dashboard lacks five-platform element breakdown
   - **Issue:** Platform is a single-select filter. Backend totals query requires one platform and groups only by element.
   - **Why it matters:** Analyst cannot see Pay counts broken down across web, iOS, Android, macOS, and Windows in one dashboard result as required.
   - **Suggested action:** Add cross-platform totals query grouped by platform and render all five platform counts together.
